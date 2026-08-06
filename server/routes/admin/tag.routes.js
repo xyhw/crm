@@ -1,0 +1,50 @@
+import { Router } from 'express';
+import { query, queryOne, insert, update } from '../../db.js';
+
+const router = Router();
+
+router.get('/', async (req, res) => {
+  try {
+    const list = await query('SELECT * FROM opportunity_tags ORDER BY sort_order, id');
+    const [countResult] = await query('SELECT COUNT(*) as total FROM opportunity_tags');
+    res.json({ code: 0, data: { list, total: countResult.total } });
+  } catch (err) {
+    res.status(500).json({ code: 500, message: '获取标签失败' });
+  }
+});
+
+router.post('/', async (req, res) => {
+  try {
+    const { name } = req.body || {};
+    if (!name) return res.json({ code: 400, message: '标签名称不能为空' });
+    const result = await insert('opportunity_tags', { name, sort_order: 0 });
+    res.json({ code: 0, data: { id: result.insertId } });
+  } catch (err) {
+    res.status(500).json({ code: 500, message: '创建标签失败' });
+  }
+});
+
+router.put('/:id', async (req, res) => {
+  try {
+    const { name, sortOrder } = req.body || {};
+    const data = {};
+    if (name !== undefined) data.name = name;
+    if (sortOrder !== undefined) data.sort_order = sortOrder;
+    if (Object.keys(data).length === 0) return res.json({ code: 400, message: '无更新字段' });
+    await update('opportunity_tags', data, 'id = ?', [req.params.id]);
+    res.json({ code: 0, message: '更新成功' });
+  } catch (err) {
+    res.status(500).json({ code: 500, message: '更新失败' });
+  }
+});
+
+router.delete('/:id', async (req, res) => {
+  try {
+    await query('DELETE FROM opportunity_tags WHERE id = ?', [req.params.id]);
+    res.json({ code: 0, message: '删除成功' });
+  } catch (err) {
+    res.status(500).json({ code: 500, message: '删除失败' });
+  }
+});
+
+export default router;

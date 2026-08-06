@@ -20,14 +20,14 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const login = async (phone, password) => {
+  const login = async ({ phone, password }) => {
     const data = await api.login({ phone, password });
     setAuth(data.token, data.user, data.refreshToken);
     setUser(data.user);
     return data;
   };
 
-  const register = async (phone, password, nickname, inviteCode) => {
+  const register = async ({ phone, password, nickname, inviteCode }) => {
     const data = await api.register({ phone, password, nickname, inviteCode });
     setAuth(data.token, data.user, data.refreshToken);
     setUser(data.user);

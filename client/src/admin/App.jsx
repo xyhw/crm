@@ -20,6 +20,9 @@ const OpportunityImport = lazy(() => import('../pages/admin/OpportunityImport'))
 const BannerManager = lazy(() => import('../pages/admin/BannerManager'));
 const NotificationManager = lazy(() => import('../pages/admin/NotificationManager'));
 const AdminManage = lazy(() => import('../pages/admin/AdminManage'));
+const FinanceDashboard = lazy(() => import('../pages/admin/FinanceDashboard'));
+const CategoryManager = lazy(() => import('../pages/admin/CategoryManager'));
+const TagManager = lazy(() => import('../pages/admin/TagManager'));
 
 const PageLoading = () => (
   <div style={{ textAlign: 'center', padding: 120 }}>
@@ -54,6 +57,9 @@ export default function AdminApp() {
           <Route path="banners" element={<Suspense fallback={<PageLoading />}><BannerManager /></Suspense>} />
           <Route path="notifications" element={<Suspense fallback={<PageLoading />}><NotificationManager /></Suspense>} />
           <Route path="admins" element={<Suspense fallback={<PageLoading />}><AdminManage /></Suspense>} />
+          <Route path="finance" element={<Suspense fallback={<PageLoading />}><FinanceDashboard /></Suspense>} />
+          <Route path="categories" element={<Suspense fallback={<PageLoading />}><CategoryManager /></Suspense>} />
+          <Route path="tags" element={<Suspense fallback={<PageLoading />}><TagManager /></Suspense>} />
         </Route>
       </Routes>
     </ConfigProvider>

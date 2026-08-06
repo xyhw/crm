@@ -24,6 +24,7 @@ const Notifications = lazy(() => import('./pages/Notifications'));
 const ReminderCenter = lazy(() => import('./pages/ReminderCenter'));
 const Agreement = lazy(() => import('./pages/Agreement'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const Support = lazy(() => import('./pages/Support'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 const PageLoading = () => (
@@ -62,6 +63,7 @@ function AppRoutes() {
         <Route path="/reminders" element={<RequireAuth><Suspense fallback={<PageLoading />}><ReminderCenter /></Suspense></RequireAuth>} />
         <Route path="/agreement/:type" element={<Suspense fallback={<PageLoading />}><Agreement /></Suspense>} />
         <Route path="*" element={<Suspense fallback={<PageLoading />}><NotFound /></Suspense>} />
+        <Route path="/support" element={<Suspense fallback={<PageLoading />}><Support /></Suspense>} />
       </Routes>
       <TabBar />
     </div>

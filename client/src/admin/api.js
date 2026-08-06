@@ -98,6 +98,21 @@ export const adminApi = {
   createAdmin: (data) => apiClient.post('/admins', data),
   updateAdmin: (id, data) => apiClient.put(`/admins/${id}`, data),
   deleteAdmin: (id) => apiClient.delete(`/admins/${id}`),
+
+  // 财务看板
+  getFinance: () => apiClient.get('/finance'),
+
+  // 分类管理
+  getCategories: () => apiClient.get('/categories'),
+  createCategory: (data) => apiClient.post('/categories', data),
+  updateCategory: (id, data) => apiClient.put(`/categories/${id}`, data),
+  deleteCategory: (id) => apiClient.delete(`/categories/${id}`),
+
+  // 标签管理
+  getTags: (params) => apiClient.get('/tags', { params }),
+  createTag: (data) => apiClient.post('/tags', data),
+  updateTag: (id, data) => apiClient.put(`/tags/${id}`, data),
+  deleteTag: (id) => apiClient.delete(`/tags/${id}`),
 };
 
 export default adminApi;
