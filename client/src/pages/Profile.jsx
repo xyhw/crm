@@ -1,0 +1,91 @@
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { NavBar, Cell, CellGroup, Tag, Toast, Button, Grid, GridItem } from 'react-vant';
+import { useAuth } from '../context/AuthContext';
+import { api } from '../api';
+import { levelMeta } from '../constants';
+
+export default function Profile() {
+  const navigate = useNavigate();
+  const { user, logout, refreshUser } = useAuth();
+  const [stats, setStats] = useState(null);
+
+  useEffect(() => {
+    api.myStats()
+      .then(setStats)
+      .catch(() => {});
+    refreshUser().catch(() => {});
+  }, []);
+
+  const level = levelMeta(user?.level || 'normal');
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  return (
+    <div className="page">
+      <NavBar title="个人中心" safeAreaInsetTop />
+
+      {/* 用户信息卡片 */}
+      <div className="profile-card">
+        <div className="profile-card__avatar">{user?.nickname?.[0] || '友'}</div>
+        <div className="profile-card__info">
+          <div className="profile-card__name">{user?.nickname || '未登录'}</div>
+          <Tag color={level.color}>{level.label}</Tag>
+        </div>
+        <div className="profile-card__credit">
+          信用分：<span style={{ color: (user?.creditScore || 100) >= 60 ? '#07c160' : '#ee0a24' }}>
+            {user?.creditScore || 100}
+          </span>
+        </div>
+      </div>
+
+      {/* 积分快捷入口 */}
+      <div className="profile-points" onClick={() => navigate('/points')}>
+        <span>我的积分</span>
+        <span className="profile-points__num">{user?.pointsBalance ?? 0}</span>
+      </div>
+
+      {/* 数据统计 */}
+      <Grid columnNum={4} style={{ marginBottom: 12 }}>
+        <GridItem text="我的投稿" onClick={() => navigate('/my/orders')}>
+          <div className="profile-stat-num">{stats?.published ?? 0}</div>
+        </GridItem>
+        <GridItem text="CRM跟单" onClick={() => navigate('/crm')}>
+          <div className="profile-stat-num">{stats?.crm ?? 0}</div>
+        </GridItem>
+        <GridItem text="被购买" onClick={() => navigate('/my/orders')}>
+          <div className="profile-stat-num">{stats?.totalPurchased ?? 0}</div>
+        </GridItem>
+        <GridItem text="总收入" onClick={() => navigate('/points')}>
+          <div className="profile-stat-num">{stats?.totalIncome ?? 0}</div>
+        </GridItem>
+      </Grid>
+
+      {/* 功能列表 */}
+      <CellGroup inset>
+        <Cell title="我的投稿" isLink onClick={() => navigate('/my/orders')} icon={<span style={{ fontSize: 18 }}>📝</span>} />
+        <Cell title="我的CRM" isLink onClick={() => navigate('/crm')} icon={<span style={{ fontSize: 18 }}>📋</span>} />
+        <Cell title="积分中心" isLink onClick={() => navigate('/points')} icon={<span style={{ fontSize: 18 }}>💰</span>} />
+        <Cell title="会员等级" isLink onClick={() => navigate('/member-level')} icon={<span style={{ fontSize: 18 }}>🏅</span>} />
+        <Cell title="信用分" isLink onClick={() => navigate('/credit')} icon={<span style={{ fontSize: 18 }}>⭐</span>} />
+        <Cell title="邀请好友" isLink onClick={() => navigate('/invite')} icon={<span style={{ fontSize: 18 }}>👥</span>} />
+        <Cell title="排行榜" isLink onClick={() => navigate('/ranking')} icon={<span style={{ fontSize: 18 }}>🏆</span>} />
+        <Cell title="通知中心" isLink onClick={() => navigate('/notifications')} icon={<span style={{ fontSize: 18 }}>🔔</span>} />
+        <Cell title="提醒中心" isLink onClick={() => navigate('/reminders')} icon={<span style={{ fontSize: 18 }}>⏰</span>} />
+      </CellGroup>
+
+      {/* 设置 */}
+      <CellGroup inset style={{ marginTop: 12 }}>
+        <Cell title="编辑资料" isLink onClick={() => navigate('/profile/edit')} icon={<span style={{ fontSize: 18 }}>✏️</span>} />
+        <Cell title="用户协议" isLink onClick={() => navigate('/agreement/agreement')} icon={<span style={{ fontSize: 18 }}>📜</span>} />
+        <Cell title="隐私政策" isLink onClick={() => navigate('/agreement/privacy')} icon={<span style={{ fontSize: 18 }}>🛡️</span>} />
+        <Cell title="退出登录" onClick={handleLogout} icon={<span style={{ fontSize: 18 }}>🚪</span>} />
+      </CellGroup>
+
+      <div style={{ height: 20 }} />
+    </div>
+  );
+}

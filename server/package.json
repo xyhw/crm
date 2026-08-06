@@ -1,0 +1,23 @@
+{
+  "name": "hotel-order-follow-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node index.js",
+    "start": "node index.js",
+    "test": "node --experimental-test-coverage --test test/*.test.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.2.0",
+    "mysql2": "^3.23.2",
+    "nanoid": "^5.0.9",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1"
+  }
+}

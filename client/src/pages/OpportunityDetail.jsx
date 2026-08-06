@@ -1,0 +1,206 @@
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { NavBar, Tag, Toast, Button, Dialog, Field, CellGroup, Cell, Radio } from 'react-vant';
+import Icon from '../components/Icon';
+import { useAuth } from '../context/AuthContext';
+import { api } from '../api';
+import { categoryLabel, stageLabel, statusMeta, timeAgo, INVALID_REASONS } from '../constants';
+
+export default function OpportunityDetail() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [detail, setDetail] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [purchasing, setPurchasing] = useState(false);
+  const [showInvalidDialog, setShowInvalidDialog] = useState(false);
+  const [invalidReason, setInvalidReason] = useState('');
+  const [invalidReasonText, setInvalidReasonText] = useState('');
+
+  useEffect(() => {
+    api.opportunity(id)
+      .then(setDetail)
+      .catch((e) => Toast.fail(e.message))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  const handlePurchase = async () => {
+    if (!user) return navigate('/login');
+    
+    Dialog.confirm({
+      title: '确认购买',
+      message: `确定花费 ${detail.price} 积分解锁此跟单？`,
+    }).then(async () => {
+      setPurchasing(true);
+      try {
+        await api.purchase({ opportunityId: Number(id) });
+        Toast.success('购买成功');
+        // 重新加载详情
+        const newDetail = await api.opportunity(id);
+        setDetail(newDetail);
+      } catch (e) {
+        Toast.fail(e.message);
+      } finally {
+        setPurchasing(false);
+      }
+    }).catch(() => {});
+  };
+
+  const handleMarkInvalid = async () => {
+    if (!invalidReason) return Toast.fail('请选择标记原因');
+    
+    try {
+      await api.markInvalid(id, { reason: invalidReason, reasonText: invalidReasonText });
+      Toast.success('标记成功');
+      setShowInvalidDialog(false);
+      // 重新加载
+      const newDetail = await api.opportunity(id);
+      setDetail(newDetail);
+    } catch (e) {
+      Toast.fail(e.message);
+    }
+  };
+
+  if (loading) return <div className="empty-tip">加载中...</div>;
+  if (!detail) return <div className="empty-tip">跟单不存在</div>;
+
+  const meta = statusMeta(detail.status);
+  const canViewFull = detail.isPurchased || detail.isPublisher;
+
+  return (
+    <div className="page">
+      <NavBar title="跟单详情" leftArrow onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+
+      {/* 标题区 */}
+      <div className="detail-header">
+        <div className="detail-header__top">
+          <Tag color={meta.color} bg={meta.bg}>{meta.label}</Tag>
+          <Tag type="primary">{detail.categoryName}</Tag>
+        </div>
+        <h2 className="detail-header__title">{detail.title}</h2>
+        <div className="detail-header__meta">
+          <span><Icon name="location-o" size={14} /> {detail.city || '未知城市'}</span>
+          <span><Icon name="hotel-o" size={14} /> {detail.hotelName || '未知酒店'}</span>
+          {detail.stage && <span><Icon name="clock-o" size={14} /> {stageLabel(detail.stage)}</span>}
+        </div>
+      </div>
+
+      {/* 价格区 */}
+      <div className="detail-price">
+        <div className="detail-price__amount">{detail.price} <span>积分</span></div>
+        <div className="detail-price__info">
+          <span>{detail.purchaseCount || 0} 人已购买</span>
+          <span>{detail.viewCount || 0} 次浏览</span>
+        </div>
+      </div>
+
+      {/* 标签 */}
+      {detail.tags && detail.tags.length > 0 && (
+        <div className="detail-tags">
+          {detail.tags.map((t) => (
+            <Tag key={t.id} type="primary" plain style={{ margin: '0 4px 4px 0' }}>{t.name}</Tag>
+          ))}
+        </div>
+      )}
+
+      {/* 描述 */}
+      <div className="detail-section">
+        <div className="detail-section__title">跟单描述</div>
+        <div className="detail-section__content">
+          {canViewFull ? (detail.descriptionFull || detail.descriptionPublic || '暂无描述') : (detail.descriptionPublic || '购买后查看完整描述')}
+        </div>
+      </div>
+
+      {/* 联系方式 - 仅购买者可见 */}
+      {canViewFull ? (
+        <div className="detail-section">
+          <div className="detail-section__title">联系方式</div>
+          <CellGroup>
+            <Cell title="联系人" value={detail.contactName || '未填写'} />
+            <Cell title="电话" value={detail.contactPhone || '未填写'} isLink onClick={() => detail.contactPhone && (window.location.href = `tel:${detail.contactPhone}`)} />
+          </CellGroup>
+        </div>
+      ) : (
+        <div className="detail-section detail-lock">
+          <Icon name="lock" size={24} color="#969799" />
+          <div>购买后查看联系方式</div>
+        </div>
+      )}
+
+      {/* 市场情报 */}
+      {detail.marketIntelligence && detail.marketIntelligence.totalShares > 0 && (
+        <div className="detail-section">
+          <div className="detail-section__title">市场情报</div>
+          <div className="detail-intelligence">
+            <div className="detail-intelligence__summary">
+              基于 {detail.marketIntelligence.totalShares} 位购买者跟进
+            </div>
+            {detail.marketIntelligence.statusDistribution && Object.entries(detail.marketIntelligence.statusDistribution).map(([status, count]) => (
+              <div key={status} className="detail-intelligence__item">
+                <span>{status === 'initial_contact' ? '初步接触' : status === 'interested' ? '意向明确' : status === 'negotiating' ? '谈判中' : status}</span>
+                <span>{count} 人</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 投稿人 */}
+      <div className="detail-section">
+        <div className="detail-section__title">投稿人</div>
+        <div className="detail-publisher">
+          <div className="detail-publisher__avatar">{detail.publisherName?.[0] || '匿'}</div>
+          <div className="detail-publisher__info">
+            <div className="detail-publisher__name">{detail.publisherName || '匿名用户'}</div>
+            {detail.publisherCompany && <div className="detail-publisher__company">{detail.publisherCompany}</div>}
+          </div>
+        </div>
+      </div>
+
+      {/* 操作按钮 */}
+      <div className="detail-footer">
+        {!canViewFull && detail.status === 'active' && (
+          <Button type="primary" block round loading={purchasing} onClick={handlePurchase}>
+            花费 {detail.price} 积分解锁
+          </Button>
+        )}
+        {canViewFull && (
+          <Button type="success" block round onClick={() => navigate('/crm')}>
+            进入CRM管理
+          </Button>
+        )}
+        {detail.isPurchased && (
+          <Button plain block round style={{ marginTop: 8 }} onClick={() => setShowInvalidDialog(true)}>
+            标记无效
+          </Button>
+        )}
+      </div>
+
+      {/* 无效标记弹窗 */}
+      <Dialog
+        visible={showInvalidDialog}
+        title="标记无效"
+        showCancelButton
+        onConfirm={handleMarkInvalid}
+        onCancel={() => setShowInvalidDialog(false)}
+      >
+        <div style={{ padding: '16px 0' }}>
+          <div style={{ marginBottom: 8 }}>请选择标记原因：</div>
+          {INVALID_REASONS.map((r) => (
+            <Radio key={r.value} checked={invalidReason === r.value} onChange={() => setInvalidReason(r.value)} style={{ display: 'block', margin: '8px 0' }}>
+              {r.label}
+            </Radio>
+          ))}
+          <Field
+            label="补充说明"
+            placeholder="可选填写"
+            value={invalidReasonText}
+            onChange={setInvalidReasonText}
+            type="textarea"
+            rows={2}
+          />
+        </div>
+      </Dialog>
+    </div>
+  );
+}
