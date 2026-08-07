@@ -48,6 +48,35 @@ export default function Profile() {
         <span className="profile-points__num">{user?.pointsBalance ?? 0}</span>
       </div>
 
+      {/* 资质展示 */}
+      {user?.qualifications && (
+        <div className="section" style={{ padding: '12px 16px' }}>
+          <div className="section-title">专业资质</div>
+          <div className="qualification-list">
+            {user.qualifications.split('\n').filter(Boolean).map((q, i) => (
+              <div key={i} className="qualification-item">
+                <span style={{ fontSize: 16 }}>📋</span>
+                <span>{q}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 案例展示 */}
+      {user?.cases && (
+        <div className="section" style={{ padding: '12px 16px' }}>
+          <div className="section-title">典型案例</div>
+          <div className="case-list">
+            {user.cases.split('\n').filter(Boolean).map((c, i) => (
+              <div key={i} className="case-card">
+                <div className="case-card__desc">{c}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* 数据统计 */}
       <Grid columnNum={4} style={{ marginBottom: 12 }}>
         <GridItem text="我的投稿" onClick={() => navigate('/my/orders')}>
@@ -82,6 +111,7 @@ export default function Profile() {
         <Cell title="编辑资料" isLink onClick={() => navigate('/profile/edit')} icon={<span style={{ fontSize: 18 }}>✏️</span>} />
         <Cell title="用户协议" isLink onClick={() => navigate('/agreement/agreement')} icon={<span style={{ fontSize: 18 }}>📜</span>} />
         <Cell title="隐私政策" isLink onClick={() => navigate('/agreement/privacy')} icon={<span style={{ fontSize: 18 }}>🛡️</span>} />
+        <Cell title="平台须知" isLink onClick={() => navigate('/agreement/summary')} icon={<span style={{ fontSize: 18 }}>📋</span>} />
         <Cell title="退出登录" onClick={handleLogout} icon={<span style={{ fontSize: 18 }}>🚪</span>} />
       </CellGroup>
 

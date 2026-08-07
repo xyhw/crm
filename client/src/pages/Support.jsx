@@ -1,12 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { NavBar, CellGroup, Cell } from 'react-vant';
+import { ArrowLeft } from '@react-vant/icons';
 
 export default function Support() {
   const navigate = useNavigate();
 
   return (
     <div className="page">
-      <NavBar title="客服与帮助" leftArrow onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+      <NavBar title="客服与帮助" leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
       <CellGroup inset style={{ marginTop: 16 }}>
         <Cell title="客服热线" value="400-123-4567" isLink onClick={() => window.location.href = 'tel:400-123-4567'} />
         <Cell title="客服邮箱" value="support@hotel-order.com" />

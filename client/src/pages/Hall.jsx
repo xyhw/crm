@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { NavBar, Tag, Toast, Search, Tabs, Empty, PullRefresh, List } from 'react-vant';
+import { NavBar, Tag, Toast, Search, PullRefresh, List } from 'react-vant';
 import { api } from '../api';
 import { SUPPLIER_CATEGORIES, timeAgo } from '../constants';
+import { ArrowLeft } from '@react-vant/icons';
 
 export default function Hall() {
   const navigate = useNavigate();
@@ -65,7 +66,7 @@ export default function Hall() {
 
   return (
     <div className="page">
-      <NavBar title="跟单大厅" leftArrow onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+      <NavBar title="跟单大厅" leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
 
       {/* 搜索栏 */}
       <Search
@@ -78,11 +79,17 @@ export default function Hall() {
       />
 
       {/* 分类筛选 */}
-      <Tabs active={category} onChange={setCategory} shrink>
+      <div className="category-tabs">
         {categoryTabs.map((tab) => (
-          <Tabs.Tab key={tab.value} title={tab.title} name={tab.value} />
+          <span
+            key={tab.value}
+            className={`category-tab ${category === tab.value ? 'active' : ''}`}
+            onClick={() => { setCategory(tab.value); setPage(1); }}
+          >
+            {tab.title}
+          </span>
         ))}
-      </Tabs>
+      </div>
 
       {/* 排序 */}
       <div className="sort-bar">
@@ -98,16 +105,24 @@ export default function Hall() {
           {loading && list.length === 0 ? (
             <div className="empty-tip">加载中...</div>
           ) : list.length === 0 ? (
-            <Empty description="暂无跟单" style={{ marginTop: 40 }} />
+            <div className="empty-tip" style={{ marginTop: 40 }}>暂无跟单</div>
           ) : (
             list.map((item) => (
-              <div className="opportunity-card" key={item.id} onClick={() => navigate(`/opportunity/${item.id}`)}>
+              <div
+                className={`opportunity-card ${item.isPurchased ? 'purchased' : ''}`}
+                key={item.id}
+                onClick={() => navigate(`/opportunity/${item.id}`)}
+              >
                 <div className="opportunity-card__header">
                   <div className="opportunity-card__icon">{item.categoryIcon || '📦'}</div>
                   <div className="opportunity-card__info">
-                    <div className="opportunity-card__title">{item.title}</div>
+                    <div className="opportunity-card__title">
+                      {item.title}
+                      {item.isPurchased && <Tag plain color="#07c160" style={{ marginLeft: 6 }} size="mini">已购买</Tag>}
+                    </div>
                     <div className="opportunity-card__meta">
-                      {item.hotelName || '未知酒店'} · {item.city || '未知城市'}
+                      {item.hotelName || item.brand || '未知品牌'} · {item.city || '未知城市'}
+                      {item.stage && <span className="opp-stage-tag">{item.stage}</span>}
                     </div>
                   </div>
                 </div>

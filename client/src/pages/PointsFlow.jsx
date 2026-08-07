@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { NavBar, Toast, Tabs, Empty } from 'react-vant';
 import { api } from '../api';
 import { timeAgo } from '../constants';
+import { ArrowLeft } from '@react-vant/icons';
 
 export default function PointsFlow() {
   const navigate = useNavigate();
@@ -26,11 +27,11 @@ export default function PointsFlow() {
 
   return (
     <div className="page">
-      <NavBar title="积分流水" leftArrow onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+      <NavBar title="积分流水" leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
 
-      <Tabs active={type} onChange={setType}>
+      <Tabs value={type} onChange={setType}>
         {typeTabs.map((tab) => (
-          <Tabs.Tab key={tab.name} title={tab.title} name={tab.name} />
+          <Tabs.TabPane key={tab.name} title={tab.title} name={tab.name} />
         ))}
       </Tabs>
 

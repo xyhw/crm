@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { NavBar, Toast, Progress, Cell, CellGroup, Tag } from 'react-vant';
 import { api } from '../api';
 import { LEVEL_META } from '../constants';
+import { ArrowLeft } from '@react-vant/icons';
 
 export default function MemberLevel() {
   const navigate = useNavigate();
@@ -32,7 +33,7 @@ export default function MemberLevel() {
 
   return (
     <div className="page">
-      <NavBar title="会员等级" leftArrow onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+      <NavBar title="会员等级" leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
 
       {/* 当前等级 */}
       <div className="level-card" style={{ background: currentLevel.color }}>

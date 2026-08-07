@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { NavBar, Button, Toast, Cell, CellGroup, Dialog, Field, Grid, GridItem } from 'react-vant';
-import Icon from '../components/Icon';
+import { NavBar, Button, Toast, Dialog, Field, Grid, GridItem } from 'react-vant';
 import { api } from '../api';
 import { timeAgo } from '../constants';
+import { ArrowLeft, BillO, CouponO, Invitation } from '@react-vant/icons';
 
 export default function Points() {
   const navigate = useNavigate();
@@ -58,7 +58,7 @@ export default function Points() {
 
   return (
     <div className="page">
-      <NavBar title="积分中心" leftArrow onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+      <NavBar title="积分中心" leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
 
       {/* 积分余额卡片 */}
       <div className="points-card">
@@ -75,9 +75,9 @@ export default function Points() {
 
       {/* 快捷入口 */}
       <Grid columnNum={3} style={{ marginBottom: 12 }}>
-        <GridItem icon="bill-o" text="积分流水" onClick={() => navigate('/points/flow')} />
-        <GridItem icon="coupon-o" text="购买记录" onClick={() => navigate('/my/orders')} />
-        <GridItem icon="invition" text="邀请好友" onClick={() => navigate('/invite')} />
+        <GridItem icon={<BillO width={22} height={22} />} text="积分流水" onClick={() => navigate('/points/flow')} />
+        <GridItem icon={<CouponO width={22} height={22} />} text="购买记录" onClick={() => navigate('/my/orders')} />
+        <GridItem icon={<Invitation width={22} height={22} />} text="邀请好友" onClick={() => navigate('/invite')} />
       </Grid>
 
       {/* 最近流水 */}

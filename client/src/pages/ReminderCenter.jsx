@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { NavBar, Tabs, Empty, Toast } from 'react-vant';
 import { api } from '../api';
 import { timeAgo, followUpStatusLabel, formatDate } from '../constants';
+import { ArrowLeft } from '@react-vant/icons';
 
 export default function ReminderCenter() {
   const navigate = useNavigate();
@@ -26,11 +27,11 @@ export default function ReminderCenter() {
 
   return (
     <div className="page">
-      <NavBar title="提醒中心" leftArrow onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+      <NavBar title="提醒中心" leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
 
-      <Tabs active={tab} onChange={setTab}>
+      <Tabs value={tab} onChange={setTab}>
         {tabs.map((t) => (
-          <Tabs.Tab key={t.name} title={t.title} name={t.name} />
+          <Tabs.TabPane key={t.name} title={t.title} name={t.name} />
         ))}
       </Tabs>
 

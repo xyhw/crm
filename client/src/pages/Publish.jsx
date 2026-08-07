@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { NavBar, Field, CellGroup, Button, Toast, Picker, Popup, Tag, Space } from 'react-vant';
+import { NavBar, Field, CellGroup, Button, Toast, Picker, Popup, Tag } from 'react-vant';
 import { api } from '../api';
 import { SUPPLIER_CATEGORIES, ORDER_STAGES } from '../constants';
 import Uploader from '../components/Uploader';
+import { ArrowLeft } from '@react-vant/icons';
 
 export default function Publish() {
   const navigate = useNavigate();
@@ -11,12 +12,11 @@ export default function Publish() {
     title: '',
     categoryId: null,
     categoryName: '',
+    brand: '',
+    city: '',
     descriptionPublic: '',
-    descriptionFull: '',
     contactName: '',
     contactPhone: '',
-    city: '',
-    hotelName: '',
     stage: '',
     price: '',
     tags: [],
@@ -31,7 +31,7 @@ export default function Publish() {
   const updateForm = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
   const handlePublish = async () => {
-    if (!form.title.trim()) return Toast.fail('请输入跟单标题');
+    if (!form.title.trim()) return Toast.fail('请输入项目名称');
     if (!form.categoryId) return Toast.fail('请选择供应分类');
     if (!form.price || Number(form.price) <= 0) return Toast.fail('请设置积分定价');
 
@@ -40,21 +40,19 @@ export default function Publish() {
       const data = await api.createOpportunity({
         title: form.title.trim(),
         categoryId: form.categoryId,
+        brand: form.brand,
+        city: form.city,
         descriptionPublic: form.descriptionPublic,
-        descriptionFull: form.descriptionFull,
         contactName: form.contactName,
         contactPhone: form.contactPhone,
-        city: form.city,
-        hotelName: form.hotelName,
         stage: form.stage,
         price: Number(form.price),
         tags: form.tags,
       });
 
-      // 检查是否有相似跟单
-      if (data.similarOpportunities && data.similarOpportunities.length > 0) {
+      if (data?.similarOpportunities?.length) {
         setSimilarList(data.similarOpportunities);
-        Toast.success('发布成功，但存在相似跟单');
+        Toast.fail('存在相似跟单，请检查');
       } else {
         Toast.success('发布成功');
         navigate('/');
@@ -83,11 +81,11 @@ export default function Publish() {
 
   return (
     <div className="page">
-      <NavBar title="发布跟单" leftArrow onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+      <NavBar title="发布跟单" leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
 
       <CellGroup inset style={{ marginTop: 12 }}>
         <Field
-          label="跟单标题"
+          label="项目名称"
           placeholder="如：某酒店弱电总包采购"
           value={form.title}
           onChange={(v) => updateForm('title', v)}
@@ -103,18 +101,10 @@ export default function Publish() {
           required
         />
         <Field
-          label="项目阶段"
-          placeholder="可选"
-          value={form.stage ? ORDER_STAGES.find((s) => s.value === form.stage)?.label : ''}
-          isLink
-          readOnly
-          onClick={() => setShowStagePicker(true)}
-        />
-        <Field
-          label="酒店名称"
+          label="品牌"
           placeholder="如：某国际大酒店"
-          value={form.hotelName}
-          onChange={(v) => updateForm('hotelName', v)}
+          value={form.brand}
+          onChange={(v) => updateForm('brand', v)}
         />
         <Field
           label="所在城市"
@@ -123,20 +113,20 @@ export default function Publish() {
           onChange={(v) => updateForm('city', v)}
         />
         <Field
-          label="公开描述"
-          placeholder="所有人可见的简要描述"
+          label="项目简介"
+          placeholder="简要描述项目内容与规模"
           value={form.descriptionPublic}
           onChange={(v) => updateForm('descriptionPublic', v)}
           type="textarea"
           rows={2}
         />
         <Field
-          label="完整描述"
-          placeholder="购买后可见的详细描述"
-          value={form.descriptionFull}
-          onChange={(v) => updateForm('descriptionFull', v)}
-          type="textarea"
-          rows={3}
+          label="项目进展"
+          placeholder="请选择"
+          value={form.stage ? ORDER_STAGES.find((s) => s.value === form.stage)?.label : ''}
+          isLink
+          readOnly
+          onClick={() => setShowStagePicker(true)}
         />
         <Field
           label="联系人"
@@ -145,7 +135,7 @@ export default function Publish() {
           onChange={(v) => updateForm('contactName', v)}
         />
         <Field
-          label="联系电话"
+          label="手机号"
           placeholder="您的电话"
           value={form.contactPhone}
           onChange={(v) => updateForm('contactPhone', v)}
@@ -185,9 +175,9 @@ export default function Publish() {
         )}
       </div>
 
-      {/* 文件上传 */}
+      {/* 图纸附件 */}
       <div className="section" style={{ padding: '12px 16px' }}>
-        <div className="section-title" style={{ marginBottom: 8 }}>附件（图片/文档，最多9张）</div>
+        <div className="section-title" style={{ marginBottom: 8 }}>图纸附件（最多9个）</div>
         <Uploader files={form.files} onChange={(files) => updateForm('files', files)} />
       </div>
 
@@ -205,7 +195,7 @@ export default function Publish() {
           {similarList.map((s) => (
             <div key={s.id} style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>{s.title}</div>
           ))}
-          <Button type="primary" block round style={{ marginTop: 12 }} onClick={() => navigate('/')}>
+          <Button type="primary" block round style={{ marginTop: 12 }} onClick={() => setSimilarList(null)}>
             我知道了
           </Button>
         </Popup>

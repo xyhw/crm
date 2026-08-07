@@ -1,12 +1,13 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Tabbar } from 'react-vant';
+import { WapHomeO, Search, Edit, Contact, UserO } from '@react-vant/icons';
 
 const TABS = [
-  { path: '/', icon: 'wap-home-o', name: '首页' },
-  { path: '/opportunities', icon: 'search', name: '大厅' },
-  { path: '/publish', icon: 'edit', name: '发布' },
-  { path: '/crm', icon: 'contact', name: 'CRM' },
-  { path: '/profile', icon: 'user-o', name: '我的' },
+  { path: '/', icon: <WapHomeO width={22} height={22} />, name: '首页' },
+  { path: '/opportunities', icon: <Search width={22} height={22} />, name: '大厅' },
+  { path: '/publish', icon: <Edit width={22} height={22} />, name: '发布' },
+  { path: '/crm', icon: <Contact width={22} height={22} />, name: 'CRM' },
+  { path: '/profile', icon: <UserO width={22} height={22} />, name: '我的' },
 ];
 
 export default function TabBar() {

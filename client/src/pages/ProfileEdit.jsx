@@ -33,7 +33,7 @@ export default function ProfileEdit() {
       <NavBar title="编辑资料" leftText="返回" onClickLeft={() => navigate(-1)} safeAreaInsetTop />
       <div className="publish-card">
         <Form
-          initialValues={{ nickname: user?.nickname, company: user?.company, bio: user?.bio }}
+          initialValues={{ nickname: user?.nickname, company: user?.company, bio: user?.bio, qualifications: user?.qualifications || '', cases: user?.cases || '' }}
           onFinish={onFinish}
           footer={
             <Button type="primary" block round nativeType="submit" loading={submitting}>
@@ -54,7 +54,13 @@ export default function ProfileEdit() {
             onClick={() => setShowCategory(true)}
           />
           <Form.Item name="bio" label="个人简介">
-            <Field type="textarea" rows={3} autosize placeholder="介绍你的服务与资源（选填）" />
+            <Field type="textarea" rows={2} autosize placeholder="介绍你的服务与资源（选填）" />
+          </Form.Item>
+          <Form.Item name="qualifications" label="专业资质">
+            <Field type="textarea" rows={2} autosize placeholder="资质证书、荣誉称号等（换行分隔）" />
+          </Form.Item>
+          <Form.Item name="cases" label="典型案例">
+            <Field type="textarea" rows={3} autosize placeholder="案例名称和简要描述（换行分隔，如：某五星酒店弱电总包 - 300间客房）" />
           </Form.Item>
         </Form>
       </div>

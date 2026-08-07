@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { NavBar, Toast, Cell, CellGroup, Progress, Empty, PullRefresh } from 'react-vant';
 import { api } from '../api';
 import { timeAgo } from '../constants';
+import { ArrowLeft } from '@react-vant/icons';
 
 const CHANGE_LABELS = {
   invalid_mark: '跟单被判无效',
@@ -55,7 +56,7 @@ export default function Credit() {
 
   return (
     <div className="page">
-      <NavBar title="信用分" leftArrow onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+      <NavBar title="信用分" leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
 
       {/* 信用分卡片 */}
       <div className="credit-card">

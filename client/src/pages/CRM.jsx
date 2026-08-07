@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { NavBar, Tag, Toast, Button, Search, Tabs, Empty } from 'react-vant';
 import { api } from '../api';
 import { categoryIcon, followUpStatusMeta, timeAgo } from '../constants';
+import { ArrowLeft } from '@react-vant/icons';
 
 export default function CRM() {
   const navigate = useNavigate();
@@ -48,7 +49,7 @@ export default function CRM() {
 
   return (
     <div className="page">
-      <NavBar title="我的CRM" leftArrow onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+      <NavBar title="我的CRM" leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
 
       {/* 搜索栏 */}
       <Search
@@ -60,9 +61,9 @@ export default function CRM() {
       />
 
       {/* 状态筛选 */}
-      <Tabs active={status} onChange={setStatus} shrink>
+      <Tabs value={status} onChange={setStatus} shrink>
         {statusTabs.map((tab) => (
-          <Tabs.Tab key={tab.name} title={tab.title} name={tab.name} />
+          <Tabs.TabPane key={tab.name} title={tab.title} name={tab.name} />
         ))}
       </Tabs>
 

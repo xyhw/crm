@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { NavBar, Toast, Button, Cell, CellGroup, Tag, Dialog, Field, Radio } from 'react-vant';
 import { api } from '../api';
 import { followUpStatusLabel, formatDate, FOLLOW_UP_STATUS } from '../constants';
+import { ArrowLeft } from '@react-vant/icons';
 
 export default function CRMDetail() {
   const { id } = useParams();
@@ -11,13 +12,13 @@ export default function CRMDetail() {
   const [loading, setLoading] = useState(true);
   const [showFollowUp, setShowFollowUp] = useState(false);
   const [followUpForm, setFollowUpForm] = useState({
-    status: 'initial_contact',
+    status: 'call_no_answer',
     contentPrivate: '',
     nextFollowDate: '',
   });
   const [showShare, setShowShare] = useState(false);
   const [shareForm, setShareForm] = useState({
-    status: 'initial_contact',
+    status: 'call_no_answer',
     summary: '',
   });
   const [submitting, setSubmitting] = useState(false);
@@ -50,7 +51,7 @@ export default function CRMDetail() {
       });
       Toast.success('跟进记录已添加');
       setShowFollowUp(false);
-      setFollowUpForm({ status: 'initial_contact', contentPrivate: '', nextFollowDate: '' });
+      setFollowUpForm({ status: 'call_no_answer', contentPrivate: '', nextFollowDate: '' });
       fetchDetail();
     } catch (e) {
       Toast.fail(e.message);
@@ -71,7 +72,7 @@ export default function CRMDetail() {
       });
       Toast.success('共享成功');
       setShowShare(false);
-      setShareForm({ status: 'initial_contact', summary: '' });
+      setShareForm({ status: 'call_no_answer', summary: '' });
     } catch (e) {
       Toast.fail(e.message);
     } finally {
@@ -84,7 +85,7 @@ export default function CRMDetail() {
 
   return (
     <div className="page">
-      <NavBar title="CRM详情" leftArrow onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+      <NavBar title="CRM详情" leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
 
       {/* 基本信息 */}
       <CellGroup inset>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { NavBar, Toast, Tabs, Empty, Badge } from 'react-vant';
 import { api } from '../api';
 import { timeAgo } from '../constants';
+import { ArrowLeft } from '@react-vant/icons';
 
 export default function Notifications() {
   const navigate = useNavigate();
@@ -53,15 +54,15 @@ export default function Notifications() {
     <div className="page">
       <NavBar
         title="通知中心"
-        leftArrow
+        leftArrow={<ArrowLeft width={20} height={20} />}
         onClickLeft={() => navigate(-1)}
         right={unreadCount > 0 ? <span onClick={handleReadAll} style={{ color: '#1677ff' }}>全部已读</span> : undefined}
         safeAreaInsetTop
       />
 
-      <Tabs active={type} onChange={setType}>
+      <Tabs value={type} onChange={setType}>
         {typeTabs.map((tab) => (
-          <Tabs.Tab key={tab.name} title={tab.title} name={tab.name} badge={tab.name === '' && unreadCount > 0 ? unreadCount : undefined} />
+          <Tabs.TabPane key={tab.name} title={tab.title} name={tab.name} badge={tab.name === '' && unreadCount > 0 ? unreadCount : undefined} />
         ))}
       </Tabs>
 

@@ -4,6 +4,7 @@ import { NavBar, Toast, Button, Cell, CellGroup, Empty, Tabs } from 'react-vant'
 import { api } from '../api';
 import { timeAgo } from '../constants';
 import InvitePoster from '../components/InvitePoster';
+import { ArrowLeft, GiftO } from '@react-vant/icons';
 
 export default function Invite() {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ export default function Invite() {
 
   return (
     <div className="page">
-      <NavBar title="邀请好友" leftArrow onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+      <NavBar title="邀请好友" leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
 
       {/* 邀请码 */}
       <div className="invite-card">
@@ -46,16 +47,16 @@ export default function Invite() {
       {/* 海报 */}
       <div className="section" style={{ padding: '12px 16px' }}>
         <div className="section-title">邀请海报</div>
-        <Tabs active={tab} onChange={setTab}>
-          <Tabs.Tab title="邀请码" name="code" />
-          <Tabs.Tab title="海报" name="poster" />
+        <Tabs value={tab} onChange={setTab}>
+          <Tabs.TabPane title="邀请码" name="code" />
+          <Tabs.TabPane title="海报" name="poster" />
         </Tabs>
         {tab === 'poster' && <InvitePoster inviteCode={data?.inviteCode} nickname={nickname} />}
       </div>
 
       {/* 邀请奖励说明 */}
       <CellGroup inset style={{ marginTop: 12 }}>
-        <Cell title="邀请奖励" label="邀请人和被邀请人各得5积分" icon="gift-o" />
+        <Cell title="邀请奖励" label="邀请人和被邀请人各得5积分" icon={<GiftO width={20} height={20} />} />
         <Cell title="已邀请人数" value={data?.stats?.totalInvited || 0} />
         <Cell title="累计奖励" value={`${data?.stats?.totalReward || 0} 积分`} />
       </CellGroup>

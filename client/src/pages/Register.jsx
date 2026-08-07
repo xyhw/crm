@@ -62,6 +62,16 @@ export default function Register() {
           >
             <Input placeholder="如：装修张工" />
           </Form.Item>
+          <Form.Item
+            name="email"
+            label="邮箱"
+            rules={[
+              { required: true, message: '请输入邮箱' },
+              { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: '邮箱格式不正确' },
+            ]}
+          >
+            <Input type="email" placeholder="用于找回密码" />
+          </Form.Item>
           <Form.Item name="company" label="公司">
             <Input placeholder="公司名称（选填）" />
           </Form.Item>

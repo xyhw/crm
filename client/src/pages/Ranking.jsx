@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NavBar, Toast, Tabs, Empty } from 'react-vant';
 import { api } from '../api';
+import { ArrowLeft } from '@react-vant/icons';
 
 export default function Ranking() {
   const navigate = useNavigate();
@@ -19,11 +20,11 @@ export default function Ranking() {
 
   return (
     <div className="page">
-      <NavBar title="排行榜" leftArrow onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+      <NavBar title="排行榜" leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
 
-      <Tabs active={type} onChange={setType}>
-        <Tabs.Tab title="跟单达人榜" name="publisher" />
-        <Tabs.Tab title="贡献榜" name="contributor" />
+      <Tabs value={type} onChange={setType}>
+        <Tabs.TabPane title="跟单达人榜" name="publisher" />
+        <Tabs.TabPane title="贡献榜" name="contributor" />
       </Tabs>
 
       {loading ? (
