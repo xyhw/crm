@@ -48,6 +48,7 @@ export default function Publish() {
         stage: form.stage,
         price: Number(form.price),
         tags: form.tags,
+        attachments: form.files.map((f) => f.url),
       });
 
       if (data?.similarOpportunities?.length) {

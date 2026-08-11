@@ -34,23 +34,23 @@ export const ORDER_STATUS_META = {
 };
 
 export const FOLLOW_UP_STATUS = [
-  { value: 'call_no_answer', label: '电话未接�通' },
-  { value: 'added_wechat', label: '已加微�信' },
+  { value: 'call_no_answer', label: '电话未接通' },
+  { value: 'added_wechat', label: '已加微信' },
   { value: 'interested', label: '意向明确' },
   { value: 'quoting', label: '报价中' },
   { value: 'negotiating', label: '谈判中' },
-  { value: 'closed', label: '已成�交' },
-  { value: 'abandoned', label: '已�放弃' },
+  { value: 'closed', label: '已成交' },
+  { value: 'abandoned', label: '已放弃' },
 ];
 
 export const FOLLOW_UP_STATUS_META = {
-  call_no_answer: { label: '电话未接�通', color: '#969799', bg: '#f2f3f5' },
-  added_wechat: { label: '已加微�信', color: '#07c160', bg: '#e9faef' },
+  call_no_answer: { label: '电话未接通', color: '#969799', bg: '#f2f3f5' },
+  added_wechat: { label: '已加微信', color: '#07c160', bg: '#e9faef' },
   interested: { label: '意向明确', color: '#1677ff', bg: '#e8f1ff' },
   quoting: { label: '报价中', color: '#ff976a', bg: '#fff4e8' },
   negotiating: { label: '谈判中', color: '#ee0a24', bg: '#fef0f0' },
   closed: { label: '成交', color: '#07c160', bg: '#e9faef' },
-  abandoned: { label: '已�放弃', color: '#969799', bg: '#f2f3f5' },
+  abandoned: { label: '已放弃', color: '#969799', bg: '#f2f3f5' },
 };
 
 export const INVALID_REASONS = [
@@ -88,7 +88,7 @@ export function followUpStatusLabel(value) {
 }
 
 export function followUpStatusMeta(value) {
-  return FOLLOW_UP_STATUS_META[value] || FOLLOW_UP_STATUS_META.initial_contact;
+  return FOLLOW_UP_STATUS_META[value] || FOLLOW_UP_STATUS_META.call_no_answer;
 }
 
 export function levelMeta(value) {

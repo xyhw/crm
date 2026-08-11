@@ -9,10 +9,14 @@ const router = Router();
 // 注册
 router.post('/register', async (req, res) => {
   try {
-    const { phone, password, nickname, inviteCode } = req.body || {};
+    const { phone, password, nickname, email, company, category, inviteCode } = req.body || {};
     
     if (!phone || !password || !nickname) {
       return res.json({ code: 400, message: '请完善必填信息' });
+    }
+
+    if (email !== undefined && email !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.json({ code: 400, message: '邮箱格式不正确' });
     }
 
     // 检查手机号是否已注册
@@ -38,9 +42,9 @@ router.post('/register', async (req, res) => {
     await transaction(async (conn) => {
       // 创建用户
       const [userResult] = await conn.execute(
-        `INSERT INTO users (phone, password_hash, nickname, invite_code, invited_by)
-         VALUES (?, ?, ?, ?, ?)`,
-        [phone, passwordHash, nickname, userInviteCode, invitedBy]
+        `INSERT INTO users (phone, password_hash, nickname, email, company, category, invite_code, invited_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [phone, passwordHash, nickname, email || null, company || null, category || null, userInviteCode, invitedBy]
       );
       const userId = userResult.insertId;
 
@@ -133,6 +137,9 @@ router.post('/register', async (req, res) => {
           phone: user.phone,
           nickname: user.nickname,
           avatar: user.avatar,
+          email: user.email,
+          company: user.company,
+          category: user.category,
           inviteCode: user.invite_code,
         },
       },
@@ -245,9 +252,12 @@ router.get('/me', authRequired, async (req, res) => {
         phone: user.phone,
         nickname: user.nickname,
         avatar: user.avatar,
+        email: user.email,
         company: user.company,
         category: user.category,
         bio: user.bio,
+        qualifications: user.qualifications,
+        cases: user.cases,
         inviteCode: user.invite_code,
         creditScore: user.credit_score,
         pointsBalance: user.points_balance || 0,
@@ -264,7 +274,7 @@ router.get('/me', authRequired, async (req, res) => {
 // 更新用户信息
 router.put('/me', authRequired, async (req, res) => {
   try {
-    const { nickname, avatar, company, category, bio } = req.body || {};
+    const { nickname, avatar, company, category, bio, qualifications, cases } = req.body || {};
     
     const updates = {};
     if (nickname !== undefined) updates.nickname = nickname;
@@ -272,6 +282,8 @@ router.put('/me', authRequired, async (req, res) => {
     if (company !== undefined) updates.company = company;
     if (category !== undefined) updates.category = category;
     if (bio !== undefined) updates.bio = bio;
+    if (qualifications !== undefined) updates.qualifications = qualifications;
+    if (cases !== undefined) updates.cases = cases;
 
     if (Object.keys(updates).length === 0) {
       return res.json({ code: 400, message: '没有需要更新的信息' });
@@ -287,9 +299,12 @@ router.put('/me', authRequired, async (req, res) => {
         phone: user.phone,
         nickname: user.nickname,
         avatar: user.avatar,
+        email: user.email,
         company: user.company,
         category: user.category,
         bio: user.bio,
+        qualifications: user.qualifications,
+        cases: user.cases,
       },
       message: '更新成功',
     });

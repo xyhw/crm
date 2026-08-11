@@ -87,6 +87,7 @@ router.get('/', optionalAuth, async (req, res) => {
         categoryName: item.category_name,
         categoryIcon: item.category_icon,
         city: item.city,
+        brand: item.brand || item.hotel_name,
         hotelName: item.hotel_name,
         price: item.price,
         status: item.status,
@@ -184,6 +185,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
       categoryIcon: opportunity.category_icon,
       descriptionPublic: opportunity.description_public,
       city: opportunity.city,
+      brand: opportunity.brand || opportunity.hotel_name,
       hotelName: opportunity.hotel_name,
       stage: opportunity.stage,
       price: opportunity.price,
@@ -213,6 +215,13 @@ router.get('/:id', optionalAuth, async (req, res) => {
       result.descriptionFull = opportunity.description_full;
       result.contactName = opportunity.contact_name;
       result.contactPhone = opportunity.contact_phone;
+      try {
+        result.attachments = opportunity.attachments ? JSON.parse(opportunity.attachments) : [];
+      } catch {
+        result.attachments = [];
+      }
+    } else {
+      result.attachments = [];
     }
 
     result.isPurchased = isPurchased;
@@ -228,7 +237,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
 // 投稿跟单
 router.post('/', authRequired, async (req, res) => {
   try {
-    const { title, categoryId, descriptionPublic, descriptionFull, contactName, contactPhone, city, hotelName, stage, price, tags } = req.body || {};
+    const { title, categoryId, descriptionPublic, descriptionFull, contactName, contactPhone, city, brand, hotelName, stage, price, tags, attachments } = req.body || {};
 
     if (!title || !categoryId || !price) {
       return res.json({ code: 400, message: '请完善必填信息' });
@@ -253,10 +262,12 @@ router.post('/', authRequired, async (req, res) => {
       contact_name: contactName || '',
       contact_phone: contactPhone || '',
       city: city || '',
+      brand: brand || hotelName || '',
       hotel_name: hotelName || '',
       stage: stage || '',
       price: Number(price),
       status: 'active',
+      attachments: Array.isArray(attachments) && attachments.length > 0 ? JSON.stringify(attachments) : null,
     });
 
     // 处理标签

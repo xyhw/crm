@@ -5,6 +5,7 @@ import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
 import { initDatabase } from './migrations/001_init.js';
+import { migrateP0Fields } from './migrations/002_p0_fields.js';
 import { seedDatabase } from './seeds/seed.js';
 import { closePool } from './db.js';
 import { adminAuthRequired } from './auth.js';
@@ -122,6 +123,10 @@ async function start() {
     // 初始化数据库
     await initDatabase();
     console.log('[server] Database initialized');
+
+    // P0 字段迁移（幂等）
+    await migrateP0Fields();
+    console.log('[server] P0 fields migrated');
 
     // 种子数据
     await seedDatabase();

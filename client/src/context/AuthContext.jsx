@@ -27,11 +27,11 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  const register = async ({ phone, password, nickname, inviteCode }) => {
-    const data = await api.register({ phone, password, nickname, inviteCode });
-    setAuth(data.token, data.user, data.refreshToken);
-    setUser(data.user);
-    return data;
+  const register = async (data) => {
+    const res = await api.register(data);
+    setAuth(res.token, res.user, res.refreshToken);
+    setUser(res.user);
+    return res;
   };
 
   const logout = () => {

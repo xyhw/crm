@@ -26,7 +26,7 @@ router.post('/', authRequired, async (req, res) => {
     const followUp = await insert('follow_ups', {
       crm_opportunity_id: crmOpportunityId,
       user_id: req.userId,
-      status: status || 'initial_contact',
+      status: status || 'call_no_answer',
       content_private: contentPrivate,
       next_follow_date: nextFollowDate || null,
     });
