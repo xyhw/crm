@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NavBar, Tag, Toast, Button, Search, Tabs, Empty } from 'react-vant';
 import { api } from '../api';
-import { categoryIcon, followUpStatusMeta, timeAgo } from '../constants';
+import { categoryIcon, crmStatusMeta, timeAgo } from '../constants';
 import { ArrowLeft } from '@react-vant/icons';
 
 export default function CRM() {
@@ -75,7 +75,7 @@ export default function CRM() {
           <Empty description="暂无CRM跟单" style={{ marginTop: 40 }} />
         ) : (
           list.map((item) => {
-            const statusMeta = followUpStatusMeta(item.status);
+            const statusMeta = crmStatusMeta(item.status);
             return (
               <div className="crm-card" key={item.id} onClick={() => navigate(`/crm/${item.id}`)}>
                 <div className="crm-card__header">

@@ -53,6 +53,13 @@ export const FOLLOW_UP_STATUS_META = {
   abandoned: { label: '已放弃', color: '#969799', bg: '#f2f3f5' },
 };
 
+export const CRM_STATUS_META = {
+  pending: { label: '待跟进', color: '#ff976a', bg: '#fff4e8' },
+  following: { label: '跟进中', color: '#1677ff', bg: '#e8f1ff' },
+  closed: { label: '已成交', color: '#07c160', bg: '#e9faef' },
+  abandoned: { label: '已放弃', color: '#969799', bg: '#f2f3f5' },
+};
+
 export const INVALID_REASONS = [
   { value: 'contact_invalid', label: '联系方式无效' },
   { value: 'info_fake', label: '信息虚假' },
@@ -91,6 +98,14 @@ export function followUpStatusMeta(value) {
   return FOLLOW_UP_STATUS_META[value] || FOLLOW_UP_STATUS_META.call_no_answer;
 }
 
+export function crmStatusLabel(value) {
+  return CRM_STATUS_META[value]?.label || CRM_STATUS_META.pending.label;
+}
+
+export function crmStatusMeta(value) {
+  return CRM_STATUS_META[value] || CRM_STATUS_META.pending;
+}
+
 export function levelMeta(value) {
   return LEVEL_META[value] || LEVEL_META.normal;
 }
@@ -120,12 +135,6 @@ export function formatDateTime(ts) {
   const date = new Date(ts);
   return `${formatDate(ts)} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
-
-export const OPPORTUNITY_STATUS = {
-  ACTIVE: 'active',
-  SOLD_OUT: 'sold_out',
-  INVALIDATED: 'invalidated',
-};
 
 export const OPPORTUNITY_STATUS_META = {
   active: { label: '销售中', color: '#07c160', bg: '#e9faef' },

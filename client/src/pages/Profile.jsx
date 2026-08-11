@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { NavBar, Cell, CellGroup, Tag, Toast, Button, Grid, GridItem } from 'react-vant';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
-import { levelMeta } from '../constants';
+import { levelMeta, categoryLabel } from '../constants';
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -40,6 +40,19 @@ export default function Profile() {
             {user?.creditScore || 100}
           </span>
         </div>
+      </div>
+
+      {/* 联系/身份信息 */}
+      <div className="profile-meta" style={{ marginBottom: 12 }}>
+        {user?.company && (
+          <div className="profile-meta__item"><span>公司</span>{user.company}</div>
+        )}
+        {user?.category != null && (
+          <div className="profile-meta__item"><span>类型</span>{categoryLabel(user.category)}</div>
+        )}
+        {user?.email && (
+          <div className="profile-meta__item"><span>邮箱</span>{user.email}</div>
+        )}
       </div>
 
       {/* 积分快捷入口 */}

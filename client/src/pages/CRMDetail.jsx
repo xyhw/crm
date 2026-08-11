@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { NavBar, Toast, Button, Cell, CellGroup, Tag, Dialog, Field, Radio } from 'react-vant';
 import { api } from '../api';
-import { followUpStatusLabel, formatDate, FOLLOW_UP_STATUS } from '../constants';
+import { crmStatusLabel, formatDate, FOLLOW_UP_STATUS, followUpStatusLabel } from '../constants';
 import { ArrowLeft } from '@react-vant/icons';
 
 export default function CRMDetail() {
@@ -93,7 +93,7 @@ export default function CRMDetail() {
         <Cell title="城市" value={detail.city || '未知'} />
         <Cell title="酒店" value={detail.hotel_name || '未知'} />
         <Cell title="分类" value={detail.category_name || '其他'} />
-        <Cell title="状态" value={followUpStatusLabel(detail.status)} />
+        <Cell title="状态" value={crmStatusLabel(detail.status)} />
         <Cell title="来源" value={detail.source === 'purchased' ? '购买入库' : '手动录入'} />
       </CellGroup>
 

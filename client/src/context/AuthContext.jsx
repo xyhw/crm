@@ -39,6 +39,13 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  const updateUser = (data) => {
+    const updated = { ...user, ...data };
+    setUser(updated);
+    localStorage.setItem('hof_user', JSON.stringify(updated));
+    return updated;
+  };
+
   useEffect(() => {
     if (getCachedUser()) {
       refreshUser().finally(() => setLoading(false));
@@ -48,7 +55,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
