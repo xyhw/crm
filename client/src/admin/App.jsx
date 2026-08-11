@@ -12,6 +12,7 @@ const OrderList = lazy(() => import('../pages/admin/OrderList'));
 const PointsList = lazy(() => import('../pages/admin/PointsList'));
 const LevelConfig = lazy(() => import('../pages/admin/LevelConfig'));
 const SystemConfig = lazy(() => import('../pages/admin/SystemConfig'));
+const AgreementConfig = lazy(() => import('../pages/admin/AgreementConfig'));
 const AuditList = lazy(() => import('../pages/admin/AuditList'));
 const RoleManagement = lazy(() => import('../pages/admin/RoleManagement'));
 const AuditLogPage = lazy(() => import('../pages/admin/AuditLogPage'));
@@ -50,6 +51,7 @@ export default function AdminApp() {
           <Route path="points" element={<Suspense fallback={<PageLoading />}><PointsList /></Suspense>} />
           <Route path="levels" element={<Suspense fallback={<PageLoading />}><LevelConfig /></Suspense>} />
           <Route path="configs" element={<Suspense fallback={<PageLoading />}><SystemConfig /></Suspense>} />
+          <Route path="configs/agreements" element={<Suspense fallback={<PageLoading />}><AgreementConfig /></Suspense>} />
           <Route path="audit" element={<Suspense fallback={<PageLoading />}><AuditList /></Suspense>} />
           <Route path="roles" element={<Suspense fallback={<PageLoading />}><RoleManagement /></Suspense>} />
           <Route path="audit-logs" element={<Suspense fallback={<PageLoading />}><AuditLogPage /></Suspense>} />

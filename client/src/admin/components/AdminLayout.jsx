@@ -19,6 +19,7 @@ const menuItems = [
   { key: '/admin/audit', icon: <AuditOutlined />, label: '摘要审核' },
   { key: '/admin/levels', icon: <SafetyCertificateOutlined />, label: '等级配置' },
   { key: '/admin/configs', icon: <SettingOutlined />, label: '系统配置' },
+  { key: '/admin/configs/agreements', icon: <FileSearchOutlined />, label: '协议内容' },
   { key: '/admin/stats', icon: <LineChartOutlined />, label: '数据统计' },
   { key: '/admin/roles', icon: <SafetyCertificateOutlined />, label: '角色管理' },
   { key: '/admin/audit-logs', icon: <FileSearchOutlined />, label: '操作日志' },
