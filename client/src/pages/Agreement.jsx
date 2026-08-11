@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { NavBar } from 'react-vant';
+import { api } from '../api';
 import { ArrowLeft } from '@react-vant/icons';
 
 const AGREEMENTS = {
@@ -45,7 +47,20 @@ const AGREEMENTS = {
 export default function Agreement() {
   const navigate = useNavigate();
   const { type = 'agreement' } = useParams();
-  const doc = AGREEMENTS[type] || AGREEMENTS.agreement;
+  const [doc, setDoc] = useState(AGREEMENTS[type] || AGREEMENTS.agreement);
+
+  useEffect(() => {
+    // 优先拉取动态配置，失败回退静态内容
+    if (typeof api.agreement === 'function') {
+      api.agreement(type)
+        .then((remote) => {
+          if (remote && remote.title && Array.isArray(remote.sections)) {
+            setDoc({ title: remote.title, sections: remote.sections });
+          }
+        })
+        .catch(() => {});
+    }
+  }, [type]);
 
   return (
     <div className="page">

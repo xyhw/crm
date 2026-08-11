@@ -9,7 +9,7 @@ router.get('/', authRequired, async (req, res) => {
     const { type = 'today' } = req.query;
 
     let sql = `
-      SELECT fu.*, co.id as crm_id, co.status, 
+      SELECT fu.*, co.id as crm_id, 
         opp.title as opportunity_title, opp.city, opp.hotel_name,
         fu.next_follow_date      FROM follow_ups fu
       JOIN crm_opportunities co ON fu.crm_opportunity_id = co.id

@@ -177,4 +177,7 @@ export const api = {
 
   // 统计
   myStats: () => request('/stats/me'),
+
+  // 协议（公开接口）
+  agreement: (type) => request('/agreement/' + type, { auth: false }),
 };

@@ -26,6 +26,7 @@ import statsRoutes from './routes/stats.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
 import remindersRoutes from './routes/reminders.routes.js';
 import creditsRoutes from './routes/credits.routes.js';
+import agreementRoutes from './routes/agreement.routes.js';
 
 // 后台路由
 import adminAuthRoutes from './routes/admin/auth.routes.js';
@@ -77,6 +78,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/reminders', remindersRoutes);
 app.use('/api/credits', creditsRoutes);
 app.use('/api/banners', bannerRoutes);
+app.use('/api/agreement', agreementRoutes);
 
 // 管理后台路由
 app.use('/api/v1/admin/auth', adminAuthRoutes);

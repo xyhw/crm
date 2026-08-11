@@ -22,12 +22,12 @@ export default function MyOrders() {
 
   return (
     <div className="page">
-      <NavBar title="我的�订单" leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+      <NavBar title="我的订单" leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
 
       {loading ? (
         <div className="empty-tip">加载中...</div>
       ) : myOrders.length === 0 ? (
-        <Empty description="�暂无�订单记录" style={{ marginTop: 40 }} />
+        <Empty description="暂无订单记录" style={{ marginTop: 40 }} />
       ) : (
         <div className="order-list">
           {myOrders.map((item) => {
@@ -41,7 +41,7 @@ export default function MyOrders() {
                   <div className="order-card__title">{item.title}</div>
                   <div className="order-status">
                     {isPublisher && <Tag color={meta.color} bg={meta.bg}>我发布</Tag>}
-                    {isPurchased && <Tag color="#07c160" plain>我已�购</Tag>}
+                    {isPurchased && <Tag color="#07c160" plain>我已购</Tag>}
                     {!isPublisher && !isPurchased && <Tag color={meta.color} bg={meta.bg}>{meta.label}</Tag>}
                   </div>
                 </div>
@@ -50,9 +50,9 @@ export default function MyOrders() {
                   <span>{item.hotelName || '未知酒店'}</span>
                 </div>
                 <div className="order-card__footer">
-                  <div className="order-card__price">{item.price} �积分</div>
+                  <div className="order-card__price">{item.price} 积分</div>
                   <div className="order-card__stats">
-                    <Tag size="mini">{item.purchaseCount || 0} 人已�购�买</Tag>
+                    <Tag size="mini">{item.purchaseCount || 0} 人已购买</Tag>
                     <span>{timeAgo(item.createdAt)}</span>
                   </div>
                 </div>
