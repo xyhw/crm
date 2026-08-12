@@ -4,6 +4,9 @@ import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  test: {
+    setupFiles: ['./test/setup.js'],
+  },
   server: {
     host: true,
     port: 5173,
