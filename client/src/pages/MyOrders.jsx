@@ -5,10 +5,16 @@ import { api } from '../api';
 import { statusMeta, timeAgo } from '../constants';
 import { ArrowLeft } from '@react-vant/icons';
 
+const TABS = [
+  { title: '我发布的', name: 'published' },
+  { title: '我购买的', name: 'purchased' },
+];
+
 export default function MyOrders() {
   const navigate = useNavigate();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState('published');
 
   useEffect(() => {
     api.opportunities({ pageSize: 50 })
@@ -17,48 +23,57 @@ export default function MyOrders() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Show orders where user is either publisher or purchaser
-  const myOrders = list.filter((o) => o.isPublisher || o.isPurchased);
+  const published = list.filter((o) => o.isPublisher);
+  const purchased = list.filter((o) => o.isPurchased);
+  const current = tab === 'published' ? published : purchased;
+
+  const renderItem = (item) => {
+    const meta = statusMeta(item.status);
+    const isPurchased = item.isPurchased;
+    const isPublisher = item.isPublisher;
+
+    return (
+      <div className="order-card" key={item.id} onClick={() => navigate(`/opportunity/${item.id}`)}>
+        <div className="order-card__header">
+          <div className="order-card__title">{item.title}</div>
+          <div className="order-status">
+            {isPublisher && <Tag color={meta.color} bg={meta.bg}>我发布</Tag>}
+            {isPurchased && <Tag color="#07c160" plain>我已购</Tag>}
+            {!isPublisher && !isPurchased && <Tag color={meta.color} bg={meta.bg}>{meta.label}</Tag>}
+          </div>
+        </div>
+        <div className="order-card__info">
+          <span>{item.city || '未知城市'}</span>
+          <span>{item.hotelName || '未知酒店'}</span>
+        </div>
+        <div className="order-card__footer">
+          <div className="order-card__price">{item.price} 积分</div>
+          <div className="order-card__stats">
+            <Tag size="mini">{item.purchaseCount || 0} 人已购买</Tag>
+            <span>{timeAgo(item.createdAt)}</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="page">
       <NavBar title="我的订单" leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
 
+      <Tabs value={tab} onChange={setTab}>
+        {TABS.map((t) => (
+          <Tabs.TabPane key={t.name} title={t.title} name={t.name} />
+        ))}
+      </Tabs>
+
       {loading ? (
         <div className="empty-tip">加载中...</div>
-      ) : myOrders.length === 0 ? (
-        <Empty description="暂无订单记录" style={{ marginTop: 40 }} />
+      ) : current.length === 0 ? (
+        <Empty description={tab === 'published' ? '暂无发布记录，去大厅发布第一条跟单吧' : '暂无购买记录，去大厅看看'} style={{ marginTop: 40 }} />
       ) : (
         <div className="order-list">
-          {myOrders.map((item) => {
-            const meta = statusMeta(item.status);
-            const isPurchased = item.isPurchased;
-            const isPublisher = item.isPublisher;
-            
-            return (
-              <div className="order-card" key={item.id} onClick={() => navigate(`/opportunity/${item.id}`)}>
-                <div className="order-card__header">
-                  <div className="order-card__title">{item.title}</div>
-                  <div className="order-status">
-                    {isPublisher && <Tag color={meta.color} bg={meta.bg}>我发布</Tag>}
-                    {isPurchased && <Tag color="#07c160" plain>我已购</Tag>}
-                    {!isPublisher && !isPurchased && <Tag color={meta.color} bg={meta.bg}>{meta.label}</Tag>}
-                  </div>
-                </div>
-                <div className="order-card__info">
-                  <span>{item.city || '未知城市'}</span>
-                  <span>{item.hotelName || '未知酒店'}</span>
-                </div>
-                <div className="order-card__footer">
-                  <div className="order-card__price">{item.price} 积分</div>
-                  <div className="order-card__stats">
-                    <Tag size="mini">{item.purchaseCount || 0} 人已购买</Tag>
-                    <span>{timeAgo(item.createdAt)}</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {current.map(renderItem)}
         </div>
       )}
     </div>

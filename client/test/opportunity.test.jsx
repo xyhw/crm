@@ -248,7 +248,9 @@ describe('我的订单 MyOrders', () => {
       </MemoryRouter>
     );
     await waitFor(() => expect(screen.getByText('我发布的单')).toBeTruthy());
-    expect(screen.getByText('我购买的单')).toBeTruthy();
+    expect(screen.getByText('我发布')).toBeTruthy();
+    fireEvent.click(screen.getByText('我购买的'));
+    await waitFor(() => expect(screen.getByText('我购买的单')).toBeTruthy());
     expect(screen.getByText('我已购')).toBeTruthy();
   });
 
@@ -260,6 +262,6 @@ describe('我的订单 MyOrders', () => {
         <MyOrders />
       </MemoryRouter>
     );
-    await waitFor(() => expect(screen.getByText(/暂无|发布/)).toBeTruthy());
+    await waitFor(() => expect(screen.getByText(/暂无发布记录/)).toBeTruthy());
   });
 });

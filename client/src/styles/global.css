@@ -28,6 +28,26 @@ body {
   background: var(--bg-color);
 }
 
+/* 首页提醒条 */
+.home-reminder-bar {
+  display: flex;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #fff7e8;
+  border-bottom: 1px solid #ffe7c2;
+}
+.home-reminder-bar__item {
+  font-size: 13px;
+  color: #ed6a0c;
+  cursor: pointer;
+}
+.home-reminder-bar__item::before {
+  content: '●';
+  margin-right: 4px;
+  font-size: 8px;
+  vertical-align: middle;
+}
+
 /* 首页用户卡片 */
 .home-user {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { NavBar, Tag, Toast, Button } from 'react-vant';
+import { NavBar, Tag, Toast, Button, Badge } from 'react-vant';
 import Icon from '../components/Icon';
 import HomeBanner from '../components/HomeBanner';
 import { useAuth } from '../context/AuthContext';
@@ -13,15 +13,21 @@ export default function Home() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [todayReminders, setTodayReminders] = useState(0);
 
   useEffect(() => {
     Promise.all([
       api.opportunities({ status: 'active', pageSize: 5, sort: 'newest' }),
       api.myStats().catch(() => null),
+      api.notifications({ pageSize: 1 }).catch(() => ({})),
+      api.reminders({ type: 'today' }).catch(() => ({})),
     ])
-      .then(([ordersRes, statsRes]) => {
+      .then(([ordersRes, statsRes, notifRes, reminderRes]) => {
         setOrders(ordersRes.list || []);
         setStats(statsRes);
+        setUnreadCount(notifRes.unreadCount || 0);
+        setTodayReminders((reminderRes.list || []).length);
       })
       .catch((e) => Toast.fail(e.message))
       .finally(() => setLoading(false));
@@ -29,10 +35,34 @@ export default function Home() {
   }, []);
 
   const level = levelMeta(user?.level || 'normal');
+  const hasReminder = unreadCount > 0 || todayReminders > 0;
 
   return (
     <div className="page">
-      <NavBar title="跟单互助" safeAreaInsetTop />
+      <NavBar
+        title="跟单互助"
+        safeAreaInsetTop
+        right={
+          <Badge content={unreadCount > 0 ? unreadCount : ''} showZero={false}>
+            <Icon name="bell" size={22} color="#323233" onClick={() => navigate('/notifications')} />
+          </Badge>
+        }
+      />
+
+      {(hasReminder) && (
+        <div className="home-reminder-bar">
+          {todayReminders > 0 && (
+            <span className="home-reminder-bar__item" onClick={() => navigate('/reminders')}>
+              {todayReminders} 条今日待跟进
+            </span>
+          )}
+          {unreadCount > 0 && (
+            <span className="home-reminder-bar__item" onClick={() => navigate('/notifications')}>
+              {unreadCount} 条未读通知
+            </span>
+          )}
+        </div>
+      )}
 
       {/* 用户卡片 */}
       <div className="home-user">

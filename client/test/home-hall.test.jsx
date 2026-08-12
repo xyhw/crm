@@ -11,6 +11,8 @@ vi.mock('../src/api', () => ({
     opportunities: vi.fn(),
     myStats: vi.fn(),
     banners: vi.fn().mockResolvedValue({ list: [] }),
+    notifications: vi.fn().mockResolvedValue({ list: [], unreadCount: 0 }),
+    reminders: vi.fn().mockResolvedValue({ list: [] }),
     me: vi.fn().mockResolvedValue({ nickname: '测试' }),
   },
 }));
@@ -95,6 +97,21 @@ describe('首页 Home（开发需求 6.1.2 跟单中心）', () => {
     );
     await waitFor(() => expect(screen.getByText('暂无跟单')).toBeTruthy());
     expect(screen.getByText('立即发布')).toBeTruthy();
+  });
+
+  it('有未读通知与今日待跟进时展示提醒条', async () => {
+    const { api } = await import('../src/api');
+    api.opportunities.mockResolvedValue({ list: [], total: 0 });
+    api.myStats.mockResolvedValue({ published: 0, crm: 0 });
+    api.notifications.mockResolvedValue({ list: [], unreadCount: 3 });
+    api.reminders.mockResolvedValue({ list: [{ id: 1 }, { id: 2 }] });
+    render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(screen.getByText('3 条未读通知')).toBeTruthy());
+    expect(screen.getByText('2 条今日待跟进')).toBeTruthy();
   });
 });
 
