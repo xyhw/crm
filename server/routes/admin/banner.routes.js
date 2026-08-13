@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { query, queryOne, insert, update, transaction } from '../../db.js';
+import { query, queryOne, insert, update, del } from '../../db.js';
 
 const router = Router();
 
@@ -88,7 +88,7 @@ router.put('/:id', async (req, res) => {
 // 删除Banner
 router.delete('/:id', async (req, res) => {
   try {
-    await deleteOrder('DELETE FROM banners WHERE id = ?', [req.params.id]);
+    await del('banners', 'id = ?', [req.params.id]);
     res.json({ code: 0, message: '删除成功' });
   } catch (err) {
     console.error('Admin delete banner error:', err);

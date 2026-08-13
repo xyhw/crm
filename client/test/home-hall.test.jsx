@@ -13,6 +13,7 @@ vi.mock('../src/api', () => ({
     banners: vi.fn().mockResolvedValue({ list: [] }),
     notifications: vi.fn().mockResolvedValue({ list: [], unreadCount: 0 }),
     reminders: vi.fn().mockResolvedValue({ list: [] }),
+    announcements: vi.fn().mockResolvedValue({ list: [] }),
     me: vi.fn().mockResolvedValue({ nickname: '测试' }),
   },
 }));
@@ -112,6 +113,36 @@ describe('首页 Home（开发需求 6.1.2 跟单中心）', () => {
     );
     await waitFor(() => expect(screen.getByText('3 条未读通知')).toBeTruthy());
     expect(screen.getByText('2 条今日待跟进')).toBeTruthy();
+  });
+
+  it('存在公告时首页顶部展示公告栏', async () => {
+    const { api } = await import('../src/api');
+    api.opportunities.mockResolvedValue({ list: [], total: 0 });
+    api.myStats.mockResolvedValue({ published: 0, crm: 0 });
+    api.announcements.mockResolvedValue({
+      list: [{ id: 1, title: '平台维护通知', media_type: 'text' }],
+    });
+    render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(screen.getByText('公告')).toBeTruthy());
+    expect(screen.getByText('平台维护通知')).toBeTruthy();
+  });
+
+  it('无公告时不展示公告栏', async () => {
+    const { api } = await import('../src/api');
+    api.opportunities.mockResolvedValue({ list: [], total: 0 });
+    api.myStats.mockResolvedValue({ published: 0, crm: 0 });
+    api.announcements.mockResolvedValue({ list: [] });
+    render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(screen.getByText('暂无跟单')).toBeTruthy());
+    expect(screen.queryByText('公告')).toBeNull();
   });
 });
 

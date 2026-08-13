@@ -19,6 +19,7 @@ const AuditLogPage = lazy(() => import('../pages/admin/AuditLogPage'));
 const StatsDetailed = lazy(() => import('../pages/admin/StatsDetailed'));
 const OpportunityImport = lazy(() => import('../pages/admin/OpportunityImport'));
 const BannerManager = lazy(() => import('../pages/admin/BannerManager'));
+const AnnouncementManager = lazy(() => import('../pages/admin/AnnouncementManager'));
 const NotificationManager = lazy(() => import('../pages/admin/NotificationManager'));
 const AdminManage = lazy(() => import('../pages/admin/AdminManage'));
 const FinanceDashboard = lazy(() => import('../pages/admin/FinanceDashboard'));
@@ -57,6 +58,7 @@ export default function AdminApp() {
           <Route path="audit-logs" element={<Suspense fallback={<PageLoading />}><AuditLogPage /></Suspense>} />
           <Route path="stats" element={<Suspense fallback={<PageLoading />}><StatsDetailed /></Suspense>} />
           <Route path="banners" element={<Suspense fallback={<PageLoading />}><BannerManager /></Suspense>} />
+          <Route path="announcements" element={<Suspense fallback={<PageLoading />}><AnnouncementManager /></Suspense>} />
           <Route path="notifications" element={<Suspense fallback={<PageLoading />}><NotificationManager /></Suspense>} />
           <Route path="admins" element={<Suspense fallback={<PageLoading />}><AdminManage /></Suspense>} />
           <Route path="finance" element={<Suspense fallback={<PageLoading />}><FinanceDashboard /></Suspense>} />

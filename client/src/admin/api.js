@@ -89,6 +89,12 @@ export const adminApi = {
   updateBanner: (id, data) => apiClient.put(`/banners/${id}`, data),
   deleteBanner: (id) => apiClient.delete(`/banners/${id}`),
 
+  // 公告
+  getAnnouncements: (params) => apiClient.get('/announcements', { params }),
+  createAnnouncement: (data) => apiClient.post('/announcements', data),
+  updateAnnouncement: (id, data) => apiClient.put(`/announcements/${id}`, data),
+  deleteAnnouncement: (id) => apiClient.delete(`/announcements/${id}`),
+
   // 通知推送
   sendNotification: (data) => apiClient.post('/notifications/send', data),
   getNotificationHistory: (params) => apiClient.get('/notifications/history', { params }),

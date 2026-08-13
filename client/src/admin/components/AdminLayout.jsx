@@ -3,7 +3,8 @@ import { Layout, Menu, Avatar, Dropdown, Space, Typography } from 'antd';
 import {
   DashboardOutlined, FileTextOutlined, UserOutlined, OrderedListOutlined,
   CreditCardOutlined, SettingOutlined, AuditOutlined, LogoutOutlined,
-  SafetyCertificateOutlined, FileSearchOutlined, LineChartOutlined, UploadOutlined
+  SafetyCertificateOutlined, FileSearchOutlined, LineChartOutlined, UploadOutlined,
+  SoundOutlined, PictureOutlined, BellOutlined
 } from '@ant-design/icons';
 
 const { Header, Sider, Content } = Layout;
@@ -23,6 +24,9 @@ const menuItems = [
   { key: '/admin/stats', icon: <LineChartOutlined />, label: '数据统计' },
   { key: '/admin/roles', icon: <SafetyCertificateOutlined />, label: '角色管理' },
   { key: '/admin/audit-logs', icon: <FileSearchOutlined />, label: '操作日志' },
+  { key: '/admin/announcements', icon: <SoundOutlined />, label: '公告管理' },
+  { key: '/admin/banners', icon: <PictureOutlined />, label: 'Banner管理' },
+  { key: '/admin/notifications', icon: <BellOutlined />, label: '通知推送' },
 ];
 
 export default function AdminLayout() {

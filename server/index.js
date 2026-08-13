@@ -6,6 +6,7 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
 import { initDatabase } from './migrations/001_init.js';
 import { migrateP0Fields } from './migrations/002_p0_fields.js';
+import { migrateAnnouncements } from './migrations/003_announcements.js';
 import { seedDatabase } from './seeds/seed.js';
 import { closePool } from './db.js';
 import { adminAuthRequired } from './auth.js';
@@ -27,6 +28,7 @@ import uploadRoutes from './routes/upload.routes.js';
 import remindersRoutes from './routes/reminders.routes.js';
 import creditsRoutes from './routes/credits.routes.js';
 import agreementRoutes from './routes/agreement.routes.js';
+import announcementRoutes from './routes/announcements.routes.js';
 
 // 后台路由
 import adminAuthRoutes from './routes/admin/auth.routes.js';
@@ -48,6 +50,7 @@ import adminNotificationRoutes from './routes/admin/notification.routes.js';
 import adminUploadRoutes from './routes/admin/upload.routes.js';
 import adminImportRoutes from './routes/admin/import.routes.js';
 import adminBannerRoutes from './routes/admin/banner.routes.js';
+import adminAnnouncementRoutes from './routes/admin/announcements.routes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -79,6 +82,7 @@ app.use('/api/reminders', remindersRoutes);
 app.use('/api/credits', creditsRoutes);
 app.use('/api/banners', bannerRoutes);
 app.use('/api/agreement', agreementRoutes);
+app.use('/api/announcements', announcementRoutes);
 
 // 管理后台路由
 app.use('/api/v1/admin/auth', adminAuthRoutes);
@@ -100,6 +104,7 @@ app.use('/api/v1/admin/notifications', adminAuthRequired, adminNotificationRoute
 app.use('/api/v1/admin/upload', adminAuthRequired, adminUploadRoutes);
 app.use('/api/v1/admin/import', adminAuthRequired, adminImportRoutes);
 app.use('/api/v1/admin/banners', adminAuthRequired, adminBannerRoutes);
+app.use('/api/v1/admin/announcements', adminAuthRequired, adminAnnouncementRoutes);
 
 // 静态文件服务
 app.use('/uploads', express.static(process.env.UPLOAD_DIR || '/workspace/uploads'));
@@ -129,6 +134,10 @@ async function start() {
     // P0 字段迁移（幂等）
     await migrateP0Fields();
     console.log('[server] P0 fields migrated');
+
+    // 公告表迁移（幂等）
+    await migrateAnnouncements();
+    console.log('[server] Announcements table ready');
 
     // 种子数据
     await seedDatabase();

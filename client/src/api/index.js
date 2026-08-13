@@ -180,4 +180,8 @@ export const api = {
 
   // 协议（公开接口）
   agreement: (type) => request('/agreement/' + type, { auth: false }),
+
+  // 公告
+  announcements: () => request('/announcements'),
+  announcementDetail: (id) => request('/announcements/' + id),
 };

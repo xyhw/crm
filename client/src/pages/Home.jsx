@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { NavBar, Tag, Toast, Button, Badge } from 'react-vant';
 import Icon from '../components/Icon';
 import HomeBanner from '../components/HomeBanner';
+import AnnouncementBar from '../components/AnnouncementBar';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
 import { categoryIcon, categoryLabel, statusMeta, timeAgo, levelMeta } from '../constants';
@@ -63,6 +64,9 @@ export default function Home() {
           )}
         </div>
       )}
+
+      {/* 公告栏 */}
+      <AnnouncementBar />
 
       {/* 用户卡片 */}
       <div className="home-user">
