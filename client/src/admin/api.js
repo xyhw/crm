@@ -109,7 +109,7 @@ export const adminApi = {
   getFinance: () => apiClient.get('/finance'),
 
   // 分类管理
-  getCategories: () => apiClient.get('/categories'),
+  getCategories: (params) => apiClient.get('/categories', { params }),
   createCategory: (data) => apiClient.post('/categories', data),
   updateCategory: (id, data) => apiClient.put(`/categories/${id}`, data),
   deleteCategory: (id) => apiClient.delete(`/categories/${id}`),

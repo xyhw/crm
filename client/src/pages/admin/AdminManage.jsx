@@ -109,6 +109,23 @@ export default function AdminManage() {
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>新建管理员</Button>
         </Space>
       </div>
+      <Card style={{ marginBottom: 16 }}>
+        <Space wrap>
+          <Input.Search
+            placeholder="搜索用户名/姓名/电话"
+            allowClear
+            style={{ width: 240 }}
+            onSearch={(v) => setParams((p) => ({ ...p, page: 1, keyword: v || undefined }))}
+          />
+          <Select
+            placeholder="状态"
+            allowClear
+            style={{ width: 120 }}
+            options={[{ value: 'active', label: '启用' }, { value: 'inactive', label: '停用' }]}
+            onChange={(v) => setParams((p) => ({ ...p, page: 1, status: v }))}
+          />
+        </Space>
+      </Card>
       <Card>
         <Table columns={columns} dataSource={list} rowKey="id" loading={loading} pagination={{ current: params.page, pageSize: params.pageSize, total, onChange: (p, ps) => setParams({ ...params, page: p, pageSize: ps }) }} />
       </Card>

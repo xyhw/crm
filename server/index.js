@@ -7,6 +7,7 @@ import swaggerSpec from './swagger.js';
 import { initDatabase } from './migrations/001_init.js';
 import { migrateP0Fields } from './migrations/002_p0_fields.js';
 import { migrateAnnouncements } from './migrations/003_announcements.js';
+import { migrateP1Indexes } from './migrations/004_p1_indexes.js';
 import { seedDatabase } from './seeds/seed.js';
 import { closePool } from './db.js';
 import { adminAuthRequired } from './auth.js';
@@ -141,6 +142,10 @@ async function start() {
     // 公告表迁移（幂等）
     await migrateAnnouncements();
     console.log('[server] Announcements table ready');
+
+    // P1 索引迁移（幂等）
+    await migrateP1Indexes();
+    console.log('[server] P1 indexes applied');
 
     // 种子数据
     await seedDatabase();

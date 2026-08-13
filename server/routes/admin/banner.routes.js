@@ -18,14 +18,26 @@ const router = Router();
  */
 router.get('/', async (req, res) => {
   try {
-    const { page = 1, pageSize = 20 } = req.query;
+    const { page = 1, pageSize = 20, keyword, status } = req.query;
     const offset = (Number(page) - 1) * Number(pageSize);
 
+    const where = [];
+    const params = [];
+    if (keyword) {
+      where.push('title LIKE ?');
+      params.push(`%${keyword}%`);
+    }
+    if (status) {
+      where.push('status = ?');
+      params.push(status);
+    }
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
     const list = await query(
-      'SELECT * FROM banners ORDER BY sort_order ASC, created_at DESC LIMIT ? OFFSET ?',
-      [Number(pageSize), offset]
+      `SELECT * FROM banners ${whereSql} ORDER BY sort_order ASC, created_at DESC LIMIT ? OFFSET ?`,
+      [...params, Number(pageSize), offset]
     );
-    const [countResult] = await query('SELECT COUNT(*) as total FROM banners');
+    const [countResult] = await query(`SELECT COUNT(*) as total FROM banners ${whereSql}`, params);
 
     res.json({
       code: 0,

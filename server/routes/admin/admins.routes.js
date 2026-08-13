@@ -18,13 +18,24 @@ const router = Router();
  */
 router.get('/', async (req, res) => {
   try {
-    const { page = 1, pageSize = 20 } = req.query;
+    const { page = 1, pageSize = 20, keyword, status } = req.query;
     const offset = (Number(page) - 1) * Number(pageSize);
+    const where = [];
+    const params = [];
+    if (keyword) {
+      where.push('(username LIKE ? OR name LIKE ? OR phone LIKE ?)');
+      params.push(`%${keyword}%`, `%${keyword}%`, `%${keyword}%`);
+    }
+    if (status) {
+      where.push('status = ?');
+      params.push(status);
+    }
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
     const list = await query(
-      'SELECT id, username, name, phone, status, created_at FROM admin_users ORDER BY created_at DESC LIMIT ? OFFSET ?',
-      [Number(pageSize), offset]
+      `SELECT id, username, name, phone, status, created_at FROM admin_users ${whereSql} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+      [...params, Number(pageSize), offset]
     );
-    const [countResult] = await query('SELECT COUNT(*) as total FROM admin_users');
+    const [countResult] = await query(`SELECT COUNT(*) as total FROM admin_users ${whereSql}`, params);
     res.json({ code: 0, data: { list, total: countResult.total, page: Number(page), pageSize: Number(pageSize) } });
   } catch (err) {
     console.error('Admin list error:', err);

@@ -123,6 +123,24 @@ export default function BannerManager() {
         </Space>
       </div>
 
+      <Card style={{ marginBottom: 16 }}>
+        <Space wrap>
+          <Input.Search
+            placeholder="按标题搜索"
+            allowClear
+            style={{ width: 220 }}
+            onSearch={(v) => setParams((p) => ({ ...p, page: 1, keyword: v || undefined }))}
+          />
+          <Select
+            placeholder="状态"
+            allowClear
+            style={{ width: 120 }}
+            options={[{ value: 'active', label: '启用' }, { value: 'inactive', label: '下线' }]}
+            onChange={(v) => setParams((p) => ({ ...p, page: 1, status: v }))}
+          />
+        </Space>
+      </Card>
+
       <Card>
         <Table columns={columns} dataSource={list} rowKey="id" loading={loading} pagination={{ current: params.page, pageSize: params.pageSize, total, onChange: (p, ps) => setParams({ ...params, page: p, pageSize: ps }) }} />
       </Card>

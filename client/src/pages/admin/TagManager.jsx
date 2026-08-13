@@ -70,6 +70,14 @@ export default function TagManager() {
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>新建标签</Button>
         </Space>
       </div>
+      <Card style={{ marginBottom: 16 }}>
+        <Input.Search
+          placeholder="按名称搜索"
+          allowClear
+          style={{ width: 220 }}
+          onSearch={(v) => setParams((p) => ({ ...p, page: 1, keyword: v || undefined }))}
+        />
+      </Card>
       <Card>
         <Table columns={columns} dataSource={list} rowKey="id" loading={loading} pagination={{ current: params.page, pageSize: params.pageSize, total, onChange: (p, ps) => setParams({ ...params, page: p, pageSize: ps }) }} />
       </Card>

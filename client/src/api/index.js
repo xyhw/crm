@@ -31,16 +31,32 @@ export function clearAuth() {
   localStorage.removeItem(REFRESH_KEY);
 }
 
-async function request(path, { method = 'GET', body, auth = true } = {}) {
+const MAX_RETRIES = 1;
+const RETRY_DELAY = 600;
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function request(path, { method = 'GET', body, auth = true, _retry = 0 } = {}) {
   const headers = { 'Content-Type': 'application/json' };
   const token = getToken();
   if (auth && token) headers.Authorization = `Bearer ${token}`;
 
-  const resp = await fetch(BASE + path, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  let resp;
+  try {
+    resp = await fetch(BASE + path, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch (e) {
+    if (method === 'GET' && _retry < MAX_RETRIES) {
+      await delay(RETRY_DELAY);
+      return request(path, { method, body, auth, _retry: _retry + 1 });
+    }
+    throw new Error('网络异常，请稍后重试');
+  }
 
   let json;
   try {
@@ -76,6 +92,11 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
   }
 
   if (json.code !== 0) {
+    // 服务端 5xx 时，GET 自动重试一次
+    if (method === 'GET' && resp.status >= 500 && _retry < MAX_RETRIES) {
+      await delay(RETRY_DELAY);
+      return request(path, { method, body, auth, _retry: _retry + 1 });
+    }
     const err = new Error(json.message || '请求失败');
     err.code = json.code;
     throw err;

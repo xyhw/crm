@@ -18,14 +18,30 @@ const router = Router();
  */
 router.get('/', async (req, res) => {
   try {
-    const { page = 1, pageSize = 20 } = req.query;
+    const { page = 1, pageSize = 20, keyword, status, isTop } = req.query;
     const offset = (Number(page) - 1) * Number(pageSize);
 
+    const where = [];
+    const params = [];
+    if (keyword) {
+      where.push('title LIKE ?');
+      params.push(`%${keyword}%`);
+    }
+    if (status) {
+      where.push('status = ?');
+      params.push(status);
+    }
+    if (isTop !== undefined && isTop !== '') {
+      where.push('is_top = ?');
+      params.push(Number(isTop) ? 1 : 0);
+    }
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
     const list = await query(
-      'SELECT * FROM announcements ORDER BY is_top DESC, sort_order ASC, created_at DESC LIMIT ? OFFSET ?',
-      [Number(pageSize), offset]
+      `SELECT * FROM announcements ${whereSql} ORDER BY is_top DESC, sort_order ASC, created_at DESC LIMIT ? OFFSET ?`,
+      [...params, Number(pageSize), offset]
     );
-    const [countResult] = await query('SELECT COUNT(*) as total FROM announcements');
+    const [countResult] = await query(`SELECT COUNT(*) as total FROM announcements ${whereSql}`, params);
 
     res.json({
       code: 0,

@@ -5,6 +5,7 @@ import zhCN from 'antd/locale/zh_CN';
 import AdminLayout from '../admin/components/AdminLayout';
 import Login from '../pages/admin/Login';
 import Dashboard from '../pages/admin/Dashboard';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 
 const OpportunityList = lazy(() => import('../pages/admin/OpportunityList'));
 const UserList = lazy(() => import('../pages/admin/UserList'));
@@ -41,6 +42,7 @@ function RequireAuth({ children }) {
 export default function AdminApp() {
   return (
     <ConfigProvider locale={zhCN}>
+      <ErrorBoundary>
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<RequireAuth><AdminLayout /></RequireAuth>}>
@@ -66,6 +68,7 @@ export default function AdminApp() {
           <Route path="tags" element={<Suspense fallback={<PageLoading />}><TagManager /></Suspense>} />
         </Route>
       </Routes>
+      </ErrorBoundary>
     </ConfigProvider>
   );
 }

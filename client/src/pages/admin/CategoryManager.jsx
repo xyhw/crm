@@ -13,15 +13,17 @@ export default function CategoryManager() {
   const [form, setForm] = useState({ name: '', icon: '', sortOrder: 0 });
   const [submitting, setSubmitting] = useState(false);
 
+  const [params, setParams] = useState({ keyword: '' });
+
   const fetchList = async () => {
     setLoading(true);
     try {
-      const res = await adminApi.getCategories();
+      const res = await adminApi.getCategories(params);
       setList(res.list || []);
     } catch (e) { message.error(e.message); } finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchList(); }, []);
+  useEffect(() => { fetchList(); }, [params]);
 
   const openCreate = () => { setEditingItem(null); setForm({ name: '', icon: '', sortOrder: 0 }); setModalOpen(true); };
   const openEdit = (r) => { setEditingItem(r); setForm({ name: r.name, icon: r.icon, sortOrder: r.sort_order }); setModalOpen(true); };
@@ -68,6 +70,14 @@ export default function CategoryManager() {
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>新建分类</Button>
         </Space>
       </div>
+      <Card style={{ marginBottom: 16 }}>
+        <Input.Search
+          placeholder="按名称搜索"
+          allowClear
+          style={{ width: 220 }}
+          onSearch={(v) => setParams({ keyword: v || undefined })}
+        />
+      </Card>
       <Card>
         <Table columns={columns} dataSource={list} rowKey="id" loading={loading} pagination={false} />
       </Card>

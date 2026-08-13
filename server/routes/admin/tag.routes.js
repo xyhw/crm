@@ -17,8 +17,17 @@ const router = Router();
  */
 router.get('/', async (req, res) => {
   try {
-    const list = await query('SELECT * FROM opportunity_tags ORDER BY sort_order, id');
-    const [countResult] = await query('SELECT COUNT(*) as total FROM opportunity_tags');
+    const { keyword, page = 1, pageSize = 50 } = req.query;
+    const where = [];
+    const params = [];
+    if (keyword) {
+      where.push('name LIKE ?');
+      params.push(`%${keyword}%`);
+    }
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const list = await query(`SELECT * FROM opportunity_tags ${whereSql} ORDER BY sort_order, id LIMIT ? OFFSET ?`,
+      [...params, Number(pageSize), (Number(page) - 1) * Number(pageSize)]);
+    const [countResult] = await query(`SELECT COUNT(*) as total FROM opportunity_tags ${whereSql}`, params);
     res.json({ code: 0, data: { list, total: countResult.total } });
   } catch (err) {
     res.status(500).json({ code: 500, message: '获取标签失败' });

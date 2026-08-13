@@ -17,7 +17,15 @@ const router = Router();
  */
 router.get('/', async (req, res) => {
   try {
-    const list = await query('SELECT * FROM opportunity_categories ORDER BY sort_order, id');
+    const { keyword } = req.query;
+    const where = [];
+    const params = [];
+    if (keyword) {
+      where.push('name LIKE ?');
+      params.push(`%${keyword}%`);
+    }
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const list = await query(`SELECT * FROM opportunity_categories ${whereSql} ORDER BY sort_order, id`, params);
     res.json({ code: 0, data: { list } });
   } catch (err) {
     res.status(500).json({ code: 500, message: '获取分类失败' });
