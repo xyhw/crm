@@ -132,6 +132,9 @@ describe('跟单详情（开发需求 6.1.2/6.1.3 购买解锁）', () => {
     await waitFor(() => expect(screen.getByText(/花费 88 积分解锁/)).toBeTruthy());
     fireEvent.click(screen.getByText(/花费 88 积分解锁/));
     await waitFor(() => expect(screen.getByText('确认购买')).toBeTruthy());
+    expect(screen.getByText('原价')).toBeTruthy();
+    expect(screen.getByText('实付')).toBeTruthy();
+    expect(screen.getByText('会员折扣（普通会员）')).toBeTruthy();
     fireEvent.click(screen.getAllByText('确认')[0]);
     await waitFor(() => expect(api.purchase).toHaveBeenCalled());
     expect(api.purchase).toHaveBeenCalledWith({ opportunityId: 25 });
@@ -153,12 +156,10 @@ describe('发布跟单（开发需求 5.3 投稿上架 + 相似度检测）', ()
     );
     await waitFor(() => expect(screen.getByPlaceholderText('如：某酒店弱电总包采购')).toBeTruthy());
     expect(screen.getByPlaceholderText('建议10-200积分')).toBeTruthy();
-    expect(screen.getByPlaceholderText('如：上海')).toBeTruthy();
-    expect(screen.getByText('标签（最多5个）')).toBeTruthy();
-    expect(screen.getByText('图纸附件（最多9个）')).toBeTruthy();
+    expect(screen.getByText('下一步')).toBeTruthy();
   });
 
-  it('缺少必填分类时发布被拦截（校验生效）', async () => {
+  it('进入第二步后展示补充详情与发布按钮', async () => {
     const { api } = await import('../src/api');
     api.createOpportunity.mockResolvedValue({});
     render(
@@ -169,9 +170,33 @@ describe('发布跟单（开发需求 5.3 投稿上架 + 相似度检测）', ()
     await waitFor(() => expect(screen.getByPlaceholderText('如：某酒店弱电总包采购')).toBeTruthy());
     fireEvent.change(screen.getByPlaceholderText('如：某酒店弱电总包采购'), { target: { value: '测试跟单' } });
     fireEvent.change(screen.getByPlaceholderText('建议10-200积分'), { target: { value: '88' } });
-    const buttons = screen.getAllByText('发布跟单');
-    fireEvent.click(buttons[buttons.length - 1]);
-    await waitFor(() => expect(api.createOpportunity).not.toHaveBeenCalled());
+    fireEvent.click(screen.getAllByPlaceholderText('请选择')[0]);
+    await waitFor(() => expect(screen.getByText('装修总包')).toBeTruthy());
+    fireEvent.click(screen.getByText('装修总包'));
+    await new Promise((r) => setTimeout(r, 200));
+    fireEvent.click(screen.getAllByText('确认')[0]);
+    await new Promise((r) => setTimeout(r, 100));
+    fireEvent.click(screen.getByText('下一步'));
+    await waitFor(() => expect(screen.getByPlaceholderText('如：上海')).toBeTruthy());
+    expect(screen.getByText('标签（最多5个）')).toBeTruthy();
+    expect(screen.getByText('图纸附件（最多9个）')).toBeTruthy();
+    expect(screen.getAllByText('发布跟单').length).toBeGreaterThan(0);
+  });
+
+  it('缺少必填分类时被拦截（校验生效）', async () => {
+    const { api } = await import('../src/api');
+    api.createOpportunity.mockResolvedValue({});
+    render(
+      <MemoryRouter>
+        <Publish />
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(screen.getByPlaceholderText('如：某酒店弱电总包采购')).toBeTruthy());
+    fireEvent.change(screen.getByPlaceholderText('如：某酒店弱电总包采购'), { target: { value: '测试跟单' } });
+    fireEvent.change(screen.getByPlaceholderText('建议10-200积分'), { target: { value: '88' } });
+    fireEvent.click(screen.getByText('下一步'));
+    await waitFor(() => expect(screen.queryByPlaceholderText('如：上海')).toBeNull());
+    expect(api.createOpportunity).not.toHaveBeenCalled();
   });
 
   it('完整填写后调用 createOpportunity 并携带标题与数字价格', async () => {
@@ -191,8 +216,10 @@ describe('发布跟单（开发需求 5.3 投稿上架 + 相似度检测）', ()
     await new Promise((r) => setTimeout(r, 200));
     fireEvent.click(screen.getAllByText('确认')[0]);
     await new Promise((r) => setTimeout(r, 100));
-    const buttons = screen.getAllByText('发布跟单');
-    fireEvent.click(buttons[buttons.length - 1]);
+    fireEvent.click(screen.getByText('下一步'));
+    await waitFor(() => expect(screen.getAllByText('发布跟单').length).toBeGreaterThan(0));
+    const pubBtns = screen.getAllByText('发布跟单');
+    fireEvent.click(pubBtns[pubBtns.length - 1]);
     await waitFor(() => expect(api.createOpportunity).toHaveBeenCalled());
     const payload = api.createOpportunity.mock.calls[0][0];
     expect(payload.title).toBe('弱电总包采购');
@@ -219,8 +246,10 @@ describe('发布跟单（开发需求 5.3 投稿上架 + 相似度检测）', ()
     await new Promise((r) => setTimeout(r, 200));
     fireEvent.click(screen.getAllByText('确认')[0]);
     await new Promise((r) => setTimeout(r, 100));
-    const buttons = screen.getAllByText('发布跟单');
-    fireEvent.click(buttons[buttons.length - 1]);
+    fireEvent.click(screen.getByText('下一步'));
+    await waitFor(() => expect(screen.getAllByText('发布跟单').length).toBeGreaterThan(0));
+    const pubBtns = screen.getAllByText('发布跟单');
+    fireEvent.click(pubBtns[pubBtns.length - 1]);
     await waitFor(() => expect(screen.getByText('发现相似跟单')).toBeTruthy());
     expect(screen.getByText('疑似相似跟单')).toBeTruthy();
   });

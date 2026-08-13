@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { NavBar, Tag, Toast, Button, Dialog, Field, CellGroup, Cell, Radio } from 'react-vant';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
-import { stageLabel, statusMeta, INVALID_REASONS } from '../constants';
+import { stageLabel, statusMeta, INVALID_REASONS, levelMeta } from '../constants';
 import { ArrowLeft } from '@react-vant/icons';
 import Icon from '../components/Icon';
 
@@ -28,9 +28,20 @@ export default function OpportunityDetail() {
   const handlePurchase = async () => {
     if (!user) return navigate('/login');
 
+    const discount = levelMeta(user.level || 'normal').discount;
+    const rateMap = { '无折扣': 1, '9折': 0.9, '8折': 0.8, '7折': 0.7 };
+    const rate = rateMap[discount] || 1;
+    const payable = Math.ceil(detail.price * rate);
+
     Dialog.confirm({
       title: '确认购买',
-      message: `确定花费 ${detail.price} 积分解锁此跟单？`,
+      message: (
+        <div className="purchase-price-detail">
+          <div className="purchase-price-detail__row"><span>原价</span><span>{detail.price} 积分</span></div>
+          <div className="purchase-price-detail__row"><span>会员折扣（{levelMeta(user.level || 'normal').label}）</span><span>{discount}</span></div>
+          <div className="purchase-price-detail__row purchase-price-detail__row--total"><span>实付</span><span>{payable} 积分</span></div>
+        </div>
+      ),
     }).then(async () => {
       setPurchasing(true);
       try {

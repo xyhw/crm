@@ -283,6 +283,22 @@ body {
   color: var(--text-color-2);
 }
 
+.purchase-price-detail__row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 14px;
+  color: var(--text-color-2);
+}
+
+.purchase-price-detail__row--total {
+  border-top: 1px dashed var(--border-color);
+  margin-top: 4px;
+  padding-top: 8px;
+  font-weight: 600;
+  color: var(--warning-color);
+}
+
 .detail-section {
   background: #fff;
   padding: 16px;

@@ -116,8 +116,23 @@ describe('个人中心 Profile（开发需求 6.1.1）', () => {
     );
     await waitFor(() => expect(screen.getByText('编辑资料')).toBeTruthy());
     expect(screen.getByText('退出登录')).toBeTruthy();
-    expect(screen.getByText('用户协议')).toBeTruthy();
+    expect(screen.getByText('用户协议与隐私')).toBeTruthy();
+    expect(screen.getByText('客服与帮助')).toBeTruthy();
+  });
+
+  it('协议入口合并为单个，点击展开三项协议选择', async () => {
+    const { api } = await import('../src/api');
+    api.myStats.mockResolvedValue({});
+    render(
+      <MemoryRouter>
+        <Profile />
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(screen.getByText('用户协议与隐私')).toBeTruthy());
+    fireEvent.click(screen.getByText('用户协议与隐私'));
+    await waitFor(() => expect(screen.getByText('用户协议')).toBeTruthy());
     expect(screen.getByText('隐私政策')).toBeTruthy();
+    expect(screen.getByText('平台须知')).toBeTruthy();
   });
 });
 

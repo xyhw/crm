@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { NavBar, Cell, CellGroup, Tag, Toast, Button, Grid, GridItem } from 'react-vant';
+import { NavBar, Cell, CellGroup, Tag, Grid, GridItem, ActionSheet } from 'react-vant';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
 import { levelMeta, categoryLabel } from '../constants';
@@ -9,6 +9,7 @@ export default function Profile() {
   const navigate = useNavigate();
   const { user, logout, refreshUser } = useAuth();
   const [stats, setStats] = useState(null);
+  const [showAgreements, setShowAgreements] = useState(false);
 
   useEffect(() => {
     api.myStats()
@@ -108,8 +109,6 @@ export default function Profile() {
 
       {/* 功能列表 */}
       <CellGroup inset>
-        <Cell title="我的投稿" isLink onClick={() => navigate('/my/orders')} icon={<span style={{ fontSize: 18 }}>📝</span>} />
-        <Cell title="我的CRM" isLink onClick={() => navigate('/crm')} icon={<span style={{ fontSize: 18 }}>📋</span>} />
         <Cell title="积分中心" isLink onClick={() => navigate('/points')} icon={<span style={{ fontSize: 18 }}>💰</span>} />
         <Cell title="会员等级" isLink onClick={() => navigate('/member-level')} icon={<span style={{ fontSize: 18 }}>🏅</span>} />
         <Cell title="信用分" isLink onClick={() => navigate('/credit')} icon={<span style={{ fontSize: 18 }}>⭐</span>} />
@@ -122,13 +121,26 @@ export default function Profile() {
       {/* 设置 */}
       <CellGroup inset style={{ marginTop: 12 }}>
         <Cell title="编辑资料" isLink onClick={() => navigate('/profile/edit')} icon={<span style={{ fontSize: 18 }}>✏️</span>} />
-        <Cell title="用户协议" isLink onClick={() => navigate('/agreement/agreement')} icon={<span style={{ fontSize: 18 }}>📜</span>} />
-        <Cell title="隐私政策" isLink onClick={() => navigate('/agreement/privacy')} icon={<span style={{ fontSize: 18 }}>🛡️</span>} />
-        <Cell title="平台须知" isLink onClick={() => navigate('/agreement/summary')} icon={<span style={{ fontSize: 18 }}>📋</span>} />
+        <Cell title="客服与帮助" isLink onClick={() => navigate('/support')} icon={<span style={{ fontSize: 18 }}>🎧</span>} />
+        <Cell title="用户协议与隐私" isLink onClick={() => setShowAgreements(true)} icon={<span style={{ fontSize: 18 }}>📜</span>} />
         <Cell title="退出登录" onClick={handleLogout} icon={<span style={{ fontSize: 18 }}>🚪</span>} />
       </CellGroup>
 
       <div style={{ height: 20 }} />
+
+      <ActionSheet
+        visible={showAgreements}
+        actions={[
+          { name: '用户协议', key: 'agreement' },
+          { name: '隐私政策', key: 'privacy' },
+          { name: '平台须知', key: 'summary' },
+        ]}
+        onSelect={(action) => {
+          setShowAgreements(false);
+          navigate(`/agreement/${action.key}`);
+        }}
+        onCancel={() => setShowAgreements(false)}
+      />
     </div>
   );
 }
