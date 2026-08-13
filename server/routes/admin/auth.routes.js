@@ -2,12 +2,14 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { query, queryOne } from '../../db.js';
+import { config } from '../../config.js';
+import { loginLimiter } from '../../middleware/rate-limit.js';
 
 const router = Router();
-const ADMIN_SECRET = process.env.ADMIN_SECRET || 'admin-secret-2026';
+const ADMIN_SECRET = config.adminSecret;
 
 // 管理员登录
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   try {
     const { username, password } = req.body || {};
     

@@ -1,9 +1,10 @@
 import jwt from 'jsonwebtoken';
 import { queryOne } from './db.js';
+import { config } from './config.js';
 
-const SECRET = process.env.JWT_SECRET || 'hotel-order-follow-dev-secret-2026';
-const REFRESH_SECRET = process.env.REFRESH_SECRET || 'hotel-order-follow-refresh-secret-2026';
-const ADMIN_SECRET = process.env.ADMIN_SECRET || 'admin-secret-2026';
+const SECRET = config.jwtSecret;
+const REFRESH_SECRET = config.refreshSecret;
+const ADMIN_SECRET = config.adminSecret;
 
 export function signToken(user) {
   return jwt.sign({ id: user.id, type: 'user' }, SECRET, { expiresIn: '7d' });

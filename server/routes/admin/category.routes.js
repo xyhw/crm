@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { query, queryOne, insert, update } from '../../db.js';
+import { audit } from '../../services/audit-log.service.js';
 
 const router = Router();
 
@@ -12,7 +13,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.post('/', async (req, res) => {
+router.post('/', audit('category', 'create', (req, res, body) => body?.data?.id ?? null), async (req, res) => {
   try {
     const { name, icon, sortOrder } = req.body || {};
     if (!name) return res.json({ code: 400, message: '分类名称不能为空' });
@@ -25,7 +26,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', audit('category', 'edit'), async (req, res) => {
   try {
     const { name, icon, sortOrder, status } = req.body || {};
     const data = {};
@@ -41,7 +42,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', audit('category', 'delete'), async (req, res) => {
   try {
     await query('DELETE FROM opportunity_categories WHERE id = ?', [req.params.id]);
     res.json({ code: 0, message: '删除成功' });

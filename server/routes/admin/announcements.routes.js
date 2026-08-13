@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { query, queryOne, insert, update, del } from '../../db.js';
+import { audit } from '../../services/audit-log.service.js';
 
 const router = Router();
 
@@ -38,7 +39,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // 创建公告
-router.post('/', async (req, res) => {
+router.post('/', audit('announcement', 'create', (req, res, body) => body?.data?.id ?? null), async (req, res) => {
   try {
     const { title, content, mediaType, mediaUrl, linkUrl, isTop, sortOrder, startAt, endAt } = req.body || {};
     if (!title || !title.trim()) {
@@ -67,7 +68,7 @@ router.post('/', async (req, res) => {
 });
 
 // 更新公告
-router.put('/:id', async (req, res) => {
+router.put('/:id', audit('announcement', 'edit'), async (req, res) => {
   try {
     const { title, content, mediaType, mediaUrl, linkUrl, isTop, sortOrder, status, startAt, endAt } = req.body || {};
     const data = {};
@@ -98,7 +99,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // 删除公告
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', audit('announcement', 'delete'), async (req, res) => {
   try {
     await del('announcements', 'id = ?', [req.params.id]);
     res.json({ code: 0, message: '删除成功' });

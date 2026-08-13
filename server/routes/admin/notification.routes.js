@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import { query, insert, queryOne } from '../../db.js';
+import { audit } from '../../services/audit-log.service.js';
 
 const router = Router();
 
 // 发送通知
-router.post('/send', async (req, res) => {
+router.post('/send', audit('notification', 'send'), async (req, res) => {
   try {
     const { title, content, userIds, sendAll } = req.body || {};
     if (!title || !content) {

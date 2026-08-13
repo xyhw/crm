@@ -11,6 +11,8 @@ import { seedDatabase } from './seeds/seed.js';
 import { closePool } from './db.js';
 import { adminAuthRequired } from './auth.js';
 import scheduler from './scheduler.js';
+import { config } from './config.js';
+import { apiLimiter } from './middleware/rate-limit.js';
 
 // 路由导入
 import authRoutes from './routes/auth.routes.js';
@@ -53,10 +55,12 @@ import adminBannerRoutes from './routes/admin/banner.routes.js';
 import adminAnnouncementRoutes from './routes/admin/announcements.routes.js';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
+
+// 全局接口限流
+app.use('/api', apiLimiter);
 
 // Swagger API 文档
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
@@ -107,7 +111,7 @@ app.use('/api/v1/admin/banners', adminAuthRequired, adminBannerRoutes);
 app.use('/api/v1/admin/announcements', adminAuthRequired, adminAnnouncementRoutes);
 
 // 静态文件服务
-app.use('/uploads', express.static(process.env.UPLOAD_DIR || '/workspace/uploads'));
+app.use('/uploads', express.static(config.uploadDir));
 
 // 404 处理
 app.use((req, res) => {
@@ -124,8 +128,7 @@ app.use((err, req, res, next) => {
 async function start() {
   try {
     // 确保上传目录存在
-    const uploadDir = process.env.UPLOAD_DIR || '/workspace/uploads';
-    fs.mkdirSync(uploadDir, { recursive: true });
+    fs.mkdirSync(config.uploadDir, { recursive: true });
 
     // 初始化数据库
     await initDatabase();
@@ -144,8 +147,8 @@ async function start() {
     console.log('[server] Seed data loaded');
 
     // 启动服务器
-    app.listen(PORT, () => {
-      console.log(`[server] Hotel Order Follow API listening on http://localhost:${PORT}`);
+    app.listen(config.port, () => {
+      console.log(`[server] Hotel Order Follow API listening on http://localhost:${config.port}`);
       scheduler.start();
     });
   } catch (err) {

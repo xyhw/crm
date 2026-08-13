@@ -1,11 +1,12 @@
 import mysql from 'mysql2/promise';
+import { config } from './config.js';
 
 const DB_CONFIG = {
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'hof_user',
-  password: process.env.DB_PASS || 'hof_pass_2026',
-  database: process.env.DB_NAME || 'hotel_order_follow',
-  charset: 'utf8mb4',
+  host: config.db.host,
+  user: config.db.user,
+  password: config.db.password,
+  database: config.db.database,
+  charset: config.db.charset,
 };
 
 let pool = null;

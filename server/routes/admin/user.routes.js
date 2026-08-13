@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { query, queryOne, update } from '../../db.js';
+import { audit } from '../../services/audit-log.service.js';
 
 const router = Router();
 
@@ -83,7 +84,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // 编辑用户基础信息
-router.put('/:id', async (req, res) => {
+router.put('/:id', audit('users', 'edit'), async (req, res) => {
   try {
     const { nickname, company } = req.body || {};
     const data = {};
@@ -102,7 +103,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // 调整用户积分
-router.put('/:id/points', async (req, res) => {
+router.put('/:id/points', audit('points', 'adjust_points'), async (req, res) => {
   try {
     const { delta, reason } = req.body || {};
     if (!delta || !reason) {
@@ -139,7 +140,7 @@ router.put('/:id/points', async (req, res) => {
 });
 
 // 调整用户信用分
-router.put('/:id/credit', async (req, res) => {
+router.put('/:id/credit', audit('users', 'adjust_credits'), async (req, res) => {
   try {
     const { delta, reason } = req.body || {};
     if (!delta || !reason) {

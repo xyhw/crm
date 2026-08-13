@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { query, queryOne, insert, update } from '../../db.js';
+import { audit } from '../../services/audit-log.service.js';
 
 const router = Router();
 
@@ -22,7 +23,7 @@ router.get('/', async (req, res) => {
 });
 
 // 创建管理员
-router.post('/', async (req, res) => {
+router.post('/', audit('admin_user', 'create'), async (req, res) => {
   try {
     const { username, password, name, phone } = req.body || {};
     if (!username || !password) {
@@ -42,7 +43,7 @@ router.post('/', async (req, res) => {
 });
 
 // 更新管理员
-router.put('/:id', async (req, res) => {
+router.put('/:id', audit('admin_user', 'edit'), async (req, res) => {
   try {
     const { name, phone, status, password } = req.body || {};
     const data = {};
@@ -62,7 +63,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // 删除管理员
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', audit('admin_user', 'delete'), async (req, res) => {
   try {
     const admins = await query('SELECT COUNT(*) as total FROM admin_users WHERE status = "active"');
     if (admins[0].total <= 1) {

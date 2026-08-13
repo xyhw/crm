@@ -60,8 +60,8 @@ router.get('/', async (req, res) => {
     res.json({
       code: 0,
       data: {
-        today: { orders: totalOrders || 0, amount: totalAmount || 0, platform: totalPlatform || 0 },
-        total: { orders: totalOrders || 0, amount: totalAmount || 0, platform: totalPlatform || 0, seller: totalSeller || 0 },
+        today: { orders: today?.totalOrders || 0, amount: today?.totalAmount || 0, platform: today?.totalPlatform || 0 },
+        total: { orders: total?.totalOrders || 0, amount: total?.totalAmount || 0, platform: total?.totalPlatform || 0, seller: total?.totalSeller || 0 },
         points: { balance: points?.totalBalance || 0, recharged: points?.totalRecharged || 0, consumed: points?.totalConsumed || 0, expired: points?.totalExpired || 0 },
         users: { total: users?.total || 0, active: users?.active || 0, goodCredit: users?.goodCredit || 0, badCredit: users?.badCredit || 0 },
         opportunities: { total: opportunities?.total || 0, active: opportunities?.active || 0, totalPurchases: opportunities?.totalPurchases || 0 },

@@ -10,7 +10,12 @@ export const analyticsLabels = {
   points: { view_logs: '查看积分流水' },
   role: { create: '创建角色', edit: '编辑角色', delete: '删除角色', assign_permission: '分配权限' },
   admin_user: { create: '创建管理员', edit: '编辑管理员', ban: '禁用管理员', assign_role: '分配角色' },
-  opportunity: { import: '批量导入跟单', status_toggle: '切换上架状态' }
+  opportunity: { import: '批量导入跟单', status_toggle: '切换上架状态' },
+  banner: { create: '创建Banner', edit: '编辑Banner', delete: '删除Banner' },
+  announcement: { create: '创建公告', edit: '编辑公告', delete: '删除公告' },
+  category: { create: '创建分类', edit: '编辑分类', delete: '删除分类' },
+  tag: { create: '创建标签', edit: '编辑标签', delete: '删除标签' },
+  order: { adjust: '订单调整' },
 };
 
 export async function recordLog(adminId, action, targetType, targetId, detail = null, ip = null) {
@@ -24,7 +29,7 @@ export async function recordLog(adminId, action, targetType, targetId, detail = 
   }
 }
 
-export function audit(targetType, action) {
+export function audit(targetType, action, targetIdResolver) {
   return (req, res, next) => {
     const originalSend = res.send;
     res.send = function (body) {
@@ -32,14 +37,15 @@ export function audit(targetType, action) {
       try {
         responseBody = JSON.parse(body);
       } catch {}
-      
-      const isSuccess = responseBody?.code === 0;
-      if (isSuccess && req.adminId) {
+
+      if (responseBody?.code === 0 && req.adminId) {
         const logAction = typeof action === 'function' ? action(req, res, responseBody) : action;
-        const targetId = typeof targetId === 'function' ? targetId(req, res, responseBody) : (req.params?.id || req.body?.id || null);
+        const targetId = typeof targetIdResolver === 'function'
+          ? targetIdResolver(req, res, responseBody)
+          : (req.params?.id || req.body?.id || null);
         recordLog(req.adminId, logAction, targetType, targetId, null, req.ip);
       }
-      
+
       res.send = originalSend;
       return originalSend.call(this, body);
     };

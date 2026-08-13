@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { nanoid } from 'nanoid';
 import { query, queryOne, insert, update, transaction } from '../db.js';
 import { signToken, signRefreshToken, verifyRefreshToken, authRequired } from '../auth.js';
+import { loginLimiter } from '../middleware/rate-limit.js';
 
 const router = Router();
 
@@ -152,7 +153,7 @@ router.post('/register', async (req, res) => {
 });
 
 // 登录
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   try {
     const { phone, password } = req.body || {};
     

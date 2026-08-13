@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { query, queryOne, insert, update, del } from '../../db.js';
+import { audit } from '../../services/audit-log.service.js';
 
 const router = Router();
 
@@ -38,7 +39,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // 创建Banner
-router.post('/', async (req, res) => {
+router.post('/', audit('banner', 'create'), async (req, res) => {
   try {
     const { title, imageUrl, linkUrl, sortOrder, startAt, endAt } = req.body || {};
     if (!title || !imageUrl) {
@@ -61,7 +62,7 @@ router.post('/', async (req, res) => {
 });
 
 // 更新Banner
-router.put('/:id', async (req, res) => {
+router.put('/:id', audit('banner', 'edit'), async (req, res) => {
   try {
     const { title, imageUrl, linkUrl, sortOrder, status, startAt, endAt } = req.body || {};
     const data = {};
@@ -86,7 +87,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // 删除Banner
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', audit('banner', 'delete'), async (req, res) => {
   try {
     await del('banners', 'id = ?', [req.params.id]);
     res.json({ code: 0, message: '删除成功' });
