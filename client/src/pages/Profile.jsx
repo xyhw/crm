@@ -64,7 +64,7 @@ export default function Profile() {
 
       {/* 资质展示 */}
       {user?.qualifications && (
-        <div className="section" style={{ padding: '12px 16px' }}>
+        <div className="section">
           <div className="section-title">专业资质</div>
           <div className="qualification-list">
             {user.qualifications.split('\n').filter(Boolean).map((q, i) => (
@@ -79,7 +79,7 @@ export default function Profile() {
 
       {/* 案例展示 */}
       {user?.cases && (
-        <div className="section" style={{ padding: '12px 16px' }}>
+        <div className="section">
           <div className="section-title">典型案例</div>
           <div className="case-list">
             {user.cases.split('\n').filter(Boolean).map((c, i) => (
@@ -109,21 +109,21 @@ export default function Profile() {
 
       {/* 功能列表 */}
       <CellGroup inset>
-        <Cell title="积分中心" isLink onClick={() => navigate('/points')} icon={<span style={{ fontSize: 18 }}>💰</span>} />
-        <Cell title="会员等级" isLink onClick={() => navigate('/member-level')} icon={<span style={{ fontSize: 18 }}>🏅</span>} />
-        <Cell title="信用分" isLink onClick={() => navigate('/credit')} icon={<span style={{ fontSize: 18 }}>⭐</span>} />
-        <Cell title="邀请好友" isLink onClick={() => navigate('/invite')} icon={<span style={{ fontSize: 18 }}>👥</span>} />
-        <Cell title="排行榜" isLink onClick={() => navigate('/ranking')} icon={<span style={{ fontSize: 18 }}>🏆</span>} />
-        <Cell title="通知中心" isLink onClick={() => navigate('/notifications')} icon={<span style={{ fontSize: 18 }}>🔔</span>} />
-        <Cell title="提醒中心" isLink onClick={() => navigate('/reminders')} icon={<span style={{ fontSize: 18 }}>⏰</span>} />
+        <Cell title="积分中心" isLink onClick={() => navigate('/points')} icon={<span className="cell-icon">💰</span>} />
+        <Cell title="会员等级" isLink onClick={() => navigate('/member-level')} icon={<span className="cell-icon">🏅</span>} />
+        <Cell title="信用分" isLink onClick={() => navigate('/credit')} icon={<span className="cell-icon">⭐</span>} />
+        <Cell title="邀请好友" isLink onClick={() => navigate('/invite')} icon={<span className="cell-icon">👥</span>} />
+        <Cell title="排行榜" isLink onClick={() => navigate('/ranking')} icon={<span className="cell-icon">🏆</span>} />
+        <Cell title="通知中心" isLink onClick={() => navigate('/notifications')} icon={<span className="cell-icon">🔔</span>} />
+        <Cell title="提醒中心" isLink onClick={() => navigate('/reminders')} icon={<span className="cell-icon">⏰</span>} />
       </CellGroup>
 
       {/* 设置 */}
       <CellGroup inset style={{ marginTop: 12 }}>
-        <Cell title="编辑资料" isLink onClick={() => navigate('/profile/edit')} icon={<span style={{ fontSize: 18 }}>✏️</span>} />
-        <Cell title="客服与帮助" isLink onClick={() => navigate('/support')} icon={<span style={{ fontSize: 18 }}>🎧</span>} />
-        <Cell title="用户协议与隐私" isLink onClick={() => setShowAgreements(true)} icon={<span style={{ fontSize: 18 }}>📜</span>} />
-        <Cell title="退出登录" onClick={handleLogout} icon={<span style={{ fontSize: 18 }}>🚪</span>} />
+        <Cell title="编辑资料" isLink onClick={() => navigate('/profile/edit')} icon={<span className="cell-icon">✏️</span>} />
+        <Cell title="客服与帮助" isLink onClick={() => navigate('/support')} icon={<span className="cell-icon">🎧</span>} />
+        <Cell title="用户协议与隐私" isLink onClick={() => setShowAgreements(true)} icon={<span className="cell-icon">📜</span>} />
+        <Cell title="退出登录" onClick={handleLogout} icon={<span className="cell-icon">🚪</span>} />
       </CellGroup>
 
       <div style={{ height: 20 }} />

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { NavBar, Button, Toast, Dialog, Field, Grid, GridItem } from 'react-vant';
+import { Button, Toast, Dialog, Field, Grid, GridItem } from 'react-vant';
 import { api } from '../api';
 import { timeAgo } from '../constants';
-import { ArrowLeft, BillO, CouponO, Invitation } from '@react-vant/icons';
+import { BillO, CouponO, Invitation } from '@react-vant/icons';
+import PageNavBar from '../components/PageNavBar';
 
 export default function Points() {
   const navigate = useNavigate();
@@ -58,7 +59,7 @@ export default function Points() {
 
   return (
     <div className="page">
-      <NavBar title="积分中心" leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+      <PageNavBar title="积分中心" onClickLeft={() => navigate(-1)} />
 
       {/* 积分余额卡片 */}
       <div className="points-card">

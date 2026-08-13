@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { NavBar, Toast, Button, Cell, CellGroup, Empty, Tabs } from 'react-vant';
+import { Toast, Button, Cell, CellGroup, Empty, Tabs } from 'react-vant';
 import { api } from '../api';
 import { timeAgo } from '../constants';
 import InvitePoster from '../components/InvitePoster';
-import { ArrowLeft, GiftO } from '@react-vant/icons';
+import { GiftO } from '@react-vant/icons';
+import PageNavBar from '../components/PageNavBar';
 
 export default function Invite() {
   const navigate = useNavigate();
@@ -35,7 +36,7 @@ export default function Invite() {
 
   return (
     <div className="page">
-      <NavBar title="邀请好友" leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+      <PageNavBar title="邀请好友" onClickLeft={() => navigate(-1)} />
 
       {/* 邀请码 */}
       <div className="invite-card">
@@ -45,7 +46,7 @@ export default function Invite() {
       </div>
 
       {/* 海报 */}
-      <div className="section" style={{ padding: '12px 16px' }}>
+      <div className="section">
         <div className="section-title">邀请海报</div>
         <Tabs value={tab} onChange={setTab}>
           <Tabs.TabPane title="邀请码" name="code" />
@@ -62,7 +63,7 @@ export default function Invite() {
       </CellGroup>
 
       {/* 邀请记录 */}
-      <div className="section" style={{ padding: '12px 16px' }}>
+      <div className="section">
         <div className="section-title">邀请记录</div>
         {data?.records?.length > 0 ? (
           data.records.map((record) => (

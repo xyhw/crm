@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { NavBar, Tag, Toast, Button, Search, Tabs, Empty } from 'react-vant';
+import { Tag, Toast, Button, Search, Tabs, Empty } from 'react-vant';
 import { api } from '../api';
+import PageNavBar from '../components/PageNavBar';
 import { categoryIcon, crmStatusMeta, timeAgo } from '../constants';
-import { ArrowLeft } from '@react-vant/icons';
 
 export default function CRM() {
   const navigate = useNavigate();
@@ -49,7 +49,7 @@ export default function CRM() {
 
   return (
     <div className="page">
-      <NavBar title="我的CRM" leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+      <PageNavBar title="我的CRM" onClickLeft={() => navigate(-1)} />
 
       {/* 搜索栏 */}
       <Search
@@ -113,7 +113,7 @@ export default function CRM() {
       <Button
         type="primary"
         round
-        icon={<span style={{ fontSize: 18 }}>+</span>}
+        icon={<span className="cell-icon">+</span>}
         style={{ position: 'fixed', bottom: 80, right: 20 }}
         onClick={() => navigate('/crm/add')}
       />

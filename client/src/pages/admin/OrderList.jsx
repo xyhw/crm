@@ -46,7 +46,7 @@ export default function OrderList() {
     <div>
       <Title level={4}>订单管理</Title>
       <Card>
-        <div style={{ marginBottom: 16, display: 'flex', gap: 12 }}>
+        <div className="action-row">
           <Input
             placeholder="搜索标题/用户"
             prefix={<SearchOutlined />}

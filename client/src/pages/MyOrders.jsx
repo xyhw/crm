@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { NavBar, Toast, Tabs, Empty, Tag } from 'react-vant';
+import { Toast, Tabs, Empty, Tag } from 'react-vant';
 import { api } from '../api';
+import PageNavBar from '../components/PageNavBar';
 import { statusMeta, timeAgo } from '../constants';
-import { ArrowLeft } from '@react-vant/icons';
 
 const TABS = [
   { title: '我发布的', name: 'published' },
@@ -59,7 +59,7 @@ export default function MyOrders() {
 
   return (
     <div className="page">
-      <NavBar title="我的订单" leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+      <PageNavBar title="我的订单" onClickLeft={() => navigate(-1)} />
 
       <Tabs value={tab} onChange={setTab}>
         {TABS.map((t) => (

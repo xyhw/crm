@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { NavBar, Toast, Progress, Cell, CellGroup, Tag } from 'react-vant';
+import { Toast, Progress, Cell, CellGroup, Tag } from 'react-vant';
 import { api } from '../api';
+import PageNavBar from '../components/PageNavBar';
 import { LEVEL_META } from '../constants';
-import { ArrowLeft } from '@react-vant/icons';
 
 export default function MemberLevel() {
   const navigate = useNavigate();
@@ -33,7 +33,7 @@ export default function MemberLevel() {
 
   return (
     <div className="page">
-      <NavBar title="会员等级" leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+      <PageNavBar title="会员等级" onClickLeft={() => navigate(-1)} />
 
       {/* 当前等级 */}
       <div className="level-card" style={{ background: currentLevel.color }}>
@@ -51,7 +51,7 @@ export default function MemberLevel() {
       </CellGroup>
 
       {/* 等级说明 */}
-      <div className="section" style={{ padding: '12px 16px' }}>
+      <div className="section">
         <div className="section-title">等级说明</div>
         {levels.map((l, i) => (
           <div key={l.key} className="level-item" style={{ opacity: i <= currentIndex ? 1 : 0.5 }}>

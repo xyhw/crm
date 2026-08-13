@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { NavBar, Field, CellGroup, Button, Toast, Picker, Popup, Tag, Steps } from 'react-vant';
+import { Field, CellGroup, Button, Toast, Picker, Popup, Tag, Steps } from 'react-vant';
 import { api } from '../api';
+import PageNavBar from '../components/PageNavBar';
 import { SUPPLIER_CATEGORIES, ORDER_STAGES } from '../constants';
 import Uploader from '../components/Uploader';
-import { ArrowLeft } from '@react-vant/icons';
 
 export default function Publish() {
   const navigate = useNavigate();
@@ -90,7 +90,7 @@ export default function Publish() {
 
   return (
     <div className="page">
-      <NavBar title="发布跟单" leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+      <PageNavBar title="发布跟单" onClickLeft={() => navigate(-1)} />
 
       <Steps active={step - 1} style={{ padding: '16px 24px 0' }}>
         <Steps.Item>基本信息</Steps.Item>
@@ -176,7 +176,7 @@ export default function Publish() {
       {step === 2 && (
         <>
           {/* 标签 */}
-          <div className="section" style={{ padding: '12px 16px' }}>
+          <div className="section">
             <div className="section-title" style={{ marginBottom: 8 }}>标签（最多5个）</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', marginBottom: 8 }}>
               {form.tags.map((tag) => (
@@ -200,7 +200,7 @@ export default function Publish() {
           </div>
 
           {/* 图纸附件 */}
-          <div className="section" style={{ padding: '12px 16px' }}>
+          <div className="section">
             <div className="section-title" style={{ marginBottom: 8 }}>图纸附件（最多9个）</div>
             <Uploader files={form.files} onChange={(files) => updateForm('files', files)} />
           </div>

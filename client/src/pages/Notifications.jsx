@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { NavBar, Toast, Tabs, Empty, Badge } from 'react-vant';
+import { Toast, Tabs, Empty, Badge } from 'react-vant';
 import { api } from '../api';
+import PageNavBar from '../components/PageNavBar';
 import { timeAgo } from '../constants';
-import { ArrowLeft } from '@react-vant/icons';
 
 export default function Notifications() {
   const navigate = useNavigate();
@@ -52,9 +52,8 @@ export default function Notifications() {
 
   return (
     <div className="page">
-      <NavBar
+      <PageNavBar
         title="通知中心"
-        leftArrow={<ArrowLeft width={20} height={20} />}
         onClickLeft={() => navigate(-1)}
         right={unreadCount > 0 ? <span onClick={handleReadAll} style={{ color: '#1677ff' }}>全部已读</span> : undefined}
         safeAreaInsetTop

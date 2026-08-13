@@ -44,7 +44,7 @@ export default function PointsList() {
     <div>
       <Title level={4}>积分管理</Title>
       <Card>
-        <div style={{ marginBottom: 16, display: 'flex', gap: 12 }}>
+        <div className="action-row">
           <Input
             placeholder="搜索用户"
             prefix={<SearchOutlined />}

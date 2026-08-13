@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { NavBar, Tabs, Empty, Toast } from 'react-vant';
+import { Tabs, Empty, Toast } from 'react-vant';
 import { api } from '../api';
+import PageNavBar from '../components/PageNavBar';
 import { timeAgo, followUpStatusLabel, formatDate } from '../constants';
-import { ArrowLeft } from '@react-vant/icons';
 
 export default function ReminderCenter() {
   const navigate = useNavigate();
@@ -27,7 +27,7 @@ export default function ReminderCenter() {
 
   return (
     <div className="page">
-      <NavBar title="提醒中心" leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+      <PageNavBar title="提醒中心" onClickLeft={() => navigate(-1)} />
 
       <Tabs value={tab} onChange={setTab}>
         {tabs.map((t) => (

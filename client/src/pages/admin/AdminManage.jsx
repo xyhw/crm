@@ -115,23 +115,23 @@ export default function AdminManage() {
       <Modal title={editingItem ? '编辑管理员' : '新建管理员'} open={modalOpen} onOk={handleSubmit} onCancel={() => setModalOpen(false)} confirmLoading={submitting} width={420}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <div style={{ marginBottom: 4, fontWeight: 500 }}>用户名</div>
+            <div className="form-label">用户名</div>
             <Input value={form.username} disabled={!!editingItem} onChange={(e) => setForm({ ...form, username: e.target.value })} placeholder="管理员登录用户名" />
           </div>
           <div>
-            <div style={{ marginBottom: 4, fontWeight: 500 }}>{editingItem ? '新密码（留空不修改）' : '密码'}</div>
+            <div className="form-label">{editingItem ? '新密码（留空不修改）' : '密码'}</div>
             <Input.Password value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder={editingItem ? '留空则不修改密码' : '设置密码'} />
           </div>
           <div>
-            <div style={{ marginBottom: 4, fontWeight: 500 }}>姓名</div>
+            <div className="form-label">姓名</div>
             <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="如：运营管理员" />
           </div>
           <div>
-            <div style={{ marginBottom: 4, fontWeight: 500 }}>电话</div>
+            <div className="form-label">电话</div>
             <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="联系方式" />
           </div>
           <div>
-            <div style={{ marginBottom: 4, fontWeight: 500 }}>状态</div>
+            <div className="form-label">状态</div>
             <Select value={form.status} onChange={(v) => setForm({ ...form, status: v })} style={{ width: '100%' }} options={[{ label: '启用', value: 'active' }, { label: '停用', value: 'inactive' }]} />
           </div>
         </div>

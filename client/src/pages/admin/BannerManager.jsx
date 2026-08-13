@@ -130,28 +130,28 @@ export default function BannerManager() {
       <Modal title={editingBanner ? '编辑Banner' : '新建Banner'} open={modalOpen} onOk={handleSubmit} onCancel={() => setModalOpen(false)} confirmLoading={submitting} width={520}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <div style={{ marginBottom: 4, fontWeight: 500 }}>标题</div>
+            <div className="form-label">标题</div>
             <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Banner标题" />
           </div>
           <div>
-            <div style={{ marginBottom: 4, fontWeight: 500 }}>图片URL</div>
+            <div className="form-label">图片URL</div>
             <Input value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} placeholder="https://..." />
             {form.imageUrl && <img src={form.imageUrl} alt="预览" style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 8, marginTop: 8 }} />}
           </div>
           <div>
-            <div style={{ marginBottom: 4, fontWeight: 500 }}>跳转链接</div>
+            <div className="form-label">跳转链接</div>
             <Input value={form.linkUrl} onChange={(e) => setForm({ ...form, linkUrl: e.target.value })} placeholder="可选，点击后跳转的URL" />
           </div>
           <div>
-            <div style={{ marginBottom: 4, fontWeight: 500 }}>排序（越小越前）</div>
+            <div className="form-label">排序（越小越前）</div>
             <Input type="number" value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: Number(e.target.value) })} />
           </div>
           <div>
-            <div style={{ marginBottom: 4, fontWeight: 500 }}>有效时间</div>
+            <div className="form-label">有效时间</div>
             <RangePicker showTime value={dateRange} onChange={setDateRange} style={{ width: '100%' }} />
           </div>
           <div>
-            <div style={{ marginBottom: 4, fontWeight: 500 }}>状态</div>
+            <div className="form-label">状态</div>
             <Select value={form.status} onChange={(v) => setForm({ ...form, status: v })} style={{ width: '100%' }} options={[{ label: '启用', value: 'active' }, { label: '停用', value: 'inactive' }]} />
           </div>
         </div>

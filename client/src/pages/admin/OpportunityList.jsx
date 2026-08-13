@@ -96,7 +96,7 @@ export default function OpportunityList() {
     <div>
       <Title level={4}>跟单管理</Title>
       <Card>
-        <div style={{ marginBottom: 16, display: 'flex', gap: 12 }}>
+        <div className="action-row">
           <Input
             placeholder="搜索标题/酒店/城市"
             prefix={<SearchOutlined />}

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { NavBar, Toast, Button, Cell, CellGroup, Tag, Dialog, Field, Radio } from 'react-vant';
+import { Toast, Button, Cell, CellGroup, Tag, Dialog, Field, Radio, Popup, DatetimePicker } from 'react-vant';
 import { api } from '../api';
+import PageNavBar from '../components/PageNavBar';
 import { crmStatusLabel, formatDate, FOLLOW_UP_STATUS, followUpStatusLabel } from '../constants';
-import { ArrowLeft } from '@react-vant/icons';
 
 export default function CRMDetail() {
   const { id } = useParams();
@@ -17,6 +17,7 @@ export default function CRMDetail() {
     nextFollowDate: '',
   });
   const [showShare, setShowShare] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [shareForm, setShareForm] = useState({
     status: 'call_no_answer',
     summary: '',
@@ -85,7 +86,7 @@ export default function CRMDetail() {
 
   return (
     <div className="page">
-      <NavBar title="CRM详情" leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+      <PageNavBar title="CRM详情" onClickLeft={() => navigate(-1)} />
 
       {/* 基本信息 */}
       <CellGroup inset>
@@ -106,7 +107,7 @@ export default function CRMDetail() {
       )}
 
       {/* 跟进记录 */}
-      <div className="section" style={{ padding: '12px 16px' }}>
+      <div className="section">
         <div className="section-title">跟进记录</div>
         {detail.followUps && detail.followUps.length > 0 ? (
           detail.followUps.map((fu) => (
@@ -170,12 +171,28 @@ export default function CRMDetail() {
           />
           <Field
             label="下次跟进日期"
-            placeholder="YYYY-MM-DD"
+            placeholder="请选择日期"
             value={followUpForm.nextFollowDate}
-            onChange={(v) => setFollowUpForm({ ...followUpForm, nextFollowDate: v })}
+            isLink
+            readOnly
+            onClick={() => setShowDatePicker(true)}
           />
         </div>
       </Dialog>
+
+      <Popup visible={showDatePicker} onClose={() => setShowDatePicker(false)} position="bottom" round>
+        <DatetimePicker
+          type="date"
+          value={followUpForm.nextFollowDate ? new Date(followUpForm.nextFollowDate) : new Date()}
+          minDate={new Date(2024, 0, 1)}
+          maxDate={new Date(2030, 11, 31)}
+          onCancel={() => setShowDatePicker(false)}
+          onConfirm={(val) => {
+            setFollowUpForm({ ...followUpForm, nextFollowDate: formatDate(val) });
+            setShowDatePicker(false);
+          }}
+        />
+      </Popup>
 
       {/* 共享进度弹窗 */}
       <Dialog

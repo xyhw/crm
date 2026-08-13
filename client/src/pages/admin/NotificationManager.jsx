@@ -88,15 +88,15 @@ export default function NotificationManager() {
       <Modal title="发送系统通知" open={modalOpen} onOk={handleSend} onCancel={() => setModalOpen(false)} confirmLoading={sending} okText="发送" cancelText="取消" width={520}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <div style={{ marginBottom: 4, fontWeight: 500 }}>通知标题</div>
+            <div className="form-label">通知标题</div>
             <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="请输入通知标题" maxLength={100} />
           </div>
           <div>
-            <div style={{ marginBottom: 4, fontWeight: 500 }}>通知内容</div>
+            <div className="form-label">通知内容</div>
             <TextArea value={content} onChange={(e) => setContent(e.target.value)} placeholder="请输入通知内容" rows={4} maxLength={500} />
           </div>
           <div>
-            <div style={{ marginBottom: 4, fontWeight: 500 }}>发送对象</div>
+            <div className="form-label">发送对象</div>
             <Radio.Group value={sendAll} onChange={(e) => setSendAll(e.target.value)}>
               <Radio value={true}>全部用户</Radio>
               <Radio value={false}>指定用户</Radio>

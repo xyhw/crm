@@ -130,7 +130,7 @@ export default function UserList() {
     <div>
       <Title level={4}>用户管理</Title>
       <Card>
-        <div style={{ marginBottom: 16, display: 'flex', gap: 12 }}>
+        <div className="action-row">
           <Input
             placeholder="搜索手机号/昵称"
             prefix={<SearchOutlined />}

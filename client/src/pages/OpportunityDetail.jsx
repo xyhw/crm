@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { NavBar, Tag, Toast, Button, Dialog, Field, CellGroup, Cell, Radio } from 'react-vant';
+import { Tag, Toast, Button, Dialog, Field, CellGroup, Cell, Radio } from 'react-vant';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
+import PageNavBar from '../components/PageNavBar';
 import { stageLabel, statusMeta, INVALID_REASONS, levelMeta } from '../constants';
-import { ArrowLeft } from '@react-vant/icons';
 import Icon from '../components/Icon';
 
 export default function OpportunityDetail() {
@@ -90,7 +90,7 @@ export default function OpportunityDetail() {
 
   return (
     <div className="page">
-      <NavBar title="跟单详情" leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+      <PageNavBar title="跟单详情" onClickLeft={() => navigate(-1)} />
 
       {/* 标题区域 */}
       <div className="detail-header">

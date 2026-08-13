@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { NavBar } from 'react-vant';
 import { api } from '../api';
-import { ArrowLeft } from '@react-vant/icons';
+import PageNavBar from '../components/PageNavBar';
 
 const AGREEMENTS = {
   agreement: {
@@ -64,7 +63,7 @@ export default function Agreement() {
 
   return (
     <div className="page">
-      <NavBar title={doc.title} leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+      <PageNavBar title={doc.title} onClickLeft={() => navigate(-1)} />
       <div className="agreement">
         <h2 className="agreement__intro">欢迎使用酒店供应链跟单互助平台，请仔细阅读以下条款。</h2>
         {doc.sections.map((s) => (

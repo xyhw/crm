@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { NavBar, Tag, Toast, Search, PullRefresh, List } from 'react-vant';
+import { Tag, Toast, Search, PullRefresh, List } from 'react-vant';
 import { api } from '../api';
+import PageNavBar from '../components/PageNavBar';
 import { SUPPLIER_CATEGORIES, timeAgo } from '../constants';
-import { ArrowLeft } from '@react-vant/icons';
 
 export default function Hall() {
   const navigate = useNavigate();
@@ -66,7 +66,7 @@ export default function Hall() {
 
   return (
     <div className="page">
-      <NavBar title="跟单大厅" leftArrow={<ArrowLeft width={20} height={20} />} onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+      <PageNavBar title="跟单大厅" onClickLeft={() => navigate(-1)} />
 
       {/* 搜索栏 */}
       <Search

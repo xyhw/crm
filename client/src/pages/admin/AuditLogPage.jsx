@@ -42,7 +42,7 @@ export default function AuditLogPage() {
     <div>
       <Title level={4}>操作日志</Title>
       <Card>
-        <div style={{ marginBottom: 16, display: 'flex', gap: 12 }}>
+        <div className="action-row">
           <Input placeholder="搜索操作人/详情" prefix={<SearchOutlined />} style={{ width: 200 }}
             onChange={(e) => setParams({ ...params, keyword: e.target.value })} />
           <Select placeholder="操作类型" style={{ width: 120 }} allowClear
