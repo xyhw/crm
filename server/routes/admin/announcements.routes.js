@@ -4,7 +4,18 @@ import { audit } from '../../services/audit-log.service.js';
 
 const router = Router();
 
-// 公告列表（含分页，含已下线）
+/**
+ * @swagger
+ * /api/v1/admin/announcements:
+ *   get:
+ *     tags: [后台-公告]
+ *     summary: 公告列表（含已下线）
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 成功
+ */
 router.get('/', async (req, res) => {
   try {
     const { page = 1, pageSize = 20 } = req.query;
@@ -26,7 +37,23 @@ router.get('/', async (req, res) => {
   }
 });
 
-// 获取单个公告
+/**
+ * @swagger
+ * /api/v1/admin/announcements/{id}:
+ *   get:
+ *     tags: [后台-公告]
+ *     summary: 公告详情
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: 成功
+ */
 router.get('/:id', async (req, res) => {
   try {
     const item = await queryOne('SELECT * FROM announcements WHERE id = ?', [req.params.id]);
@@ -38,7 +65,35 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// 创建公告
+/**
+ * @swagger
+ * /api/v1/admin/announcements:
+ *   post:
+ *     tags: [后台-公告]
+ *     summary: 创建公告
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title: { type: string }
+ *               content: { type: string }
+ *               mediaType: { type: string, enum: [text, image, video, mixed] }
+ *               mediaUrl: { type: string }
+ *               linkUrl: { type: string }
+ *               isTop: { type: integer }
+ *               sortOrder: { type: integer }
+ *               status: { type: string, enum: [active, inactive] }
+ *               startAt: { type: string, format: date-time }
+ *               endAt: { type: string, format: date-time }
+ *     responses:
+ *       200:
+ *         description: 创建成功
+ */
 router.post('/', audit('announcement', 'create', (req, res, body) => body?.data?.id ?? null), async (req, res) => {
   try {
     const { title, content, mediaType, mediaUrl, linkUrl, isTop, sortOrder, startAt, endAt } = req.body || {};
@@ -67,7 +122,23 @@ router.post('/', audit('announcement', 'create', (req, res, body) => body?.data?
   }
 });
 
-// 更新公告
+/**
+ * @swagger
+ * /api/v1/admin/announcements/{id}:
+ *   put:
+ *     tags: [后台-公告]
+ *     summary: 更新公告
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: 成功
+ */
 router.put('/:id', audit('announcement', 'edit'), async (req, res) => {
   try {
     const { title, content, mediaType, mediaUrl, linkUrl, isTop, sortOrder, status, startAt, endAt } = req.body || {};
@@ -98,7 +169,23 @@ router.put('/:id', audit('announcement', 'edit'), async (req, res) => {
   }
 });
 
-// 删除公告
+/**
+ * @swagger
+ * /api/v1/admin/announcements/{id}:
+ *   delete:
+ *     tags: [后台-公告]
+ *     summary: 删除公告
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: 成功
+ */
 router.delete('/:id', audit('announcement', 'delete'), async (req, res) => {
   try {
     await del('announcements', 'id = ?', [req.params.id]);

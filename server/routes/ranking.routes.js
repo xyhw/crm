@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { query } from '../db.js';
 import { authRequired, optionalAuth } from '../auth.js';
+import { setCache } from '../middleware/cache-headers.js';
 
 const router = Router();
 
 // 获取排行榜
-router.get('/', optionalAuth, async (req, res) => {
+router.get('/', optionalAuth, setCache(300, { staleWhileRevalidate: 600 }), async (req, res) => {
   try {
     const { type = 'publisher', period = 'week', page = 1, pageSize = 20 } = req.query;
     const offset = (Number(page) - 1) * Number(pageSize);

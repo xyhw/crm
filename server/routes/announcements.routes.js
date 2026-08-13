@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { query, queryOne } from '../db.js';
+import { setCache } from '../middleware/cache-headers.js';
 
 const router = Router();
 
@@ -29,7 +30,7 @@ const router = Router();
  *                       items:
  *                         type: object
  */
-router.get('/', async (req, res) => {
+router.get('/', setCache(60, { staleWhileRevalidate: 120 }), async (req, res) => {
   try {
     const now = new Date();
     const list = await query(
@@ -65,7 +66,7 @@ router.get('/', async (req, res) => {
  *       200:
  *         description: 成功
  */
-router.get('/:id', async (req, res) => {
+router.get('/:id', setCache(60, { staleWhileRevalidate: 120 }), async (req, res) => {
   try {
     const now = new Date();
     const item = await queryOne(

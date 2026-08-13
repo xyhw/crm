@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { query } from '../db.js';
+import { setCache } from '../middleware/cache-headers.js';
 
 const router = Router();
 
@@ -43,7 +44,7 @@ const router = Router();
  *                             type: string
  *                             enum: [active, inactive]
  */
-router.get('/', async (req, res) => {
+router.get('/', setCache(60, { staleWhileRevalidate: 120 }), async (req, res) => {
   try {
     const now = new Date();
     const list = await query(

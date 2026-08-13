@@ -8,7 +8,26 @@ import { loginLimiter } from '../../middleware/rate-limit.js';
 const router = Router();
 const ADMIN_SECRET = config.adminSecret;
 
-// 管理员登录
+/**
+ * @swagger
+ * /api/v1/admin/auth/login:
+ *   post:
+ *     tags: [后台-认证]
+ *     summary: 管理员登录
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [username, password]
+ *             properties:
+ *               username: { type: string }
+ *               password: { type: string }
+ *     responses:
+ *       200:
+ *         description: 成功返回token
+ */
 router.post('/login', loginLimiter, async (req, res) => {
   try {
     const { username, password } = req.body || {};
@@ -62,7 +81,18 @@ router.post('/login', loginLimiter, async (req, res) => {
   }
 });
 
-// 获取当前管理员信息
+/**
+ * @swagger
+ * /api/v1/admin/auth/me:
+ *   get:
+ *     tags: [后台-认证]
+ *     summary: 获取当前管理员信息
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 成功
+ */
 router.get('/me', async (req, res) => {
   try {
     const header = req.headers.authorization || '';

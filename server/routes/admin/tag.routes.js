@@ -4,6 +4,17 @@ import { audit } from '../../services/audit-log.service.js';
 
 const router = Router();
 
+/**
+ * @swagger
+ * /api/v1/admin/tags:
+ *   get:
+ *     tags: [后台-标签]
+ *     summary: 标签列表
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200: { description: 成功 }
+ */
 router.get('/', async (req, res) => {
   try {
     const list = await query('SELECT * FROM opportunity_tags ORDER BY sort_order, id');
@@ -14,6 +25,17 @@ router.get('/', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/v1/admin/tags:
+ *   post:
+ *     tags: [后台-标签]
+ *     summary: 创建标签
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200: { description: 成功 }
+ */
 router.post('/', audit('tag', 'create', (req, res, body) => body?.data?.id ?? null), async (req, res) => {
   try {
     const { name } = req.body || {};
@@ -25,6 +47,22 @@ router.post('/', audit('tag', 'create', (req, res, body) => body?.data?.id ?? nu
   }
 });
 
+/**
+ * @swagger
+ * /api/v1/admin/tags/{id}:
+ *   put:
+ *     tags: [后台-标签]
+ *     summary: 更新标签
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200: { description: 成功 }
+ */
 router.put('/:id', audit('tag', 'edit'), async (req, res) => {
   try {
     const { name, sortOrder } = req.body || {};
@@ -39,6 +77,22 @@ router.put('/:id', audit('tag', 'edit'), async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/v1/admin/tags/{id}:
+ *   delete:
+ *     tags: [后台-标签]
+ *     summary: 删除标签
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200: { description: 成功 }
+ */
 router.delete('/:id', audit('tag', 'delete'), async (req, res) => {
   try {
     await query('DELETE FROM opportunity_tags WHERE id = ?', [req.params.id]);

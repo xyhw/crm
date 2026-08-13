@@ -7,8 +7,16 @@ import { recordLog } from '../../services/audit-log.service.js';
 import crypto from 'crypto';
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR || '/workspace/uploads';
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf', '.doc', '.docx', '.xls', '.xlsx'];
+const ALLOWED_MIMES = [
+  'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+];
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOAD_DIR),
@@ -19,7 +27,16 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage, limits: { fileSize: MAX_FILE_SIZE } });
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) return cb(new Error('UNSUPPORTED_TYPE'));
+    if (!ALLOWED_MIMES.includes(file.mimetype)) return cb(new Error('UNSUPPORTED_MIME'));
+    cb(null, true);
+  },
+});
 
 const router = Router();
 
@@ -45,6 +62,12 @@ router.post('/', adminAuthRequired, upload.single('file'), async (req, res) => {
     });
   } catch (error) {
     console.error('[UPLOAD]', error.message);
+    if (error.message === 'UNSUPPORTED_TYPE' || error.message === 'UNSUPPORTED_MIME') {
+      return res.status(400).json({ code: 400, message: '不支持的文件类型' });
+    }
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ code: 400, message: '文件大小超过限制（5MB）' });
+    }
     res.status(500).json({ code: 500, message: '文件上传失败' });
   }
 });

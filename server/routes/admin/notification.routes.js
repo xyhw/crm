@@ -4,7 +4,17 @@ import { audit } from '../../services/audit-log.service.js';
 
 const router = Router();
 
-// 发送通知
+/**
+ * @swagger
+ * /api/v1/admin/notifications/send:
+ *   post:
+ *     tags: [后台-通知]
+ *     summary: 发送通知
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200: { description: 成功 }
+ */
 router.post('/send', audit('notification', 'send'), async (req, res) => {
   try {
     const { title, content, userIds, sendAll } = req.body || {};
@@ -48,7 +58,17 @@ router.post('/send', audit('notification', 'send'), async (req, res) => {
   }
 });
 
-// 获取通知历史
+/**
+ * @swagger
+ * /api/v1/admin/notifications/history:
+ *   get:
+ *     tags: [后台-通知]
+ *     summary: 通知历史
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200: { description: 成功 }
+ */
 router.get('/history', async (req, res) => {
   try {
     const { page = 1, pageSize = 20 } = req.query;

@@ -5,7 +5,17 @@ import { audit } from '../../services/audit-log.service.js';
 
 const router = Router();
 
-// 管理员列表
+/**
+ * @swagger
+ * /api/v1/admin/admins:
+ *   get:
+ *     tags: [后台-管理员]
+ *     summary: 管理员列表
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200: { description: 成功 }
+ */
 router.get('/', async (req, res) => {
   try {
     const { page = 1, pageSize = 20 } = req.query;
@@ -22,7 +32,17 @@ router.get('/', async (req, res) => {
   }
 });
 
-// 创建管理员
+/**
+ * @swagger
+ * /api/v1/admin/admins:
+ *   post:
+ *     tags: [后台-管理员]
+ *     summary: 创建管理员
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200: { description: 成功 }
+ */
 router.post('/', audit('admin_user', 'create'), async (req, res) => {
   try {
     const { username, password, name, phone } = req.body || {};
@@ -42,7 +62,22 @@ router.post('/', audit('admin_user', 'create'), async (req, res) => {
   }
 });
 
-// 更新管理员
+/**
+ * @swagger
+ * /api/v1/admin/admins/{id}:
+ *   put:
+ *     tags: [后台-管理员]
+ *     summary: 更新管理员
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200: { description: 成功 }
+ */
 router.put('/:id', audit('admin_user', 'edit'), async (req, res) => {
   try {
     const { name, phone, status, password } = req.body || {};
@@ -62,7 +97,22 @@ router.put('/:id', audit('admin_user', 'edit'), async (req, res) => {
   }
 });
 
-// 删除管理员
+/**
+ * @swagger
+ * /api/v1/admin/admins/{id}:
+ *   delete:
+ *     tags: [后台-管理员]
+ *     summary: 删除管理员
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200: { description: 成功 }
+ */
 router.delete('/:id', audit('admin_user', 'delete'), async (req, res) => {
   try {
     const admins = await query('SELECT COUNT(*) as total FROM admin_users WHERE status = "active"');

@@ -4,7 +4,18 @@ import { audit } from '../../services/audit-log.service.js';
 
 const router = Router();
 
-// Banner列表（含inactive）
+/**
+ * @swagger
+ * /api/v1/admin/banners:
+ *   get:
+ *     tags: [后台-Banner]
+ *     summary: Banner列表
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 成功
+ */
 router.get('/', async (req, res) => {
   try {
     const { page = 1, pageSize = 20 } = req.query;
@@ -26,7 +37,23 @@ router.get('/', async (req, res) => {
   }
 });
 
-// 获取单个Banner
+/**
+ * @swagger
+ * /api/v1/admin/banners/{id}:
+ *   get:
+ *     tags: [后台-Banner]
+ *     summary: Banner详情
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: 成功
+ */
 router.get('/:id', async (req, res) => {
   try {
     const banner = await queryOne('SELECT * FROM banners WHERE id = ?', [req.params.id]);
@@ -38,7 +65,18 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// 创建Banner
+/**
+ * @swagger
+ * /api/v1/admin/banners:
+ *   post:
+ *     tags: [后台-Banner]
+ *     summary: 创建Banner
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 成功
+ */
 router.post('/', audit('banner', 'create'), async (req, res) => {
   try {
     const { title, imageUrl, linkUrl, sortOrder, startAt, endAt } = req.body || {};
@@ -61,7 +99,23 @@ router.post('/', audit('banner', 'create'), async (req, res) => {
   }
 });
 
-// 更新Banner
+/**
+ * @swagger
+ * /api/v1/admin/banners/{id}:
+ *   put:
+ *     tags: [后台-Banner]
+ *     summary: 更新Banner
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: 成功
+ */
 router.put('/:id', audit('banner', 'edit'), async (req, res) => {
   try {
     const { title, imageUrl, linkUrl, sortOrder, status, startAt, endAt } = req.body || {};
@@ -86,7 +140,23 @@ router.put('/:id', audit('banner', 'edit'), async (req, res) => {
   }
 });
 
-// 删除Banner
+/**
+ * @swagger
+ * /api/v1/admin/banners/{id}:
+ *   delete:
+ *     tags: [后台-Banner]
+ *     summary: 删除Banner
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: 成功
+ */
 router.delete('/:id', audit('banner', 'delete'), async (req, res) => {
   try {
     await del('banners', 'id = ?', [req.params.id]);

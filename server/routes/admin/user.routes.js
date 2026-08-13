@@ -84,6 +84,23 @@ router.get('/:id', async (req, res) => {
 });
 
 // 编辑用户基础信息
+/**
+ * @swagger
+ * /api/v1/admin/users/{id}:
+ *   put:
+ *     tags: [后台-用户管理]
+ *     summary: 编辑用户
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: 成功
+ */
 router.put('/:id', audit('users', 'edit'), async (req, res) => {
   try {
     const { nickname, company } = req.body || {};
@@ -103,6 +120,23 @@ router.put('/:id', audit('users', 'edit'), async (req, res) => {
 });
 
 // 调整用户积分
+/**
+ * @swagger
+ * /api/v1/admin/users/{id}/points:
+ *   put:
+ *     tags: [后台-用户管理]
+ *     summary: 调整积分
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: 成功
+ */
 router.put('/:id/points', audit('points', 'adjust_points'), async (req, res) => {
   try {
     const { delta, reason } = req.body || {};
@@ -140,6 +174,23 @@ router.put('/:id/points', audit('points', 'adjust_points'), async (req, res) => 
 });
 
 // 调整用户信用分
+/**
+ * @swagger
+ * /api/v1/admin/users/{id}/credit:
+ *   put:
+ *     tags: [后台-用户管理]
+ *     summary: 调整信用分
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: 成功
+ */
 router.put('/:id/credit', audit('users', 'adjust_credits'), async (req, res) => {
   try {
     const { delta, reason } = req.body || {};

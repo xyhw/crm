@@ -4,6 +4,17 @@ import { audit } from '../../services/audit-log.service.js';
 
 const router = Router();
 
+/**
+ * @swagger
+ * /api/v1/admin/categories:
+ *   get:
+ *     tags: [后台-分类]
+ *     summary: 分类列表
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200: { description: 成功 }
+ */
 router.get('/', async (req, res) => {
   try {
     const list = await query('SELECT * FROM opportunity_categories ORDER BY sort_order, id');
@@ -13,6 +24,17 @@ router.get('/', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/v1/admin/categories:
+ *   post:
+ *     tags: [后台-分类]
+ *     summary: 创建分类
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200: { description: 成功 }
+ */
 router.post('/', audit('category', 'create', (req, res, body) => body?.data?.id ?? null), async (req, res) => {
   try {
     const { name, icon, sortOrder } = req.body || {};
@@ -26,6 +48,22 @@ router.post('/', audit('category', 'create', (req, res, body) => body?.data?.id 
   }
 });
 
+/**
+ * @swagger
+ * /api/v1/admin/categories/{id}:
+ *   put:
+ *     tags: [后台-分类]
+ *     summary: 更新分类
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200: { description: 成功 }
+ */
 router.put('/:id', audit('category', 'edit'), async (req, res) => {
   try {
     const { name, icon, sortOrder, status } = req.body || {};
@@ -42,6 +80,22 @@ router.put('/:id', audit('category', 'edit'), async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/v1/admin/categories/{id}:
+ *   delete:
+ *     tags: [后台-分类]
+ *     summary: 删除分类
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200: { description: 成功 }
+ */
 router.delete('/:id', audit('category', 'delete'), async (req, res) => {
   try {
     await query('DELETE FROM opportunity_categories WHERE id = ?', [req.params.id]);
