@@ -67,8 +67,31 @@ app.use('/api', apiLimiter);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // 健康检查
+const START_TIME = Date.now();
 app.get('/api/health', async (req, res) => {
-  res.json({ code: 0, data: { status: 'ok', time: Date.now() } });
+  const mem = process.memoryUsage();
+  const dbOk = await (async () => {
+    try {
+      const { query } = await import('./db.js');
+      await query('SELECT 1');
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+  res.json({
+    code: dbOk ? 0 : 503,
+    data: {
+      status: dbOk ? 'ok' : 'degraded',
+      time: Date.now(),
+      uptime: Math.round((Date.now() - START_TIME) / 1000),
+      memory: {
+        rss: Math.round(mem.rss / 1024 / 1024),
+        heapUsed: Math.round(mem.heapUsed / 1024 / 1024),
+      },
+      db: dbOk ? 'up' : 'down',
+    },
+  });
 });
 
 // 用户端路由

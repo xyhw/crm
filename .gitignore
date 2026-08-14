@@ -3,3 +3,19 @@ dist/
 *.log
 .DS_Store
 server/data/*.json
+
+# 上传文件与运行时数据
+uploads/
+
+# 调试脚本（开发期排查用，禁止入仓）
+client/check-empty.mjs
+client/dump.mjs
+client/inspect-bundle.mjs
+client/probe-rv.mjs
+client/render-*.mjs
+client/test-esm.mjs
+client/test-min.mjs
+client/test-rv.mjs
+
+# 后端运行时输出
+server/coverage/
