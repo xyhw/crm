@@ -138,6 +138,10 @@ describe('跟单详情（开发需求 6.1.2/6.1.3 购买解锁）', () => {
     fireEvent.click(screen.getAllByText('确认')[0]);
     await waitFor(() => expect(api.purchase).toHaveBeenCalled());
     expect(api.purchase).toHaveBeenCalledWith({ opportunityId: 25 });
+    await waitFor(() => {
+      expect(document.querySelector('.rv-dialog')).toBeNull();
+      expect(document.querySelector('.rv-overlay')).toBeNull();
+    }, { timeout: 5000 });
   });
 });
 

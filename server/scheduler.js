@@ -62,7 +62,7 @@ class Scheduler {
         for (const log of expiredLogs) {
           await connection.query(
             `INSERT INTO points_logs (user_id, delta, source_type, source_id, source_title, balance_after)
-             SELECT ?, -?, 'expiry', 0, '积分过期', balance FROM points_accounts WHERE user_id = ?`,
+             SELECT ?, -?, 'expire', 0, '积分过期', balance FROM points_accounts WHERE user_id = ?`,
             [log.user_id, log.delta, log.user_id]
           );
 

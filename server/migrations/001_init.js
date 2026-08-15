@@ -155,7 +155,7 @@ export async function initDatabase() {
       delta INT NOT NULL COMMENT '正为获得负为消耗',
       balance_after INT NOT NULL,
       source_type ENUM('register_gift','invite_gift','purchase_income','commission',
-                       'reward','consume','expire','recharge','admin_adjust') NOT NULL,
+                       'reward','consume','expire','recharge','admin_adjust','refund') NOT NULL,
       source_id BIGINT UNSIGNED,
       source_title VARCHAR(200),
       expires_at TIMESTAMP NULL,
