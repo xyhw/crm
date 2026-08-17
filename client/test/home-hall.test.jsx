@@ -48,7 +48,7 @@ const OPP = {
   isPurchased: false,
 };
 
-describe('首页 Home（开发需求 6.1.2 跟单中心）', () => {
+describe('首页 Home（开发需求 6.1.2 商机中心）', () => {
   afterEach(() => cleanup());
 
   beforeEach(() => {
@@ -71,7 +71,7 @@ describe('首页 Home（开发需求 6.1.2 跟单中心）', () => {
     expect(screen.getByText('5')).toBeTruthy();
   });
 
-  it('最新跟单列表展示关键字段：标题/分类/价格/购买数', async () => {
+  it('最新商机列表展示关键字段：标题/分类/价格/购买数', async () => {
     const { api } = await import('../src/api');
     api.opportunities.mockResolvedValue({ list: [OPP], total: 1 });
     api.myStats.mockResolvedValue({ published: 0, crm: 0 });
@@ -87,7 +87,7 @@ describe('首页 Home（开发需求 6.1.2 跟单中心）', () => {
     expect(screen.getByText('查看全部')).toBeTruthy();
   });
 
-  it('无跟单时展示空态与发布引导', async () => {
+  it('无商机时展示空态与发布引导', async () => {
     const { api } = await import('../src/api');
     api.opportunities.mockResolvedValue({ list: [], total: 0 });
     api.myStats.mockResolvedValue({ published: 0, crm: 0 });
@@ -96,7 +96,7 @@ describe('首页 Home（开发需求 6.1.2 跟单中心）', () => {
         <Home />
       </MemoryRouter>
     );
-    await waitFor(() => expect(screen.getByText('暂无跟单')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('暂无商机')).toBeTruthy());
     expect(screen.getByText('立即发布')).toBeTruthy();
   });
 
@@ -141,12 +141,12 @@ describe('首页 Home（开发需求 6.1.2 跟单中心）', () => {
         <Home />
       </MemoryRouter>
     );
-    await waitFor(() => expect(screen.getByText('暂无跟单')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('暂无商机')).toBeTruthy());
     expect(screen.queryByText('公告')).toBeNull();
   });
 });
 
-describe('跟单大厅 Hall', () => {
+describe('商机大厅 Hall', () => {
   afterEach(() => cleanup());
 
   beforeEach(() => {

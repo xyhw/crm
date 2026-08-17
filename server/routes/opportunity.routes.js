@@ -6,7 +6,7 @@ import { detectSimilar } from '../services/similarity.service.js';
 
 const router = Router();
 
-// 跟单列表（支持筛选、搜索、分页）
+// 商机列表（支持筛选、搜索、分页）
 router.get('/', optionalAuth, async (req, res) => {
   try {
     const { category, keyword, status = 'active', page = 1, pageSize = 10, sort = 'newest' } = req.query;
@@ -23,9 +23,9 @@ router.get('/', optionalAuth, async (req, res) => {
       params.push(category);
     }
     if (keyword) {
-      sql += ' AND (o.title LIKE ? OR o.hotel_name LIKE ? OR o.city LIKE ?)';
+      sql += ' AND (o.title LIKE ? OR o.hotel_name LIKE ? OR o.city LIKE ? OR o.brand LIKE ? OR o.address LIKE ?)';
       const kw = `%${keyword}%`;
-      params.push(kw, kw, kw);
+      params.push(kw, kw, kw, kw, kw);
     }
 
     // 排序
@@ -60,9 +60,9 @@ router.get('/', optionalAuth, async (req, res) => {
       countParams.push(category);
     }
     if (keyword) {
-      countSql += ' AND (o.title LIKE ? OR o.hotel_name LIKE ? OR o.city LIKE ?)';
+      countSql += ' AND (o.title LIKE ? OR o.hotel_name LIKE ? OR o.city LIKE ? OR o.brand LIKE ? OR o.address LIKE ?)';
       const kw = `%${keyword}%`;
-      countParams.push(kw, kw, kw);
+      countParams.push(kw, kw, kw, kw, kw);
     }
     const [countResult] = await query(countSql, countParams);
 
@@ -87,6 +87,7 @@ router.get('/', optionalAuth, async (req, res) => {
         categoryName: item.category_name,
         categoryIcon: item.category_icon,
         city: item.city,
+        address: item.address,
         brand: item.brand || item.hotel_name,
         hotelName: item.hotel_name,
         price: item.price,
@@ -103,6 +104,7 @@ router.get('/', optionalAuth, async (req, res) => {
           descriptionFull: item.description_full,
           contactName: item.contact_name,
           contactPhone: item.contact_phone,
+          wechat: item.wechat,
         } : {}),
         isPurchased,
         isPublisher,
@@ -120,11 +122,11 @@ router.get('/', optionalAuth, async (req, res) => {
     });
   } catch (err) {
     console.error('Get opportunities error:', err);
-    res.status(500).json({ code: 500, message: '获取跟单列表失败' });
+    res.status(500).json({ code: 500, message: '获取商机列表失败' });
   }
 });
 
-// 跟单详情
+// 商机详情
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const opportunity = await queryOne(
@@ -138,7 +140,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
     );
 
     if (!opportunity) {
-      return res.json({ code: 404, message: '跟单不存在' });
+      return res.json({ code: 404, message: '商机不存在' });
     }
 
     // 增加浏览量
@@ -185,6 +187,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
       categoryIcon: opportunity.category_icon,
       descriptionPublic: opportunity.description_public,
       city: opportunity.city,
+      address: opportunity.address,
       brand: opportunity.brand || opportunity.hotel_name,
       hotelName: opportunity.hotel_name,
       stage: opportunity.stage,
@@ -215,6 +218,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
       result.descriptionFull = opportunity.description_full;
       result.contactName = opportunity.contact_name;
       result.contactPhone = opportunity.contact_phone;
+      result.wechat = opportunity.wechat;
       try {
         result.attachments = opportunity.attachments ? JSON.parse(opportunity.attachments) : [];
       } catch {
@@ -230,16 +234,16 @@ router.get('/:id', optionalAuth, async (req, res) => {
     res.json({ code: 0, data: result });
   } catch (err) {
     console.error('Get opportunity detail error:', err);
-    res.status(500).json({ code: 500, message: '获取跟单详情失败' });
+    res.status(500).json({ code: 500, message: '获取商机详情失败' });
   }
 });
 
-// 投稿跟单
+// 发布商机
 router.post('/', authRequired, async (req, res) => {
   try {
-    const { title, categoryId, descriptionPublic, descriptionFull, contactName, contactPhone, city, brand, hotelName, stage, price, tags, attachments } = req.body || {};
+    const { title, categoryId, descriptionPublic, descriptionFull, contactName, contactPhone, city, address, brand, wechat, stage, price, tags, attachments } = req.body || {};
 
-    if (!title || !categoryId || !price) {
+    if (!title || !categoryId || !brand || !city || !contactName || !contactPhone || !price) {
       return res.json({ code: 400, message: '请完善必填信息' });
     }
 
@@ -250,9 +254,9 @@ router.post('/', authRequired, async (req, res) => {
     // 简化：直接使用传入的价格
 
     // 相似度检测
-    const similar = await detectSimilar(title, city, hotelName, categoryId);
+    const similar = await detectSimilar(title, city, address, categoryId);
 
-    // 创建跟单
+    // 创建商机
     const opportunity = await insert('opportunities', {
       user_id: req.userId,
       title,
@@ -261,9 +265,10 @@ router.post('/', authRequired, async (req, res) => {
       description_full: descriptionFull || '',
       contact_name: contactName || '',
       contact_phone: contactPhone || '',
+      wechat: wechat || '',
       city: city || '',
-      brand: brand || hotelName || '',
-      hotel_name: hotelName || '',
+      address: address || '',
+      brand: brand || '',
       stage: stage || '',
       price: Number(price),
       status: 'active',
@@ -324,7 +329,7 @@ router.post('/:id/invalid-mark', authRequired, async (req, res) => {
       [opportunityId, req.userId]
     );
     if (existing) {
-      return res.json({ code: 409, message: '你已经标记过此跟单' });
+      return res.json({ code: 409, message: '你已经标记过此商机' });
     }
 
     await transaction(async (conn) => {
@@ -372,7 +377,7 @@ router.post('/:id/invalid-mark', authRequired, async (req, res) => {
             `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
              VALUES (?, ?, 
                (SELECT balance FROM points_accounts WHERE user_id = ?),
-               'refund', '跟单无效退款')`,
+               'refund', '商机无效退款')`,
             [order.user_id, order.actual_price, order.user_id]
           );
           // 更新订单状态
@@ -395,7 +400,7 @@ router.post('/:id/invalid-mark', authRequired, async (req, res) => {
         );
         await conn.execute(
           `INSERT INTO user_credits (user_id, credit_score, change_amount, change_reason, source_type)
-           SELECT ?, credit_score, -10, '跟单被判无效', 'invalid_mark' FROM users WHERE id = ?`,
+           SELECT ?, credit_score, -10, '商机被判无效', 'invalid_mark' FROM users WHERE id = ?`,
           [publisherId, publisherId]
         );
       }

@@ -41,7 +41,7 @@ export default function Home() {
   return (
     <div className="page">
       <NavBar
-        title="跟单互助"
+        title="商机互助"
         safeAreaInsetTop
         right={
           <Badge content={unreadCount > 0 ? unreadCount : ''} showZero={false}>
@@ -106,11 +106,11 @@ export default function Home() {
       <div className="home-entry">
         <div className="home-entry__item" onClick={() => navigate('/opportunities')}>
           <Icon name="search" size={26} color="#1677ff" />
-          <span>跟单大厅</span>
+          <span>商机大厅</span>
         </div>
         <div className="home-entry__item" onClick={() => navigate('/publish')}>
           <Icon name="edit" size={26} color="#ed6a0c" />
-          <span>发布跟单</span>
+          <span>发布商机</span>
         </div>
         <div className="home-entry__item" onClick={() => navigate('/crm')}>
           <Icon name="contact" size={26} color="#07c160" />
@@ -122,9 +122,9 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 最新跟单 */}
+      {/* 最新商机 */}
       <div className="flex-between section-head">
-        <span className="section-title">最新跟单</span>
+        <span className="section-title">最新商机</span>
         <span className="section-more" onClick={() => navigate('/opportunities')}>
           查看全部 <Icon name="arrow" size={12} />
         </span>
@@ -134,8 +134,8 @@ export default function Home() {
         <div className="empty-tip">加载中...</div>
       ) : orders.length === 0 ? (
         <div className="home-empty">
-          <div className="home-empty__title">暂无跟单</div>
-          <div className="home-empty__desc">发布你的第一条跟单，互助从你开始</div>
+          <div className="home-empty__title">暂无商机</div>
+          <div className="home-empty__desc">发布你的第一条商机，互助从你开始</div>
           <Button type="primary" size="small" round onClick={() => navigate('/publish')}>
             立即发布
           </Button>

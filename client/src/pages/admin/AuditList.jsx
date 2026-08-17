@@ -32,7 +32,7 @@ export default function AuditList() {
 
   const columns = [
     { title: 'ID', dataIndex: 'id', width: 60 },
-    { title: '跟单标题', dataIndex: 'opportunity_title', ellipsis: true },
+    { title: '商机标题', dataIndex: 'opportunity_title', ellipsis: true },
     { title: '提交者', dataIndex: 'user_name', width: 100 },
     { title: '进度状态', dataIndex: 'status', width: 100, render: (v) => <Tag>{followUpStatusLabel(v)}</Tag> },
     { title: '共享摘要', dataIndex: 'summary', ellipsis: true },

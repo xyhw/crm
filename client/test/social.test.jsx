@@ -94,7 +94,7 @@ describe('排行榜 Ranking（开发需求 6.1.7）', () => {
     vi.clearAllMocks();
   });
 
-  it('跟单达人榜展示排名/昵称/购买次数', async () => {
+  it('商机达人榜展示排名/昵称/购买次数', async () => {
     const { api } = await import('../src/api');
     api.rankings.mockResolvedValue({
       list: [
@@ -147,7 +147,7 @@ describe('通知中心 Notifications（开发需求 6.1.8）', () => {
     api.notifications.mockResolvedValue({
       list: [
         { id: 1, title: '注册赠送积分', content: '欢迎注册，赠送10积分', is_read: 0, created_at: '2026-08-01' },
-        { id: 2, title: '跟单被购买', content: '您的跟单被购买，获得分佣', is_read: 1, created_at: '2026-08-02' },
+        { id: 2, title: '商机被购买', content: '您的商机被购买，获得分佣', is_read: 1, created_at: '2026-08-02' },
       ],
       unreadCount: 1,
       total: 2,
@@ -159,7 +159,7 @@ describe('通知中心 Notifications（开发需求 6.1.8）', () => {
     );
     await waitFor(() => expect(screen.getByText('注册赠送积分')).toBeTruthy());
     expect(screen.getByText('欢迎注册，赠送10积分')).toBeTruthy();
-    expect(screen.getByText('跟单被购买')).toBeTruthy();
+    expect(screen.getByText('商机被购买')).toBeTruthy();
     expect(document.body.innerHTML.includes('unread')).toBe(true);
   });
 

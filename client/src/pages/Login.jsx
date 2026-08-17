@@ -24,7 +24,7 @@ export default function Login() {
   return (
     <div className="auth-page">
       <div className="auth-hero">
-        <div className="auth-logo">跟单互助</div>
+        <div className="auth-logo">商机互助</div>
         <p className="auth-slogan">酒店供应链供应商互助平台</p>
         <p className="auth-sub">我为人人，人人为我</p>
       </div>

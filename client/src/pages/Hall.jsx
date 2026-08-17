@@ -66,14 +66,14 @@ export default function Hall() {
 
   return (
     <div className="page">
-      <PageNavBar title="跟单大厅" onClickLeft={() => navigate(-1)} />
+      <PageNavBar title="商机大厅" onClickLeft={() => navigate(-1)} />
 
       {/* 搜索栏 */}
       <Search
         value={keyword}
         onChange={setKeyword}
         onSearch={onSearch}
-        placeholder="搜索跟单"
+        placeholder="搜索商机"
         shape="round"
         style={{ padding: '8px 12px' }}
       />
@@ -105,7 +105,7 @@ export default function Hall() {
           {loading && list.length === 0 ? (
             <div className="empty-tip">加载中...</div>
           ) : list.length === 0 ? (
-            <div className="empty-tip" style={{ marginTop: 40 }}>暂无跟单</div>
+            <div className="empty-tip" style={{ marginTop: 40 }}>暂无商机</div>
           ) : (
             list.map((item) => (
               <div

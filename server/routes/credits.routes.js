@@ -5,10 +5,10 @@ import { query, queryOne } from '../db.js';
 const router = Router();
 
 const SOURCE_TYPE_LABELS = {
-  invalid_mark: '跟单被判无效',
+  invalid_mark: '商机被判无效',
   share_report: '分享被举报',
   account_report: '账号被举报',
-  purchase: '购买跟单',
+  purchase: '购买商机',
   share_helpful: '分享被认可',
   weekly_active: '活跃奖励',
   admin_adjust: '管理员调整',

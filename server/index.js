@@ -9,6 +9,7 @@ import { migrateP0Fields } from './migrations/002_p0_fields.js';
 import { migrateAnnouncements } from './migrations/003_announcements.js';
 import { migrateP1Indexes } from './migrations/004_p1_indexes.js';
 import { migratePointsLogsRefund } from './migrations/005_points_logs_refund.js';
+import { migrateOpportunityAddressWechat } from './migrations/006_opportunity_address_wechat.js';
 import { seedDatabase } from './seeds/seed.js';
 import { closePool } from './db.js';
 import { adminAuthRequired } from './auth.js';
@@ -174,6 +175,9 @@ async function start() {
     // 积分流水 source_type 枚举补 refund（幂等）
     await migratePointsLogsRefund();
     console.log('[server] points_logs.source_type enum ready');
+
+    await migrateOpportunityAddressWechat();
+    console.log('[server] opportunities address/wechat columns ready');
 
     // 种子数据
     await seedDatabase();

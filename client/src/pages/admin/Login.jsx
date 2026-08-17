@@ -28,7 +28,7 @@ export default function Login() {
     <div style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#f0f2f5' }}>
       <Card style={{ width: 400 }}>
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <Title level={3}>跟单管理后台</Title>
+          <Title level={3}>商机管理后台</Title>
           <Text type="secondary">Hotel Order Follow Admin</Text>
         </div>
         <Form onFinish={onFinish} autoComplete="off">

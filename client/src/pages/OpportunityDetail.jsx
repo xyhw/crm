@@ -72,7 +72,7 @@ export default function OpportunityDetail() {
   };
 
   if (loading) return <div className="empty-tip">加载中...</div>;
-  if (!detail) return <div className="empty-tip">跟单不存在</div>;
+  if (!detail) return <div className="empty-tip">商机不存在</div>;
 
   const meta = statusMeta(detail.status);
   const canViewFull = detail.isPurchased || detail.isPublisher;
@@ -90,7 +90,7 @@ export default function OpportunityDetail() {
 
   return (
     <div className="page">
-      <PageNavBar title="跟单详情" onClickLeft={() => navigate(-1)} />
+      <PageNavBar title="商机详情" onClickLeft={() => navigate(-1)} />
 
       {/* 标题区域 */}
       <div className="detail-header">
@@ -105,7 +105,6 @@ export default function OpportunityDetail() {
           {detail.stage && <span><Icon name="clock-o" size={14} /> {stageLabel(detail.stage)}</span>}
         </div>
       </div>
-
       {/* 价格区 */}
       <div className="detail-price">
         <div className="detail-price__amount">{detail.price} <span>积分</span></div>
@@ -132,10 +131,20 @@ export default function OpportunityDetail() {
         </div>
       </div>
 
-      {/* 项目进展 - 始终展示 */}
+      {/* 具体地址 */}
+      {detail.address && (
+        <div className="detail-section">
+          <div className="detail-section__title">具体地址</div>
+          <div className="detail-section__content" style={{ color: '#666' }}>
+            {detail.address}
+          </div>
+        </div>
+      )}
+
+      {/* 项目现状 - 始终展示 */}
       {detail.stage && (
         <div className="detail-section">
-          <div className="detail-section__title">项目进展</div>
+          <div className="detail-section__title">项目现状</div>
           <div className="detail-section__content" style={{ color: '#666' }}>
             {stageLabel(detail.stage)}
           </div>
@@ -158,6 +167,7 @@ export default function OpportunityDetail() {
             <CellGroup>
               <Cell title="联系人" value={detail.contactName || '未填写'} />
               <Cell title="电话" value={detail.contactPhone || '未填写'} isLink onClick={() => detail.contactPhone && (window.location.href = `tel:${detail.contactPhone}`)} />
+              {detail.wechat && <Cell title="微信号" value={detail.wechat} />}
             </CellGroup>
           </div>
 
@@ -178,10 +188,10 @@ export default function OpportunityDetail() {
             </div>
           )}
 
-          {/* 完整描述（如果有） */}
+          {/* 项目概要（购买后可见） */}
           {detail.descriptionFull && (
             <div className="detail-section">
-              <div className="detail-section__title">完整描述</div>
+              <div className="detail-section__title">项目概要</div>
               <div className="detail-section__content" style={{ lineHeight: 1.6, color: '#333' }}>
                 {detail.descriptionFull}
               </div>
@@ -192,7 +202,7 @@ export default function OpportunityDetail() {
         /* 未购买时的锁定提示 */
         <div className="detail-section detail-lock" style={{ textAlign: 'center', padding: '40px 0' }}>
           <Icon name="lock" size={48} color="#969799" />
-          <div style={{ marginTop: 16, fontSize: 14, color: '#666' }}>购买后查看联系方式、图纸附件及完整描述</div>
+          <div style={{ marginTop: 16, fontSize: 14, color: '#666' }}>购买后查看联系方式、项目概要及图纸附件</div>
         </div>
       )}
 

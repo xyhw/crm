@@ -25,7 +25,7 @@ export default function OpportunityImport() {
 
   return (
     <div>
-      <Title level={4}>批量导入跟单</Title>
+      <Title level={4}>批量导入商机</Title>
       <Card>
         <Alert
           message="导入说明"

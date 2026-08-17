@@ -82,7 +82,7 @@ describe('积分中心 Points（开发需求 5.2 积分体系）', () => {
     api.pointsLogs.mockResolvedValue({
       list: [
         { id: 1, source_title: '注册赠送', source_type: 'register_gift', delta: 10, created_at: '2026-08-01' },
-        { id: 2, source_title: '购买跟单', source_type: 'consume', delta: -88, created_at: '2026-08-02' },
+        { id: 2, source_title: '购买商机', source_type: 'consume', delta: -88, created_at: '2026-08-02' },
       ],
       total: 2,
     });
@@ -93,7 +93,7 @@ describe('积分中心 Points（开发需求 5.2 积分体系）', () => {
     );
     await waitFor(() => expect(screen.getByText('注册赠送')).toBeTruthy());
     expect(screen.getByText('+10')).toBeTruthy();
-    expect(screen.getByText('购买跟单')).toBeTruthy();
+    expect(screen.getByText('购买商机')).toBeTruthy();
     expect(screen.getByText('-88')).toBeTruthy();
   });
 });
@@ -212,8 +212,8 @@ describe('信用分 Credit（开发需求 5.7）', () => {
     api.me.mockResolvedValue({ creditScore: 90 });
     api.credits.mockResolvedValue({
       list: [
-        { id: 1, reason: '投稿跟单被购买', sourceType: 'purchase', delta: 2, createdAt: '2026-08-01' },
-        { id: 2, reason: '跟单被判无效', sourceType: 'invalid_mark', delta: -10, createdAt: '2026-08-02' },
+        { id: 1, reason: '投稿商机被购买', sourceType: 'purchase', delta: 2, createdAt: '2026-08-01' },
+        { id: 2, reason: '商机被判无效', sourceType: 'invalid_mark', delta: -10, createdAt: '2026-08-02' },
       ],
       total: 2,
     });
@@ -222,8 +222,8 @@ describe('信用分 Credit（开发需求 5.7）', () => {
         <Credit />
       </MemoryRouter>
     );
-    await waitFor(() => expect(screen.getByText('投稿跟单被购买')).toBeTruthy());
-    expect(screen.getByText('跟单被判无效')).toBeTruthy();
+    await waitFor(() => expect(screen.getByText('投稿商机被购买')).toBeTruthy());
+    expect(screen.getByText('商机被判无效')).toBeTruthy();
   });
 
   it('低信用分（<60）展示信用较差标签', async () => {

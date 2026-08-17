@@ -42,6 +42,7 @@ const makeDetail = (over = {}) => ({
   categoryName: '装修总包',
   city: '杭州',
   brand: '维也纳酒店',
+  address: '西湖区文三路100号维也纳酒店',
   price: 88,
   purchaseCount: 12,
   viewCount: 30,
@@ -50,6 +51,7 @@ const makeDetail = (over = {}) => ({
   descriptionFull: '完整联系方式与详情',
   contactName: '张工',
   contactPhone: '13800000001',
+  wechat: 'zhang_gong',
   isPurchased: false,
   isPublisher: false,
   publisherName: '投稿人甲',
@@ -59,7 +61,7 @@ const makeDetail = (over = {}) => ({
   ...over,
 });
 
-describe('跟单详情（开发需求 6.1.2/6.1.3 购买解锁）', () => {
+describe('商机详情（开发需求 6.1.2/6.1.3 购买解锁）', () => {
   afterEach(() => cleanup());
 
   beforeEach(() => {
@@ -78,12 +80,14 @@ describe('跟单详情（开发需求 6.1.2/6.1.3 购买解锁）', () => {
     );
     await waitFor(() => expect(screen.getByText('某国际酒店装修总包项目')).toBeTruthy());
     expect(screen.getByText('公开描述')).toBeTruthy();
+    expect(screen.getByText('西湖区文三路100号维也纳酒店')).toBeTruthy();
     expect(screen.getByText(/购买后查看联系方式/)).toBeTruthy();
     expect(screen.queryByText('完整联系方式与详情')).toBeNull();
     expect(screen.queryByText('张工')).toBeNull();
+    expect(screen.queryByText('zhang_gong')).toBeNull();
   });
 
-  it('已购买后展示解锁字段（联系方式/完整描述/市场情报）', async () => {
+  it('已购买后展示解锁字段（联系方式/完整描述/微信号/市场情报）', async () => {
     const { api } = await import('../src/api');
     api.opportunity.mockResolvedValue(makeDetail({
       isPurchased: true,
@@ -99,6 +103,7 @@ describe('跟单详情（开发需求 6.1.2/6.1.3 购买解锁）', () => {
     await waitFor(() => expect(screen.getByText('完整联系方式与详情')).toBeTruthy());
     expect(screen.getByText('张工')).toBeTruthy();
     expect(screen.getByText('13800000001')).toBeTruthy();
+    expect(screen.getByText('zhang_gong')).toBeTruthy();
     expect(screen.getByText('基于 2 位购买者跟进')).toBeTruthy();
     expect(screen.getByText('意向明确')).toBeTruthy();
   });
@@ -116,6 +121,7 @@ describe('跟单详情（开发需求 6.1.2/6.1.3 购买解锁）', () => {
     await waitFor(() => expect(screen.getByText('完整联系方式与详情')).toBeTruthy());
     expect(screen.getByText('投稿人甲')).toBeTruthy();
     expect(screen.getByText('某某工程公司')).toBeTruthy();
+    expect(screen.getByText('zhang_gong')).toBeTruthy();
   });
 
   it('购买按钮调用 purchase 接口并携带 opportunityId', async () => {
@@ -145,12 +151,34 @@ describe('跟单详情（开发需求 6.1.2/6.1.3 购买解锁）', () => {
   });
 });
 
-describe('发布跟单（开发需求 5.3 投稿上架 + 相似度检测）', () => {
+describe('发布商机（开发需求 5.3 投稿上架 + 相似度检测）', () => {
   afterEach(() => cleanup());
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
+
+  async function fillStep1({ title = '弱电总包采购', price = '66', category = '装修总包' } = {}) {
+    await waitFor(() => expect(screen.getByPlaceholderText('如：某酒店弱电总包采购')).toBeTruthy());
+    fireEvent.change(screen.getByPlaceholderText('如：某酒店弱电总包采购'), { target: { value: title } });
+    fireEvent.change(screen.getByPlaceholderText('如：某国际大酒店'), { target: { value: '维也纳酒店' } });
+    fireEvent.change(screen.getByPlaceholderText('如：上海'), { target: { value: '杭州' } });
+    fireEvent.change(screen.getByPlaceholderText('您的姓名'), { target: { value: '张经理' } });
+    fireEvent.change(screen.getByPlaceholderText('您的电话'), { target: { value: '13900000001' } });
+    fireEvent.change(screen.getByPlaceholderText('建议10-200积分'), { target: { value: price } });
+    fireEvent.click(screen.getAllByPlaceholderText('请选择')[0]);
+    await waitFor(() => expect(screen.getByText(category)).toBeTruthy());
+    fireEvent.click(screen.getByText(category));
+    await new Promise((r) => setTimeout(r, 200));
+    fireEvent.click(screen.getAllByText('确认')[0]);
+    await new Promise((r) => setTimeout(r, 100));
+  }
+
+  async function goStep2() {
+    await fillStep1();
+    fireEvent.click(screen.getByText('下一步'));
+    await waitFor(() => expect(screen.getByPlaceholderText('如：已完成设计，正在招投标')).toBeTruthy());
+  }
 
   it('渲染核心表单字段与提交按钮', async () => {
     render(
@@ -159,6 +187,9 @@ describe('发布跟单（开发需求 5.3 投稿上架 + 相似度检测）', ()
       </MemoryRouter>
     );
     await waitFor(() => expect(screen.getByPlaceholderText('如：某酒店弱电总包采购')).toBeTruthy());
+    expect(screen.getByPlaceholderText('如：某国际大酒店')).toBeTruthy();
+    expect(screen.getByPlaceholderText('如：上海')).toBeTruthy();
+    expect(screen.getByPlaceholderText('您的电话')).toBeTruthy();
     expect(screen.getByPlaceholderText('建议10-200积分')).toBeTruthy();
     expect(screen.getByText('下一步')).toBeTruthy();
   });
@@ -171,20 +202,12 @@ describe('发布跟单（开发需求 5.3 投稿上架 + 相似度检测）', ()
         <Publish />
       </MemoryRouter>
     );
-    await waitFor(() => expect(screen.getByPlaceholderText('如：某酒店弱电总包采购')).toBeTruthy());
-    fireEvent.change(screen.getByPlaceholderText('如：某酒店弱电总包采购'), { target: { value: '测试跟单' } });
-    fireEvent.change(screen.getByPlaceholderText('建议10-200积分'), { target: { value: '88' } });
-    fireEvent.click(screen.getAllByPlaceholderText('请选择')[0]);
-    await waitFor(() => expect(screen.getByText('装修总包')).toBeTruthy());
-    fireEvent.click(screen.getByText('装修总包'));
-    await new Promise((r) => setTimeout(r, 200));
-    fireEvent.click(screen.getAllByText('确认')[0]);
-    await new Promise((r) => setTimeout(r, 100));
-    fireEvent.click(screen.getByText('下一步'));
-    await waitFor(() => expect(screen.getByPlaceholderText('如：上海')).toBeTruthy());
+    await goStep2();
+    expect(screen.getByPlaceholderText('如：已完成设计，正在招投标')).toBeTruthy();
+    expect(screen.getByPlaceholderText('简要描述项目背景、规模与预期需求')).toBeTruthy();
     expect(screen.getByText('标签（最多5个）')).toBeTruthy();
-    expect(screen.getByText('图纸附件（最多9个）')).toBeTruthy();
-    expect(screen.getAllByText('发布跟单').length).toBeGreaterThan(0);
+    expect(screen.getByText('项目图纸（最多9个）')).toBeTruthy();
+    expect(screen.getAllByText('发布商机').length).toBeGreaterThan(0);
   });
 
   it('缺少必填分类时被拦截（校验生效）', async () => {
@@ -196,14 +219,14 @@ describe('发布跟单（开发需求 5.3 投稿上架 + 相似度检测）', ()
       </MemoryRouter>
     );
     await waitFor(() => expect(screen.getByPlaceholderText('如：某酒店弱电总包采购')).toBeTruthy());
-    fireEvent.change(screen.getByPlaceholderText('如：某酒店弱电总包采购'), { target: { value: '测试跟单' } });
+    fireEvent.change(screen.getByPlaceholderText('如：某酒店弱电总包采购'), { target: { value: '测试商机' } });
     fireEvent.change(screen.getByPlaceholderText('建议10-200积分'), { target: { value: '88' } });
     fireEvent.click(screen.getByText('下一步'));
-    await waitFor(() => expect(screen.queryByPlaceholderText('如：上海')).toBeNull());
+    await waitFor(() => expect(screen.queryByPlaceholderText('如：已完成设计，正在招投标')).toBeNull());
     expect(api.createOpportunity).not.toHaveBeenCalled();
   });
 
-  it('完整填写后调用 createOpportunity 并携带标题与数字价格', async () => {
+  it('缺少联系电话时被拦截（校验生效）', async () => {
     const { api } = await import('../src/api');
     api.createOpportunity.mockResolvedValue({});
     render(
@@ -212,37 +235,10 @@ describe('发布跟单（开发需求 5.3 投稿上架 + 相似度检测）', ()
       </MemoryRouter>
     );
     await waitFor(() => expect(screen.getByPlaceholderText('如：某酒店弱电总包采购')).toBeTruthy());
-    fireEvent.change(screen.getByPlaceholderText('如：某酒店弱电总包采购'), { target: { value: '弱电总包采购' } });
-    fireEvent.change(screen.getByPlaceholderText('建议10-200积分'), { target: { value: '66' } });
-    fireEvent.click(screen.getAllByPlaceholderText('请选择')[0]);
-    await waitFor(() => expect(screen.getByText('装修总包')).toBeTruthy());
-    fireEvent.click(screen.getByText('装修总包'));
-    await new Promise((r) => setTimeout(r, 200));
-    fireEvent.click(screen.getAllByText('确认')[0]);
-    await new Promise((r) => setTimeout(r, 100));
-    fireEvent.click(screen.getByText('下一步'));
-    await waitFor(() => expect(screen.getAllByText('发布跟单').length).toBeGreaterThan(0));
-    const pubBtns = screen.getAllByText('发布跟单');
-    fireEvent.click(pubBtns[pubBtns.length - 1]);
-    await waitFor(() => expect(api.createOpportunity).toHaveBeenCalled());
-    const payload = api.createOpportunity.mock.calls[0][0];
-    expect(payload.title).toBe('弱电总包采购');
-    expect(payload.price).toBe(66);
-    expect(payload.categoryId).toBeTruthy();
-  });
-
-  it('相似度检测命中时展示相似跟单提示', async () => {
-    const { api } = await import('../src/api');
-    api.createOpportunity.mockResolvedValue({
-      similarOpportunities: [{ id: 3, title: '疑似相似跟单' }],
-    });
-    render(
-      <MemoryRouter>
-        <Publish />
-      </MemoryRouter>
-    );
-    await waitFor(() => expect(screen.getByPlaceholderText('如：某酒店弱电总包采购')).toBeTruthy());
-    fireEvent.change(screen.getByPlaceholderText('如：某酒店弱电总包采购'), { target: { value: '撞单测试' } });
+    fireEvent.change(screen.getByPlaceholderText('如：某酒店弱电总包采购'), { target: { value: '测试商机' } });
+    fireEvent.change(screen.getByPlaceholderText('如：某国际大酒店'), { target: { value: '维也纳酒店' } });
+    fireEvent.change(screen.getByPlaceholderText('如：上海'), { target: { value: '杭州' } });
+    fireEvent.change(screen.getByPlaceholderText('您的姓名'), { target: { value: '张经理' } });
     fireEvent.change(screen.getByPlaceholderText('建议10-200积分'), { target: { value: '88' } });
     fireEvent.click(screen.getAllByPlaceholderText('请选择')[0]);
     await waitFor(() => expect(screen.getByText('装修总包')).toBeTruthy());
@@ -251,11 +247,55 @@ describe('发布跟单（开发需求 5.3 投稿上架 + 相似度检测）', ()
     fireEvent.click(screen.getAllByText('确认')[0]);
     await new Promise((r) => setTimeout(r, 100));
     fireEvent.click(screen.getByText('下一步'));
-    await waitFor(() => expect(screen.getAllByText('发布跟单').length).toBeGreaterThan(0));
-    const pubBtns = screen.getAllByText('发布跟单');
+    await waitFor(() => expect(screen.queryByPlaceholderText('如：已完成设计，正在招投标')).toBeNull());
+    expect(api.createOpportunity).not.toHaveBeenCalled();
+  });
+
+  it('完整填写后调用 createOpportunity 并携带标题、数字价格、地址与微信号', async () => {
+    const { api } = await import('../src/api');
+    api.createOpportunity.mockResolvedValue({});
+    render(
+      <MemoryRouter>
+        <Publish />
+      </MemoryRouter>
+    );
+    await fillStep1({ title: '弱电总包采购', price: '66' });
+    fireEvent.change(screen.getByPlaceholderText('如：上海市浦东新区世纪大道100号'), { target: { value: '世纪大道100号' } });
+    fireEvent.change(screen.getByPlaceholderText('您的微信号'), { target: { value: 'zhang_jingli' } });
+    fireEvent.click(screen.getByText('下一步'));
+    await waitFor(() => expect(screen.getAllByText('发布商机').length).toBeGreaterThan(0));
+    const pubBtns = screen.getAllByText('发布商机');
     fireEvent.click(pubBtns[pubBtns.length - 1]);
-    await waitFor(() => expect(screen.getByText('发现相似跟单')).toBeTruthy());
-    expect(screen.getByText('疑似相似跟单')).toBeTruthy();
+    await waitFor(() => expect(api.createOpportunity).toHaveBeenCalled());
+    const payload = api.createOpportunity.mock.calls[0][0];
+    expect(payload.title).toBe('弱电总包采购');
+    expect(payload.price).toBe(66);
+    expect(payload.categoryId).toBeTruthy();
+    expect(payload.brand).toBe('维也纳酒店');
+    expect(payload.city).toBe('杭州');
+    expect(payload.address).toBe('世纪大道100号');
+    expect(payload.wechat).toBe('zhang_jingli');
+    expect(payload.contactName).toBe('张经理');
+    expect(payload.contactPhone).toBe('13900000001');
+  });
+
+  it('相似度检测命中时展示相似商机提示', async () => {
+    const { api } = await import('../src/api');
+    api.createOpportunity.mockResolvedValue({
+      similarOpportunities: [{ id: 3, title: '疑似相似商机' }],
+    });
+    render(
+      <MemoryRouter>
+        <Publish />
+      </MemoryRouter>
+    );
+    await fillStep1({ title: '撞单测试', price: '88' });
+    fireEvent.click(screen.getByText('下一步'));
+    await waitFor(() => expect(screen.getAllByText('发布商机').length).toBeGreaterThan(0));
+    const pubBtns = screen.getAllByText('发布商机');
+    fireEvent.click(pubBtns[pubBtns.length - 1]);
+    await waitFor(() => expect(screen.getByText('发现相似商机')).toBeTruthy());
+    expect(screen.getByText('疑似相似商机')).toBeTruthy();
   });
 });
 

@@ -8,10 +8,10 @@ const router = Router();
 
 const ALL_PERMISSIONS = [
   { key: 'dashboard', label: '仪表盘', group: '基础' },
-  { key: 'opportunities', label: '跟单管理', group: '跟单' },
-  { key: 'opportunities.edit', label: '编辑跟单', group: '跟单' },
-  { key: 'opportunities.import', label: '批量导入跟单', group: '跟单' },
-  { key: 'opportunities.status', label: '切换跟单状态', group: '跟单' },
+  { key: 'opportunities', label: '商机管理', group: '商机' },
+  { key: 'opportunities.edit', label: '编辑商机', group: '商机' },
+  { key: 'opportunities.import', label: '批量导入商机', group: '商机' },
+  { key: 'opportunities.status', label: '切换商机状态', group: '商机' },
   { key: 'users', label: '用户管理', group: '用户' },
   { key: 'users.edit', label: '编辑用户', group: '用户' },
   { key: 'users.ban', label: '封禁用户', group: '用户' },

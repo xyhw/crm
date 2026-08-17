@@ -4,7 +4,7 @@ import { recordLog } from '../../services/audit-log.service.js';
 
 const router = Router();
 
-// 获取跟单列表
+// 获取商机列表
 router.get('/', async (req, res) => {
   try {
     const { status, category, keyword, page = 1, pageSize = 20 } = req.query;
@@ -62,11 +62,11 @@ router.get('/', async (req, res) => {
     });
   } catch (err) {
     console.error('Admin get opportunities error:', err);
-    res.status(500).json({ code: 500, message: '获取跟单列表失败' });
+    res.status(500).json({ code: 500, message: '获取商机列表失败' });
   }
 });
 
-// 获取跟单详情
+// 获取商机详情
 router.get('/:id', async (req, res) => {
   try {
     const opportunity = await queryOne(
@@ -79,7 +79,7 @@ router.get('/:id', async (req, res) => {
     );
 
     if (!opportunity) {
-      return res.json({ code: 404, message: '跟单不存在' });
+      return res.json({ code: 404, message: '商机不存在' });
     }
 
     // 获取无效标记
@@ -100,11 +100,11 @@ router.get('/:id', async (req, res) => {
     });
   } catch (err) {
     console.error('Admin get opportunity detail error:', err);
-    res.status(500).json({ code: 500, message: '获取跟单详情失败' });
+    res.status(500).json({ code: 500, message: '获取商机详情失败' });
   }
 });
 
-// 更新跟单状态（上架/下架）
+// 更新商机状态（上架/下架）
 router.put('/:id/status', async (req, res) => {
   try {
     const { status } = req.body || {};

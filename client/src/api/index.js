@@ -149,7 +149,7 @@ export const api = {
   me: () => request('/auth/me'),
   updateMe: (data) => request('/auth/me', { method: 'PUT', body: data }),
 
-  // 跟单
+  // 商机
   opportunities: (params) => request('/opportunities' + qs(params)),
   opportunity: (id) => request('/opportunities/' + id),
   createOpportunity: (data) => request('/opportunities', { method: 'POST', body: data }),

@@ -10,27 +10,27 @@ import {
 
 const router = Router();
 
-// 购买跟单
+// 购买商机
 router.post('/', authRequired, async (req, res) => {
   try {
     const { opportunityId } = req.body || {};
     
     if (!opportunityId) {
-      return res.json({ code: 400, message: '请选择要购买的跟单' });
+      return res.json({ code: 400, message: '请选择要购买的商机' });
     }
 
-    // 查询跟单信息
+    // 查询商机信息
     const opportunity = await queryOne(
       'SELECT * FROM opportunities WHERE id = ? AND status = "active" AND deleted_at IS NULL',
       [opportunityId]
     );
     if (!opportunity) {
-      return res.json({ code: 404, message: '跟单不存在或已下架' });
+      return res.json({ code: 404, message: '商机不存在或已下架' });
     }
 
-    // 不能购买自己的跟单
+    // 不能购买自己的商机
     if (opportunity.user_id === req.userId) {
-      return res.json({ code: 403, message: '不能购买自己发布的跟单' });
+      return res.json({ code: 403, message: '不能购买自己发布的商机' });
     }
 
     // 检查是否已购买
@@ -39,13 +39,13 @@ router.post('/', authRequired, async (req, res) => {
       [req.userId, opportunityId]
     );
     if (existingPurchase) {
-      return res.json({ code: 409, message: '你已购买过此跟单' });
+      return res.json({ code: 409, message: '你已购买过此商机' });
     }
 
     // 计算购买价格（使用 level service）
     const priceInfo = await getPurchasePrice(opportunityId, req.userId);
     if (!priceInfo) {
-      return res.json({ code: 404, message: '跟单不存在' });
+      return res.json({ code: 404, message: '商机不存在' });
     }
 
     const actualPrice = priceInfo.finalPrice;
@@ -82,7 +82,7 @@ router.post('/', authRequired, async (req, res) => {
       await conn.execute(
         `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_id, source_title)
          VALUES (?, ?, ?, 'consume', ?, ?)`,
-        [req.userId, -actualPrice, buyerAccount[0].balance, opportunityId, `购买跟单「${opportunity.title}」`]
+        [req.userId, -actualPrice, buyerAccount[0].balance, opportunityId, `购买商机「${opportunity.title}」`]
       );
 
       // 2. 给投稿人加积分
@@ -99,7 +99,7 @@ router.post('/', authRequired, async (req, res) => {
       await conn.execute(
         `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_id, source_title)
          VALUES (?, ?, ?, 'commission', ?, ?)`,
-        [opportunity.user_id, totalSellerIncome, sellerAccount[0].balance, opportunityId, `跟单被购买「${opportunity.title}」`]
+        [opportunity.user_id, totalSellerIncome, sellerAccount[0].balance, opportunityId, `商机被购买「${opportunity.title}」`]
       );
 
       // 3. 创建订单
@@ -116,7 +116,7 @@ router.post('/', authRequired, async (req, res) => {
         [opportunity.user_id, actualPrice, 0.20, platformCommission, totalSellerIncome, Math.max(0, totalSellerIncome - Math.round(earningsInfo.netAmount * 0.40))]
       );
 
-      // 5. 更新跟单购买数
+      // 5. 更新商机购买数
       await conn.execute(
         'UPDATE opportunities SET purchase_count = purchase_count + 1 WHERE id = ?',
         [opportunityId]

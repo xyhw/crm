@@ -55,7 +55,7 @@ export default function CRM() {
       <Search
         value={keyword}
         onChange={setKeyword}
-        placeholder="搜索跟单"
+        placeholder="搜索商机"
         shape="round"
         style={{ padding: '8px 12px' }}
       />
@@ -72,7 +72,7 @@ export default function CRM() {
         {loading && list.length === 0 ? (
           <div className="empty-tip">加载中...</div>
         ) : list.length === 0 ? (
-          <Empty description="暂无CRM跟单" style={{ marginTop: 40 }} />
+          <Empty description="暂无CRM商机" style={{ marginTop: 40 }} />
         ) : (
           list.map((item) => {
             const statusMeta = crmStatusMeta(item.status);
@@ -80,7 +80,7 @@ export default function CRM() {
               <div className="crm-card" key={item.id} onClick={() => navigate(`/crm/${item.id}`)}>
                 <div className="crm-card__header">
                   <div className="crm-card__icon">{item.category_icon || '📦'}</div>
-                  <div className="crm-card__title">{item.title || '手动录入跟单'}</div>
+                  <div className="crm-card__title">{item.title || '手动录入商机'}</div>
                 </div>
                 <div className="crm-card__info">
                   <span>{item.city || '未知城市'}</span>

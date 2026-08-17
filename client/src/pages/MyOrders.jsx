@@ -70,7 +70,7 @@ export default function MyOrders() {
       {loading ? (
         <div className="empty-tip">加载中...</div>
       ) : current.length === 0 ? (
-        <Empty description={tab === 'published' ? '暂无发布记录，去大厅发布第一条跟单吧' : '暂无购买记录，去大厅看看'} style={{ marginTop: 40 }} />
+        <Empty description={tab === 'published' ? '暂无发布记录，去大厅发布第一条商机吧' : '暂无购买记录，去大厅看看'} style={{ marginTop: 40 }} />
       ) : (
         <div className="order-list">
           {current.map(renderItem)}

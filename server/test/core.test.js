@@ -68,17 +68,18 @@ describe('核心流程', () => {
     await pool.end();
   });
 
-  it('发布跟单', async () => {
+  it('发布商机', async () => {
     const data = {
       title: '杭州西溪酒店弱电工程30间',
       city: '杭州',
-      hotelName: '西溪假日酒店',
+      address: '余杭区五常街道西溪假日酒店',
+      brand: '西溪假日',
       categoryId: 4,
       price: 50,
-      descriptionPublic: '公开描述',
       descriptionFull: '完整描述含联系方式',
       contactName: '张经理',
       contactPhone: '13900000001',
+      wechat: 'zhang_jingli',
     };
     const res = await apiPost('/opportunities', data, user1Token);
     assert.strictEqual(res.code, 0);
@@ -86,8 +87,13 @@ describe('核心流程', () => {
     publishedId = res.data.id;
   });
 
-  it('购买跟单并验证分佣', async () => {
-    assert.ok(publishedId, '依赖发布跟单');
+  it('发布商机缺必填字段被拒', async () => {
+    const res = await apiPost('/opportunities', { title: '缺字段商机' }, user1Token);
+    assert.ok(res.code !== 0);
+  });
+
+  it('购买商机并验证分佣', async () => {
+    assert.ok(publishedId, '依赖发布商机');
     const buyRes = await apiPost('/orders', { opportunityId: publishedId }, user2Token);
     assert.strictEqual(buyRes.code, 0);
     assert.ok(buyRes.data?.actualPrice >= 0);
@@ -100,8 +106,16 @@ describe('核心流程', () => {
     assert.ok(sellerMe.data.pointsBalance >= 0);
   });
 
+  it('商机详情返回地址与微信号', async () => {
+    assert.ok(publishedId, '依赖发布商机');
+    const res = await apiGet(`/opportunities/${publishedId}`, user2Token);
+    assert.strictEqual(res.code, 0);
+    assert.strictEqual(res.data?.address, '余杭区五常街道西溪假日酒店');
+    assert.strictEqual(res.data?.wechat, 'zhang_jingli');
+  });
+
   it('无效标记录', async () => {
-    assert.ok(publishedId, '没有发布跟单');
+    assert.ok(publishedId, '没有发布商机');
     const invalRes = await apiPost(
       `/opportunities/${publishedId}/invalid-mark`,
       { reason: 'other', reasonText: '信息已过时' },
@@ -111,7 +125,7 @@ describe('核心流程', () => {
   });
 
   it('重复购买拦截', async () => {
-    assert.ok(publishedId, '没有发布跟单');
+    assert.ok(publishedId, '没有发布商机');
     const res = await apiPost('/orders', { opportunityId: publishedId }, user2Token);
     assert.ok(res.code !== 0);
   });

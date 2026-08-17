@@ -4,7 +4,7 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: '酒店供应链跟单互助平台 API',
+      title: '酒店供应链商机互助平台 API',
       version: '1.0.0',
       description: 'H5用户端 + Web管理后台 完整API文档',
     },
@@ -71,8 +71,8 @@ const options = {
     },
     tags: [
       { name: '认证', description: '登录/注册/重置密码' },
-      { name: '跟单', description: '跟单CRUD、列表、详情' },
-      { name: '订单', description: '购买跟单、订单管理' },
+      { name: '商机', description: '商机CRUD、列表、详情' },
+      { name: '订单', description: '购买商机、订单管理' },
       { name: '积分', description: '积分账户、积分流水、充值' },
       { name: 'CRM', description: '个人跟进库管理' },
       { name: '跟进', description: '跟进记录管理' },
@@ -82,7 +82,7 @@ const options = {
       { name: 'Banner', description: '首页轮播Banner' },
       { name: '提醒', description: 'CRM提醒中心' },
       { name: '信用', description: '信用分记录' },
-      { name: '后台-跟单管理', description: '管理跟单上下架、导入' },
+      { name: '后台-商机管理', description: '管理商机上下架、导入' },
       { name: '后台-订单管理', description: '管理订单' },
       { name: '后台-用户管理', description: '用户管理与积分/信用调整' },
       { name: '后台-积分管理', description: '积分流水' },

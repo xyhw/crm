@@ -4,7 +4,7 @@ import { authRequired } from '../auth.js';
 
 const router = Router();
 
-// 获取我的CRM跟单库
+// 获取我的CRM商机库
 router.get('/', authRequired, async (req, res) => {
   try {
     const { status, keyword, page = 1, pageSize = 10 } = req.query;
@@ -54,7 +54,7 @@ router.get('/', authRequired, async (req, res) => {
   }
 });
 
-// 获取CRM跟单详情
+// 获取CRM商机详情
 router.get('/:id', authRequired, async (req, res) => {
   try {
     const crm = await queryOne(
@@ -69,7 +69,7 @@ router.get('/:id', authRequired, async (req, res) => {
     );
 
     if (!crm) {
-      return res.json({ code: 404, message: 'CRM跟单不存在' });
+      return res.json({ code: 404, message: 'CRM商机不存在' });
     }
 
     // 获取跟进记录
@@ -91,16 +91,16 @@ router.get('/:id', authRequired, async (req, res) => {
   }
 });
 
-// 手动录入跟单到CRM
+// 手动录入商机到CRM
 router.post('/', authRequired, async (req, res) => {
   try {
     const { title, categoryName, city, hotelName, description, contactName, contactPhone } = req.body || {};
 
     if (!title) {
-      return res.json({ code: 400, message: '请填写跟单标题' });
+      return res.json({ code: 400, message: '请填写商机标题' });
     }
 
-    // 先创建一个跟单记录
+    // 先创建一个商机记录
     const opportunity = await insert('opportunities', {
       user_id: req.userId,
       title,
@@ -143,11 +143,11 @@ router.post('/:id/publish', authRequired, async (req, res) => {
     );
 
     if (!crm) {
-      return res.json({ code: 404, message: 'CRM跟单不存在' });
+      return res.json({ code: 404, message: 'CRM商机不存在' });
     }
 
     if (crm.source === 'purchased') {
-      return res.json({ code: 400, message: '购买的跟单不能投稿' });
+      return res.json({ code: 400, message: '购买的商机不能投稿' });
     }
 
     const { price, descriptionPublic, descriptionFull } = req.body || {};
@@ -155,7 +155,7 @@ router.post('/:id/publish', authRequired, async (req, res) => {
       return res.json({ code: 400, message: '请设置定价' });
     }
 
-    // 更新跟单信息
+    // 更新商机信息
     await update('opportunities', {
       price: Number(price),
       description_public: descriptionPublic || '',

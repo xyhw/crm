@@ -40,7 +40,7 @@ describe('个人 CRM 列表（开发需求 6.1.4）', () => {
     vi.clearAllMocks();
   });
 
-  it('渲染跟单卡片：标题/城市/酒店/分类/状态标签/跟进次数', async () => {
+  it('渲染商机卡片：标题/城市/酒店/分类/状态标签/跟进次数', async () => {
     const { api } = await import('../src/api');
     api.crmList.mockResolvedValue({
       list: [
@@ -96,7 +96,7 @@ describe('个人 CRM 列表（开发需求 6.1.4）', () => {
         <CRM />
       </MemoryRouter>
     );
-    await waitFor(() => expect(screen.getByText('暂无CRM跟单')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('暂无CRM商机')).toBeTruthy());
   });
 });
 

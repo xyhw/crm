@@ -82,7 +82,7 @@ export default function CRMDetail() {
   };
 
   if (loading) return <div className="empty-tip">加载中...</div>;
-  if (!detail) return <div className="empty-tip">CRM跟单不存在</div>;
+  if (!detail) return <div className="empty-tip">CRM商机不存在</div>;
 
   return (
     <div className="page">
@@ -90,7 +90,7 @@ export default function CRMDetail() {
 
       {/* 基本信息 */}
       <CellGroup inset>
-        <Cell title="跟单标题" value={detail.title || '手动录入'} />
+        <Cell title="商机标题" value={detail.title || '手动录入'} />
         <Cell title="城市" value={detail.city || '未知'} />
         <Cell title="酒店" value={detail.hotel_name || '未知'} />
         <Cell title="分类" value={detail.category_name || '其他'} />
@@ -223,7 +223,7 @@ export default function CRMDetail() {
             onChange={(v) => setShareForm({ ...shareForm, summary: v })}
           />
           <div style={{ marginTop: 8, color: '#999', fontSize: 12 }}>
-            您的共享摘要将匿名展示给其他购买者，帮助他们判断跟单价值。
+            您的共享摘要将匿名展示给其他购买者，帮助他们判断商机价值。
           </div>
         </div>
       </Dialog>

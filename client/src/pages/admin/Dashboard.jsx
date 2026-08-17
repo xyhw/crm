@@ -18,7 +18,7 @@ export default function Dashboard() {
 
   const statCards = [
     { title: '用户总数', value: stats?.totalUsers || 0, icon: <UserOutlined />, color: '#1677ff' },
-    { title: '跟单总数', value: stats?.totalOpportunities || 0, icon: <FileTextOutlined />, color: '#52c41a' },
+    { title: '商机总数', value: stats?.totalOpportunities || 0, icon: <FileTextOutlined />, color: '#52c41a' },
     { title: '订单总数', value: stats?.totalOrders || 0, icon: <OrderedListOutlined />, color: '#faad14' },
     { title: '积分总量', value: stats?.totalPoints || 0, icon: <CreditCardOutlined />, color: '#f5222d' },
   ];

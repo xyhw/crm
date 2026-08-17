@@ -6,10 +6,10 @@ import PageNavBar from '../components/PageNavBar';
 import { timeAgo } from '../constants';
 
 const CHANGE_LABELS = {
-  invalid_mark: '跟单被判无效',
+  invalid_mark: '商机被判无效',
   share_report: '分享被举报',
   account_report: '账号被举报',
-  purchase: '购买跟单',
+  purchase: '购买商机',
   share_helpful: '分享被认可',
   weekly_active: '活跃奖励',
   admin_adjust: '管理员调整',
@@ -92,7 +92,7 @@ export default function Credit() {
       <CellGroup inset style={{ marginTop: 12 }}>
         <Cell title="信用分说明" label="初始100分，根据您的行为动态调整" />
         <Cell title="80分以上" label="正常使用所有功能" />
-        <Cell title="60-80分" label="投稿跟单需要审核才能上架" />
+        <Cell title="60-80分" label="投稿商机需要审核才能上架" />
         <Cell title="40-60分" label="禁止投稿，只能购买和跟进" />
         <Cell title="40分以下" label="账号封禁" />
       </CellGroup>

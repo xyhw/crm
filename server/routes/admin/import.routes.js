@@ -63,7 +63,7 @@ router.post('/', adminAuthRequired, upload.single('file'), async (req, res) => {
     }
 
     fs.unlinkSync(req.file.path);
-    await recordLog(req.adminId, '批量导入跟单', 'opportunity', 0, { successCount: successes.length, errorCount: errors.length });
+    await recordLog(req.adminId, '批量导入商机', 'opportunity', 0, { successCount: successes.length, errorCount: errors.length });
 
     res.json({
       code: 0,

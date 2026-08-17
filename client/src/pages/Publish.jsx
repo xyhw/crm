@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Field, CellGroup, Button, Toast, Picker, Popup, Tag, Steps } from 'react-vant';
 import { api } from '../api';
 import PageNavBar from '../components/PageNavBar';
-import { SUPPLIER_CATEGORIES, ORDER_STAGES } from '../constants';
+import { SUPPLIER_CATEGORIES } from '../constants';
 import Uploader from '../components/Uploader';
 
 export default function Publish() {
@@ -14,16 +14,17 @@ export default function Publish() {
     categoryName: '',
     brand: '',
     city: '',
-    descriptionPublic: '',
+    address: '',
     contactName: '',
     contactPhone: '',
-    stage: '',
+    wechat: '',
     price: '',
+    stage: '',
+    descriptionFull: '',
     tags: [],
     files: [],
   });
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
-  const [showStagePicker, setShowStagePicker] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [similarList, setSimilarList] = useState(null);
@@ -33,14 +34,22 @@ export default function Publish() {
 
   const goNext = () => {
     if (!form.title.trim()) return Toast.fail('请输入项目名称');
-    if (!form.categoryId) return Toast.fail('请选择供应分类');
+    if (!form.categoryId) return Toast.fail('请选择需求分类');
+    if (!form.brand.trim()) return Toast.fail('请输入品牌');
+    if (!form.city.trim()) return Toast.fail('请输入城市');
+    if (!form.contactName.trim()) return Toast.fail('请输入联系人');
+    if (!form.contactPhone.trim()) return Toast.fail('请输入联系电话');
     if (!form.price || Number(form.price) <= 0) return Toast.fail('请设置积分定价');
     setStep(2);
   };
 
   const handlePublish = async () => {
     if (!form.title.trim()) return Toast.fail('请输入项目名称');
-    if (!form.categoryId) return Toast.fail('请选择供应分类');
+    if (!form.categoryId) return Toast.fail('请选择需求分类');
+    if (!form.brand.trim()) return Toast.fail('请输入品牌');
+    if (!form.city.trim()) return Toast.fail('请输入城市');
+    if (!form.contactName.trim()) return Toast.fail('请输入联系人');
+    if (!form.contactPhone.trim()) return Toast.fail('请输入联系电话');
     if (!form.price || Number(form.price) <= 0) return Toast.fail('请设置积分定价');
 
     setSubmitting(true);
@@ -48,20 +57,22 @@ export default function Publish() {
       const data = await api.createOpportunity({
         title: form.title.trim(),
         categoryId: form.categoryId,
-        brand: form.brand,
-        city: form.city,
-        descriptionPublic: form.descriptionPublic,
-        contactName: form.contactName,
-        contactPhone: form.contactPhone,
-        stage: form.stage,
+        brand: form.brand.trim(),
+        city: form.city.trim(),
+        address: form.address.trim(),
+        contactName: form.contactName.trim(),
+        contactPhone: form.contactPhone.trim(),
+        wechat: form.wechat.trim(),
         price: Number(form.price),
+        stage: form.stage.trim(),
+        descriptionFull: form.descriptionFull.trim(),
         tags: form.tags,
         attachments: form.files.map((f) => f.url),
       });
 
       if (data?.similarOpportunities?.length) {
         setSimilarList(data.similarOpportunities);
-        Toast.fail('存在相似跟单，请检查');
+        Toast.fail('存在相似商机，请检查');
       } else {
         Toast.success('发布成功');
         navigate('/');
@@ -86,11 +97,10 @@ export default function Publish() {
   };
 
   const categoryColumns = SUPPLIER_CATEGORIES.map((c) => ({ text: c.label, value: c.value }));
-  const stageColumns = ORDER_STAGES.map((s) => ({ text: s.label, value: s.value }));
 
   return (
     <div className="page">
-      <PageNavBar title="发布跟单" onClickLeft={() => navigate(-1)} />
+      <PageNavBar title="发布商机" onClickLeft={() => navigate(-1)} />
 
       <Steps active={step - 1} style={{ padding: '16px 24px 0' }}>
         <Steps.Item>基本信息</Steps.Item>
@@ -106,7 +116,7 @@ export default function Publish() {
           required
         />
         <Field
-          label="供应分类"
+          label="需求"
           placeholder="请选择"
           value={form.categoryName}
           isLink
@@ -117,17 +127,45 @@ export default function Publish() {
         {step === 1 && (
           <>
             <Field
+              label="品牌"
+              placeholder="如：某国际大酒店"
+              value={form.brand}
+              onChange={(v) => updateForm('brand', v)}
+              required
+            />
+            <Field
+              label="城市"
+              placeholder="如：上海"
+              value={form.city}
+              onChange={(v) => updateForm('city', v)}
+              required
+            />
+            <Field
+              label="具体地址"
+              placeholder="如：上海市浦东新区世纪大道100号"
+              value={form.address}
+              onChange={(v) => updateForm('address', v)}
+            />
+            <Field
               label="联系人"
               placeholder="您的姓名"
               value={form.contactName}
               onChange={(v) => updateForm('contactName', v)}
+              required
             />
             <Field
-              label="手机号"
+              label="联系电话"
               placeholder="您的电话"
               value={form.contactPhone}
               onChange={(v) => updateForm('contactPhone', v)}
               type="tel"
+              required
+            />
+            <Field
+              label="微信号"
+              placeholder="您的微信号"
+              value={form.wechat}
+              onChange={(v) => updateForm('wechat', v)}
             />
             <Field
               label="积分定价"
@@ -142,32 +180,20 @@ export default function Publish() {
         {step === 2 && (
           <>
             <Field
-              label="品牌"
-              placeholder="如：某国际大酒店"
-              value={form.brand}
-              onChange={(v) => updateForm('brand', v)}
-            />
-            <Field
-              label="所在城市"
-              placeholder="如：上海"
-              value={form.city}
-              onChange={(v) => updateForm('city', v)}
-            />
-            <Field
-              label="项目简介"
-              placeholder="简要描述项目内容与规模"
-              value={form.descriptionPublic}
-              onChange={(v) => updateForm('descriptionPublic', v)}
+              label="项目现状"
+              placeholder="如：已完成设计，正在招投标"
+              value={form.stage}
+              onChange={(v) => updateForm('stage', v)}
               type="textarea"
               rows={2}
             />
             <Field
-              label="项目进展"
-              placeholder="请选择"
-              value={form.stage ? ORDER_STAGES.find((s) => s.value === form.stage)?.label : ''}
-              isLink
-              readOnly
-              onClick={() => setShowStagePicker(true)}
+              label="项目概要"
+              placeholder="简要描述项目背景、规模与预期需求"
+              value={form.descriptionFull}
+              onChange={(v) => updateForm('descriptionFull', v)}
+              type="textarea"
+              rows={3}
             />
           </>
         )}
@@ -201,7 +227,7 @@ export default function Publish() {
 
           {/* 图纸附件 */}
           <div className="section">
-            <div className="section-title" style={{ marginBottom: 8 }}>图纸附件（最多9个）</div>
+            <div className="section-title" style={{ marginBottom: 8 }}>项目图纸（最多9个）</div>
             <Uploader files={form.files} onChange={(files) => updateForm('files', files)} />
           </div>
         </>
@@ -219,17 +245,17 @@ export default function Publish() {
               上一步
             </Button>
             <Button type="primary" block round loading={submitting} onClick={handlePublish}>
-              发布跟单
+              发布商机
             </Button>
           </>
         )}
       </div>
 
-      {/* 相似跟单提示 */}
+      {/* 相似商机提示 */}
       {similarList && (
         <Popup visible={!!similarList} onClose={() => setSimilarList(null)} style={{ padding: 20, borderRadius: 12, margin: 20, width: 'calc(100% - 40px)' }}>
-          <h3 style={{ margin: '0 0 12px' }}>发现相似跟单</h3>
-          <div style={{ marginBottom: 12, color: '#666' }}>以下跟单与您发布的跟单相似：</div>
+          <h3 style={{ margin: '0 0 12px' }}>发现相似商机</h3>
+          <div style={{ marginBottom: 12, color: '#666' }}>以下商机与您发布的商机相似：</div>
           {similarList.map((s) => (
             <div key={s.id} style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>{s.title}</div>
           ))}
@@ -249,18 +275,6 @@ export default function Publish() {
             setShowCategoryPicker(false);
           }}
           onCancel={() => setShowCategoryPicker(false)}
-        />
-      </Popup>
-
-      {/* 阶段选择器 */}
-      <Popup visible={showStagePicker} onClose={() => setShowStagePicker(false)} position="bottom" round>
-        <Picker
-          columns={stageColumns}
-          onConfirm={(val) => {
-            updateForm('stage', val);
-            setShowStagePicker(false);
-          }}
-          onCancel={() => setShowStagePicker(false)}
         />
       </Popup>
     </div>

@@ -96,7 +96,7 @@ export default function Profile() {
         <GridItem text="我的投稿" onClick={() => navigate('/my/orders')}>
           <div className="profile-stat-num">{stats?.published ?? 0}</div>
         </GridItem>
-        <GridItem text="CRM跟单" onClick={() => navigate('/crm')}>
+        <GridItem text="CRM商机" onClick={() => navigate('/crm')}>
           <div className="profile-stat-num">{stats?.crm ?? 0}</div>
         </GridItem>
         <GridItem text="被购买" onClick={() => navigate('/my/orders')}>

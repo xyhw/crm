@@ -75,7 +75,7 @@ export default function OpportunityList() {
             详情
           </Button>
           {record.status === 'active' ? (
-            <Popconfirm title="确认下架该跟单？" onConfirm={() => handleUpdateStatus(record, 'inactive')}>
+            <Popconfirm title="确认下架该商机？" onConfirm={() => handleUpdateStatus(record, 'inactive')}>
               <Button size="small" danger>
                 下架
               </Button>
@@ -94,7 +94,7 @@ export default function OpportunityList() {
 
   return (
     <div>
-      <Title level={4}>跟单管理</Title>
+      <Title level={4}>商机管理</Title>
       <Card>
         <div className="action-row">
           <Input
@@ -132,7 +132,7 @@ export default function OpportunityList() {
         />
       </Card>
 
-      <Drawer title={`跟单详情 #${detail?.id || ''}`} open={detailOpen} onClose={() => setDetailOpen(false)} width={520} loading={detailLoading}>
+      <Drawer title={`商机详情 #${detail?.id || ''}`} open={detailOpen} onClose={() => setDetailOpen(false)} width={520} loading={detailLoading}>
         {detail && (
           <Descriptions column={1} bordered size="small">
             <Descriptions.Item label="标题">{detail.title}</Descriptions.Item>

@@ -23,7 +23,7 @@ export default function Ranking() {
       <PageNavBar title="排行榜" onClickLeft={() => navigate(-1)} />
 
       <Tabs value={type} onChange={setType}>
-        <Tabs.TabPane title="跟单达人榜" name="publisher" />
+        <Tabs.TabPane title="商机达人榜" name="publisher" />
         <Tabs.TabPane title="贡献榜" name="contributor" />
       </Tabs>
 

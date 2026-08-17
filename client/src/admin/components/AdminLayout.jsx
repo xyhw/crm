@@ -12,7 +12,7 @@ const { Text } = Typography;
 
 const menuItems = [
   { key: '/admin', icon: <DashboardOutlined />, label: '仪表盘' },
-  { key: '/admin/opportunities', icon: <FileTextOutlined />, label: '跟单管理' },
+  { key: '/admin/opportunities', icon: <FileTextOutlined />, label: '商机管理' },
   { key: '/admin/opportunities/import', icon: <UploadOutlined />, label: '批量导入' },
   { key: '/admin/users', icon: <UserOutlined />, label: '用户管理' },
   { key: '/admin/orders', icon: <OrderedListOutlined />, label: '订单管理' },
@@ -46,7 +46,7 @@ export default function AdminLayout() {
     <Layout style={{ minHeight: '100vh' }}>
       <Sider>
         <div style={{ height: 32, margin: 16, textAlign: 'center' }}>
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: 600 }}>跟单管理后台</Text>
+          <Text style={{ color: '#fff', fontSize: 16, fontWeight: 600 }}>商机管理后台</Text>
         </div>
         <Menu
           theme="dark"

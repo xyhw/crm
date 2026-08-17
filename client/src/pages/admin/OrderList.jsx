@@ -32,7 +32,7 @@ export default function OrderList() {
 
   const columns = [
     { title: 'ID', dataIndex: 'id', width: 60 },
-    { title: '跟单标题', dataIndex: 'opportunity_title', ellipsis: true },
+    { title: '商机标题', dataIndex: 'opportunity_title', ellipsis: true },
     { title: '购买者', dataIndex: 'buyer_name', width: 100 },
     { title: '发布者', dataIndex: 'seller_name', width: 100 },
     { title: '实付积分', dataIndex: 'actual_price', width: 80 },

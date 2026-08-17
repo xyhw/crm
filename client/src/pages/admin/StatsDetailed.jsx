@@ -25,7 +25,7 @@ export default function StatsDetailed() {
 
       <Row gutter={16} style={{ marginBottom: 24 }}>
         <Col span={4}><Card><Statistic title="总用户数" value={dashboard?.totalUsers || 0} prefix={<UserOutlined />} valueStyle={{ color: '#1677ff' }} /></Card></Col>
-        <Col span={4}><Card><Statistic title="总跟单数" value={dashboard?.totalOpportunities || 0} prefix={<FileTextOutlined />} valueStyle={{ color: '#52c41a' }} /></Card></Col>
+        <Col span={4}><Card><Statistic title="总商机数" value={dashboard?.totalOpportunities || 0} prefix={<FileTextOutlined />} valueStyle={{ color: '#52c41a' }} /></Card></Col>
         <Col span={4}><Card><Statistic title="总订单数" value={dashboard?.totalOrders || 0} prefix={<OrderedListOutlined />} valueStyle={{ color: '#faad14' }} /></Card></Col>
         <Col span={4}><Card><Statistic title="总积分量" value={dashboard?.totalPoints || 0} prefix={<CreditCardOutlined />} valueStyle={{ color: '#f5222d' }} /></Card></Col>
         <Col span={4}><Card><Statistic title="今日订单" value={dashboard?.todayOrders || 0} prefix={<RiseOutlined />} valueStyle={{ color: '#1677ff' }} /></Card></Col>
@@ -45,7 +45,7 @@ export default function StatsDetailed() {
                 ))}
               </div>
             </Card>
-            <Card size="small" title="新跟单">
+            <Card size="small" title="新商机">
               <div style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>
                 {(trends?.opportunities || []).map((d, i) => (
                   <div key={i} style={{ textAlign: 'center', minWidth: 80 }}>
@@ -70,7 +70,7 @@ export default function StatsDetailed() {
 
         <Col span={12}>
           <Card title="分布统计" loading={loading}>
-            <Card size="small" title="跟单分类分布">
+            <Card size="small" title="商机分类分布">
               {(distribution?.oppCategories || []).map((d, i) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
                   <span>{d.name}</span><span style={{ fontWeight: 600 }}>{d.count}</span>

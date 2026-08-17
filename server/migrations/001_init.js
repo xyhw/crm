@@ -64,7 +64,7 @@ export async function initDatabase() {
       UNIQUE KEY uk_name (name)
     ) ENGINE=InnoDB`,
 
-    // 跟单表
+    // 商机表
     `CREATE TABLE IF NOT EXISTS opportunities (
       id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
       user_id BIGINT UNSIGNED NOT NULL,
@@ -74,7 +74,9 @@ export async function initDatabase() {
       description_full TEXT,
       contact_name VARCHAR(50),
       contact_phone VARCHAR(30),
+      wechat VARCHAR(50) COMMENT '微信号',
       city VARCHAR(50),
+      address VARCHAR(200) COMMENT '具体地址',
       hotel_name VARCHAR(100),
       stage VARCHAR(50),
       price INT NOT NULL COMMENT '积分定价',
@@ -95,7 +97,7 @@ export async function initDatabase() {
       INDEX idx_created_at (created_at)
     ) ENGINE=InnoDB`,
 
-    // 跟单标签关联表
+    // 商机标签关联表
     `CREATE TABLE IF NOT EXISTS opportunity_tag_relations (
       opportunity_id BIGINT UNSIGNED NOT NULL,
       tag_id INT UNSIGNED NOT NULL,

@@ -20,7 +20,7 @@ export default function Invite() {
       .catch((e) => Toast.fail(e.message))
       .finally(() => setLoading(false));
     api.me()
-      .then((me) => setNickname(me?.nickname || '酒店跟单伙伴'))
+      .then((me) => setNickname(me?.nickname || '酒店商机伙伴'))
       .catch(() => {});
   }, []);
 

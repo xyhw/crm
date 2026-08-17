@@ -63,7 +63,7 @@ export const CRM_STATUS_META = {
 export const INVALID_REASONS = [
   { value: 'contact_invalid', label: '联系方式无效' },
   { value: 'info_fake', label: '信息虚假' },
-  { value: 'duplicate', label: '重复跟单' },
+  { value: 'duplicate', label: '重复商机' },
   { value: 'other', label: '其他' },
 ];
 

@@ -5,7 +5,7 @@ import QRCode from 'qrcode';
 const POSTER_WIDTH = 750;
 const POSTER_HEIGHT = 1200;
 
-export default function InvitePoster({ inviteCode, nickname = '酒店跟单伙伴' }) {
+export default function InvitePoster({ inviteCode, nickname = '酒店商机伙伴' }) {
   const canvasRef = useRef(null);
   const [posterUrl, setPosterUrl] = useState('');
 
@@ -33,10 +33,10 @@ export default function InvitePoster({ inviteCode, nickname = '酒店跟单伙�
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 72px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('酒店跟单互助平台', POSTER_WIDTH / 2, 260);
+      ctx.fillText('酒店商机互助平台', POSTER_WIDTH / 2, 260);
 
       ctx.font = '32px sans-serif';
-      ctx.fillText('真实跟单信息 · 分享赚积分', POSTER_WIDTH / 2, 330);
+      ctx.fillText('真实商机信息 · 分享赚积分', POSTER_WIDTH / 2, 330);
 
       ctx.fillStyle = '#ffffff';
       ctx.font = '40px sans-serif';

@@ -49,7 +49,7 @@ describe('认证页面（开发需求 6.1.1）', () => {
         <Login />
       </MemoryRouter>
     );
-    expect(screen.getByText('跟单互助')).toBeTruthy();
+    expect(screen.getByText('商机互助')).toBeTruthy();
     expect(screen.getByText('酒店供应链供应商互助平台')).toBeTruthy();
     expect(screen.getByPlaceholderText('请输入手机号')).toBeTruthy();
     expect(screen.getByPlaceholderText('请输入密码')).toBeTruthy();

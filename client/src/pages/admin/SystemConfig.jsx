@@ -86,12 +86,12 @@ export default function SystemConfig() {
           </Row>
           <Row gutter={24}>
             <Col span={8}>
-              <Form.Item name="opportunity_price_min" label="跟单定价下限(积分)">
+              <Form.Item name="opportunity_price_min" label="商机定价下限(积分)">
                 <InputNumber min={1} style={{ width: '100%' }} />
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item name="opportunity_price_max" label="跟单定价上限(积分)">
+              <Form.Item name="opportunity_price_max" label="商机定价上限(积分)">
                 <InputNumber min={1} style={{ width: '100%' }} />
               </Form.Item>
             </Col>

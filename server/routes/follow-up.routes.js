@@ -14,13 +14,13 @@ router.post('/', authRequired, async (req, res) => {
       return res.json({ code: 400, message: '请填写跟进内容' });
     }
 
-    // 验证CRM跟单归属
+    // 验证CRM商机归属
     const crm = await queryOne(
       'SELECT id FROM crm_opportunities WHERE id = ? AND user_id = ?',
       [crmOpportunityId, req.userId]
     );
     if (!crm) {
-      return res.json({ code: 404, message: 'CRM跟单不存在' });
+      return res.json({ code: 404, message: 'CRM商机不存在' });
     }
 
     const followUp = await insert('follow_ups', {
@@ -48,13 +48,13 @@ router.post('/', authRequired, async (req, res) => {
 // 获取跟进记录列表
 router.get('/:crmOpportunityId', authRequired, async (req, res) => {
   try {
-    // 验证CRM跟单归属
+    // 验证CRM商机归属
     const crm = await queryOne(
       'SELECT id FROM crm_opportunities WHERE id = ? AND user_id = ?',
       [req.params.crmOpportunityId, req.userId]
     );
     if (!crm) {
-      return res.json({ code: 404, message: 'CRM跟单不存在' });
+      return res.json({ code: 404, message: 'CRM商机不存在' });
     }
 
     const followUps = await query(

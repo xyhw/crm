@@ -70,7 +70,7 @@ describe('P1 关键能力', () => {
     assert.strictEqual(me.data.category, 'zhuangxiu');
   });
 
-  it('发布跟单携带 brand/attachments/stage/tags', async () => {
+  it('发布商机携带 brand/attachments/stage/tags', async () => {
     const res = await apiPost('/opportunities', {
       title: 'P1测试-某酒店软装项目',
       categoryId: 3,

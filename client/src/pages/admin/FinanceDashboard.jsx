@@ -27,7 +27,7 @@ export default function FinanceDashboard() {
         <Col span={6}><Card><Statistic title="平台抽成累计" value={data.total?.platform || 0} suffix="积分" /></Card></Col>
         <Col span={6}><Card><Statistic title="卖家收入累计" value={data.total?.seller || 0} suffix="积分" /></Card></Col>
         <Col span={6}><Card><Statistic title="活跃用户" value={data.users?.active || 0} prefix={<UserOutlined />} /></Card></Col>
-        <Col span={6}><Card><Statistic title="在架跟单" value={data.opportunities?.active || 0} prefix={<RiseOutlined />} /></Card></Col>
+        <Col span={6}><Card><Statistic title="在架商机" value={data.opportunities?.active || 0} prefix={<RiseOutlined />} /></Card></Col>
       </Row>
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
         <Col span={24}>
