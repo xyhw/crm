@@ -148,14 +148,14 @@ export default function Publish() {
             />
             <Field
               label="联系人"
-              placeholder="您的姓名"
+              placeholder="如：王经理"
               value={form.contactName}
               onChange={(v) => updateForm('contactName', v)}
               required
             />
             <Field
               label="联系电话"
-              placeholder="您的电话"
+              placeholder="如：13912345678"
               value={form.contactPhone}
               onChange={(v) => updateForm('contactPhone', v)}
               type="tel"
@@ -163,7 +163,7 @@ export default function Publish() {
             />
             <Field
               label="微信号"
-              placeholder="您的微信号"
+              placeholder="如：wang123"
               value={form.wechat}
               onChange={(v) => updateForm('wechat', v)}
             />

@@ -163,8 +163,8 @@ describe('发布商机（开发需求 5.3 投稿上架 + 相似度检测）', ()
     fireEvent.change(screen.getByPlaceholderText('如：某酒店弱电总包采购'), { target: { value: title } });
     fireEvent.change(screen.getByPlaceholderText('如：某国际大酒店'), { target: { value: '维也纳酒店' } });
     fireEvent.change(screen.getByPlaceholderText('如：上海'), { target: { value: '杭州' } });
-    fireEvent.change(screen.getByPlaceholderText('您的姓名'), { target: { value: '张经理' } });
-    fireEvent.change(screen.getByPlaceholderText('您的电话'), { target: { value: '13900000001' } });
+    fireEvent.change(screen.getByPlaceholderText('如：王经理'), { target: { value: '张经理' } });
+    fireEvent.change(screen.getByPlaceholderText('如：13912345678'), { target: { value: '13900000001' } });
     fireEvent.change(screen.getByPlaceholderText('建议10-200积分'), { target: { value: price } });
     fireEvent.click(screen.getAllByPlaceholderText('请选择')[0]);
     await waitFor(() => expect(screen.getByText(category)).toBeTruthy());
@@ -189,7 +189,7 @@ describe('发布商机（开发需求 5.3 投稿上架 + 相似度检测）', ()
     await waitFor(() => expect(screen.getByPlaceholderText('如：某酒店弱电总包采购')).toBeTruthy());
     expect(screen.getByPlaceholderText('如：某国际大酒店')).toBeTruthy();
     expect(screen.getByPlaceholderText('如：上海')).toBeTruthy();
-    expect(screen.getByPlaceholderText('您的电话')).toBeTruthy();
+    expect(screen.getByPlaceholderText('如：13912345678')).toBeTruthy();
     expect(screen.getByPlaceholderText('建议10-200积分')).toBeTruthy();
     expect(screen.getByText('下一步')).toBeTruthy();
   });
@@ -238,7 +238,7 @@ describe('发布商机（开发需求 5.3 投稿上架 + 相似度检测）', ()
     fireEvent.change(screen.getByPlaceholderText('如：某酒店弱电总包采购'), { target: { value: '测试商机' } });
     fireEvent.change(screen.getByPlaceholderText('如：某国际大酒店'), { target: { value: '维也纳酒店' } });
     fireEvent.change(screen.getByPlaceholderText('如：上海'), { target: { value: '杭州' } });
-    fireEvent.change(screen.getByPlaceholderText('您的姓名'), { target: { value: '张经理' } });
+    fireEvent.change(screen.getByPlaceholderText('如：王经理'), { target: { value: '张经理' } });
     fireEvent.change(screen.getByPlaceholderText('建议10-200积分'), { target: { value: '88' } });
     fireEvent.click(screen.getAllByPlaceholderText('请选择')[0]);
     await waitFor(() => expect(screen.getByText('装修总包')).toBeTruthy());
@@ -261,7 +261,7 @@ describe('发布商机（开发需求 5.3 投稿上架 + 相似度检测）', ()
     );
     await fillStep1({ title: '弱电总包采购', price: '66' });
     fireEvent.change(screen.getByPlaceholderText('如：上海市浦东新区世纪大道100号'), { target: { value: '世纪大道100号' } });
-    fireEvent.change(screen.getByPlaceholderText('您的微信号'), { target: { value: 'zhang_jingli' } });
+    fireEvent.change(screen.getByPlaceholderText('如：wang123'), { target: { value: 'zhang_jingli' } });
     fireEvent.click(screen.getByText('下一步'));
     await waitFor(() => expect(screen.getAllByText('发布商机').length).toBeGreaterThan(0));
     const pubBtns = screen.getAllByText('发布商机');
