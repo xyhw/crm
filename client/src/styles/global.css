@@ -1373,8 +1373,8 @@ body {
 
 /* 交易状态标签（用于商机列表） */
 .opportunity-card.purchased {
-  border: 1px solid #d6e0ff;
-  background: #f6f8ff;
+  border: 1px solid #b6d4ff;
+  background: #eef5ff;
 }
 .opportunity-card.purchased .opportunity-card__title {
   color: var(--text-color);
@@ -1384,19 +1384,19 @@ body {
   color: var(--text-color-2);
 }
 .opportunity-card.purchased .opp-stage-tag {
-  background: #eef3ff;
-  color: #5b6bc2;
+  background: #dbeafe;
+  color: #3b6fd0;
 }
 .opportunity-card.purchased .opportunity-card__footer {
-  border-top: 1px solid #e8eeff;
+  border-top: 1px solid #d6e8ff;
 }
 .opportunity-card.purchased .opportunity-card__price {
   color: #f53f3f;
 }
 .opportunity-card.purchased .opportunity-card__price-label {
   display: inline-block;
-  background: #e8eeff;
-  color: #5b6bc2;
+  background: #dbeafe;
+  color: #3b6fd0;
   padding: 1px 6px;
   border-radius: 4px;
   font-size: 11px;
@@ -1418,7 +1418,7 @@ body {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #5b7cff;
+  background: #3b82f6;
   color: #fff;
   display: flex;
   align-items: center;
@@ -1430,8 +1430,8 @@ body {
 .opportunity-card__purchased-tag {
   display: inline-block;
   padding: 1px 6px;
-  background: #e8eeff;
-  color: #5b6bc2;
+  background: #dbeafe;
+  color: #3b6fd0;
   font-size: 11px;
   border-radius: 3px;
   margin-left: 6px;
