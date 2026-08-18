@@ -69,7 +69,7 @@ router.get('/:crmOpportunityId', authRequired, async (req, res) => {
   }
 });
 
-// 共享摘要
+// 分享摘要
 router.post('/share', authRequired, async (req, res) => {
   try {
     const { followUpId, opportunityId, status, summary } = req.body || {};
@@ -106,7 +106,7 @@ router.post('/share', authRequired, async (req, res) => {
         "SELECT config_value FROM system_configs WHERE config_key = 'share_reward_points'"
       );
       const rewardPoints = parseInt(rewardConfig[0]?.config_value || '2');
-      
+
       if (rewardPoints > 0) {
         await transaction(async (conn) => {
           await conn.execute(
@@ -133,17 +133,40 @@ router.post('/share', authRequired, async (req, res) => {
     });
   } catch (err) {
     console.error('Share follow-up error:', err);
-    res.status(500).json({ code: 500, message: '共享失败' });
+    res.status(500).json({ code: 500, message: '分享失败' });
   }
 });
 
-// 标记有用
+// 标记有用（防作弊：必须购买同条商机，且不能给自己标记）
 router.post('/helpful', authRequired, async (req, res) => {
   try {
     const { shareId } = req.body || {};
 
     if (!shareId) {
       return res.json({ code: 400, message: '参数错误' });
+    }
+
+    // 获取分享者及对应商机
+    const share = await queryOne(
+      'SELECT user_id, opportunity_id FROM follow_up_shares WHERE id = ? AND audit_status = "approved"',
+      [shareId]
+    );
+    if (!share) {
+      return res.json({ code: 404, message: '摘要不存在或未审核通过' });
+    }
+
+    // 不能给自己标记有用
+    if (share.user_id === req.userId) {
+      return res.json({ code: 403, message: '不能给自己的摘要标记有用' });
+    }
+
+    // 标记者必须购买过同一条商机
+    const purchase = await queryOne(
+      'SELECT id FROM orders WHERE user_id = ? AND opportunity_id = ? AND status = "paid"',
+      [req.userId, share.opportunity_id]
+    );
+    if (!purchase) {
+      return res.json({ code: 403, message: '只有购买同条商机的用户才能标记有用' });
     }
 
     // 检查是否已标记
@@ -168,34 +191,26 @@ router.post('/helpful', authRequired, async (req, res) => {
         [shareId]
       );
 
-      // 获取分享者ID
-      const [share] = await conn.execute(
-        'SELECT user_id FROM follow_up_shares WHERE id = ?',
-        [shareId]
+      // 给分享者奖励积分
+      const [rewardConfig] = await conn.execute(
+        "SELECT config_value FROM system_configs WHERE config_key = 'helpful_reward_points'"
       );
-      
-      if (share[0]) {
-        // 给分享者奖励积分
-        const [rewardConfig] = await conn.execute(
-          "SELECT config_value FROM system_configs WHERE config_key = 'helpful_reward_points'"
+      const rewardPoints = parseInt(rewardConfig[0]?.config_value || '1');
+
+      if (rewardPoints > 0) {
+        await conn.execute(
+          'UPDATE points_accounts SET balance = balance + ? WHERE user_id = ?',
+          [rewardPoints, share.user_id]
         );
-        const rewardPoints = parseInt(rewardConfig[0]?.config_value || '1');
-        
-        if (rewardPoints > 0) {
-          await conn.execute(
-            'UPDATE points_accounts SET balance = balance + ? WHERE user_id = ?',
-            [rewardPoints, share[0].user_id]
-          );
-          const [account] = await conn.execute(
-            'SELECT balance FROM points_accounts WHERE user_id = ?',
-            [share[0].user_id]
-          );
-          await conn.execute(
-            `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-             VALUES (?, ?, ?, 'reward', '摘要被标记有用')`,
-            [share[0].user_id, rewardPoints, account[0].balance]
-          );
-        }
+        const [account] = await conn.execute(
+          'SELECT balance FROM points_accounts WHERE user_id = ?',
+          [share.user_id]
+        );
+        await conn.execute(
+          `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
+           VALUES (?, ?, ?, 'reward', '摘要被标记有用')`,
+          [share.user_id, rewardPoints, account[0].balance]
+        );
       }
     });
 

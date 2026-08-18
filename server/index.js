@@ -10,6 +10,7 @@ import { migrateAnnouncements } from './migrations/003_announcements.js';
 import { migrateP1Indexes } from './migrations/004_p1_indexes.js';
 import { migratePointsLogsRefund } from './migrations/005_points_logs_refund.js';
 import { migrateOpportunityAddressWechat } from './migrations/006_opportunity_address_wechat.js';
+import { migrateFollowUpHelpfulMarks } from './migrations/007_follow_up_helpful_marks.js';
 import { seedDatabase } from './seeds/seed.js';
 import { closePool } from './db.js';
 import { adminAuthRequired } from './auth.js';
@@ -178,6 +179,9 @@ async function start() {
 
     await migrateOpportunityAddressWechat();
     console.log('[server] opportunities address/wechat columns ready');
+
+    await migrateFollowUpHelpfulMarks();
+    console.log('[server] follow_up_helpful_marks table ready');
 
     // 种子数据
     await seedDatabase();
