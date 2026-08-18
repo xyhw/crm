@@ -204,20 +204,9 @@ router.get('/:id', optionalAuth, async (req, res) => {
       publisherCompany: opportunity.publisher_company,
       tags: tags.map(t => ({ id: t.id, name: t.name })),
       createdAt: opportunity.created_at,
-      // 市场情报
-      marketIntelligence: {
-        totalShares: shares.length,
-        statusDistribution: statusCounts,
-        latestShares: shares.slice(0, 5).map(s => ({
-          status: s.status,
-          summary: s.summary,
-          helpfulCount: s.helpful_count,
-          createdAt: s.created_at,
-        })),
-      },
     };
 
-    // 仅购买者或投稿人可见
+    // 仅购买者或投稿人可见（含市场情报）
     if (isPurchased || isPublisher) {
       result.address = opportunity.address;
       result.stage = opportunity.stage;
@@ -230,6 +219,16 @@ router.get('/:id', optionalAuth, async (req, res) => {
       } catch {
         result.attachments = [];
       }
+      result.marketIntelligence = {
+        totalShares: shares.length,
+        statusDistribution: statusCounts,
+        latestShares: shares.slice(0, 5).map(s => ({
+          status: s.status,
+          summary: s.summary,
+          helpfulCount: s.helpful_count,
+          createdAt: s.created_at,
+        })),
+      };
     } else {
       result.attachments = [];
     }

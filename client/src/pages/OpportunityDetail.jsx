@@ -4,7 +4,7 @@ import { Tag, Toast, Button, Dialog, Field, CellGroup, Cell, Radio } from 'react
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
 import PageNavBar from '../components/PageNavBar';
-import { stageLabel, statusMeta, INVALID_REASONS, levelMeta } from '../constants';
+import { stageLabel, statusMeta, INVALID_REASONS, levelMeta, timeAgo } from '../constants';
 import Icon from '../components/Icon';
 
 export default function OpportunityDetail() {
@@ -198,7 +198,7 @@ export default function OpportunityDetail() {
         </div>
       )}
 
-      {/* 市场情报（若存在，购买后可见） */}
+      {/* 市场情报（若存在，仅购买同一条商机的人可见） */}
       {canViewFull && detail.marketIntelligence && detail.marketIntelligence.totalShares > 0 && (
         <div className="detail-section">
           <div className="detail-section__title">市场情报</div>
@@ -212,6 +212,25 @@ export default function OpportunityDetail() {
                 <span>{count} 人</span>
               </div>
             ))}
+            {detail.marketIntelligence.latestShares && detail.marketIntelligence.latestShares.length > 0 && (
+              <div className="detail-intelligence__shares">
+                <div className="detail-intelligence__shares-title" style={{ marginTop: 12, marginBottom: 8, color: '#666', fontSize: 13 }}>
+                  最近摘要
+                </div>
+                {detail.marketIntelligence.latestShares.map((s, idx) => (
+                  <div key={idx} className="detail-intelligence__share-item" style={{ padding: '8px 0', borderTop: idx > 0 ? '1px solid #eee' : 'none' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <Tag size="mini">{statusLabelMap[s.status] || s.status}</Tag>
+                      <span style={{ color: '#999', fontSize: 12 }}>{timeAgo(s.createdAt)}</span>
+                    </div>
+                    {s.summary && (
+                      <div style={{ color: '#333', fontSize: 13, lineHeight: 1.5 }}>{s.summary}</div>
+                    )}
+                    <div style={{ color: '#999', fontSize: 12, marginTop: 4 }}>👍 {s.helpfulCount || 0} 人觉得有用</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
