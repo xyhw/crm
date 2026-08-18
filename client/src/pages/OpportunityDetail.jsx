@@ -102,7 +102,6 @@ export default function OpportunityDetail() {
         <div className="detail-header__meta">
           <span><Icon name="location-o" size={14} /> {detail.city || '未知城市'}</span>
           <span><Icon name="hotel-o" size={14} /> {displayBrand}</span>
-          {detail.stage && <span><Icon name="clock-o" size={14} /> {stageLabel(detail.stage)}</span>}
         </div>
       </div>
       {/* 价格区 */}
@@ -131,26 +130,6 @@ export default function OpportunityDetail() {
         </div>
       </div>
 
-      {/* 具体地址 */}
-      {detail.address && (
-        <div className="detail-section">
-          <div className="detail-section__title">具体地址</div>
-          <div className="detail-section__content" style={{ color: '#666' }}>
-            {detail.address}
-          </div>
-        </div>
-      )}
-
-      {/* 项目现状 - 始终展示 */}
-      {detail.stage && (
-        <div className="detail-section">
-          <div className="detail-section__title">项目现状</div>
-          <div className="detail-section__content" style={{ color: '#666' }}>
-            {stageLabel(detail.stage)}
-          </div>
-        </div>
-      )}
-
       {/* 已购买标识 - 右上角 */}
       {detail.isPurchased && (
         <div style={{ position: 'absolute', top: 12, right: 12 }}>
@@ -161,6 +140,26 @@ export default function OpportunityDetail() {
       {/* 购买后才显示的内容 */}
       {canViewFull ? (
         <>
+          {/* 具体地址 */}
+          {detail.address && (
+            <div className="detail-section">
+              <div className="detail-section__title">具体地址</div>
+              <div className="detail-section__content" style={{ color: '#666' }}>
+                {detail.address}
+              </div>
+            </div>
+          )}
+
+          {/* 项目现状 */}
+          {detail.stage && (
+            <div className="detail-section">
+              <div className="detail-section__title">项目现状</div>
+              <div className="detail-section__content" style={{ color: '#666' }}>
+                {stageLabel(detail.stage)}
+              </div>
+            </div>
+          )}
+
           {/* 联系方式 */}
           <div className="detail-section">
             <div className="detail-section__title">联系方式</div>
@@ -202,7 +201,7 @@ export default function OpportunityDetail() {
         /* 未购买时的锁定提示 */
         <div className="detail-section detail-lock" style={{ textAlign: 'center', padding: '40px 0' }}>
           <Icon name="lock" size={48} color="#969799" />
-          <div style={{ marginTop: 16, fontSize: 14, color: '#666' }}>购买后查看联系方式、项目概要及图纸附件</div>
+          <div style={{ marginTop: 16, fontSize: 14, color: '#666' }}>购买后查看具体地址、联系人、项目现状、项目概要及图纸附件</div>
         </div>
       )}
 

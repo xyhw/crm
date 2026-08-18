@@ -96,20 +96,26 @@ describe('P1 关键能力', () => {
     assert.strictEqual(detail.data.isPublisher, true);
   });
 
-  it('匿名视角详情不泄露联系方式与附件', async () => {
+  it('匿名视角详情不泄露联系方式、地址、项目现状与附件', async () => {
     const detail = await apiGet(`/opportunities/${publishedId}`);
     assert.strictEqual(detail.code, 0);
     assert.strictEqual(detail.data.contactName, undefined);
+    assert.strictEqual(detail.data.contactPhone, undefined);
+    assert.strictEqual(detail.data.wechat, undefined);
+    assert.strictEqual(detail.data.address, undefined);
+    assert.strictEqual(detail.data.stage, undefined);
     assert.deepStrictEqual(detail.data.attachments, []);
   });
 
-  it('购买后解锁联系方式与附件', async () => {
+  it('购买后解锁联系方式、地址、项目现状与附件', async () => {
     const buyRes = await apiPost('/orders', { opportunityId: publishedId }, userBToken);
     assert.strictEqual(buyRes.code, 0);
 
     const detail = await apiGet(`/opportunities/${publishedId}`, userBToken);
     assert.strictEqual(detail.data.isPurchased, true);
     assert.strictEqual(detail.data.contactName, '王经理');
+    assert.strictEqual(detail.data.address, '');
+    assert.strictEqual(detail.data.stage, 'design');
     assert.strictEqual(detail.data.attachments.length, 2);
   });
 

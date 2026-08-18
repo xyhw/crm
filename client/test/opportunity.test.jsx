@@ -52,6 +52,7 @@ const makeDetail = (over = {}) => ({
   contactName: '张工',
   contactPhone: '13800000001',
   wechat: 'zhang_gong',
+  stage: '已完成设计，正在招投标',
   isPurchased: false,
   isPublisher: false,
   publisherName: '投稿人甲',
@@ -80,8 +81,8 @@ describe('商机详情（开发需求 6.1.2/6.1.3 购买解锁）', () => {
     );
     await waitFor(() => expect(screen.getByText('某国际酒店装修总包项目')).toBeTruthy());
     expect(screen.getByText('公开描述')).toBeTruthy();
-    expect(screen.getByText('西湖区文三路100号维也纳酒店')).toBeTruthy();
-    expect(screen.getByText(/购买后查看联系方式/)).toBeTruthy();
+    expect(screen.queryByText('西湖区文三路100号维也纳酒店')).toBeNull();
+    expect(screen.getByText(/购买后查看/)).toBeTruthy();
     expect(screen.queryByText('完整联系方式与详情')).toBeNull();
     expect(screen.queryByText('张工')).toBeNull();
     expect(screen.queryByText('zhang_gong')).toBeNull();
@@ -104,6 +105,8 @@ describe('商机详情（开发需求 6.1.2/6.1.3 购买解锁）', () => {
     expect(screen.getByText('张工')).toBeTruthy();
     expect(screen.getByText('13800000001')).toBeTruthy();
     expect(screen.getByText('zhang_gong')).toBeTruthy();
+    expect(screen.getByText('西湖区文三路100号维也纳酒店')).toBeTruthy();
+    expect(screen.getByText('已完成设计，正在招投标')).toBeTruthy();
     expect(screen.getByText('基于 2 位购买者跟进')).toBeTruthy();
     expect(screen.getByText('意向明确')).toBeTruthy();
   });
@@ -122,6 +125,8 @@ describe('商机详情（开发需求 6.1.2/6.1.3 购买解锁）', () => {
     expect(screen.getByText('投稿人甲')).toBeTruthy();
     expect(screen.getByText('某某工程公司')).toBeTruthy();
     expect(screen.getByText('zhang_gong')).toBeTruthy();
+    expect(screen.getByText('西湖区文三路100号维也纳酒店')).toBeTruthy();
+    expect(screen.getByText('已完成设计，正在招投标')).toBeTruthy();
   });
 
   it('购买按钮调用 purchase 接口并携带 opportunityId', async () => {

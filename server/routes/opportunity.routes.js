@@ -87,7 +87,6 @@ router.get('/', optionalAuth, async (req, res) => {
         categoryName: item.category_name,
         categoryIcon: item.category_icon,
         city: item.city,
-        address: item.address,
         brand: item.brand || item.hotel_name,
         hotelName: item.hotel_name,
         price: item.price,
@@ -98,9 +97,10 @@ router.get('/', optionalAuth, async (req, res) => {
         createdAt: item.created_at,
         // 公开字段
         descriptionPublic: item.description_public,
-        stage: item.stage,
         // 仅购买者或投稿人可见
         ...(isPurchased || isPublisher ? {
+          address: item.address,
+          stage: item.stage,
           descriptionFull: item.description_full,
           contactName: item.contact_name,
           contactPhone: item.contact_phone,
@@ -187,10 +187,8 @@ router.get('/:id', optionalAuth, async (req, res) => {
       categoryIcon: opportunity.category_icon,
       descriptionPublic: opportunity.description_public,
       city: opportunity.city,
-      address: opportunity.address,
       brand: opportunity.brand || opportunity.hotel_name,
       hotelName: opportunity.hotel_name,
-      stage: opportunity.stage,
       price: opportunity.price,
       status: opportunity.status,
       purchaseCount: opportunity.purchase_count,
@@ -215,6 +213,8 @@ router.get('/:id', optionalAuth, async (req, res) => {
 
     // 仅购买者或投稿人可见
     if (isPurchased || isPublisher) {
+      result.address = opportunity.address;
+      result.stage = opportunity.stage;
       result.descriptionFull = opportunity.description_full;
       result.contactName = opportunity.contact_name;
       result.contactPhone = opportunity.contact_phone;
