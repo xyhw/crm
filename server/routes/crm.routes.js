@@ -59,7 +59,8 @@ router.get('/:id', authRequired, async (req, res) => {
   try {
     const crm = await queryOne(
       `SELECT crm.*, o.title, o.description_full, 
-              o.city, o.hotel_name, o.price, o.contact_name, o.contact_phone,
+              o.city, o.address, o.hotel_name, o.price, o.contact_name, o.contact_phone,
+              o.wechat, o.stage, o.attachments, o.brand,
               c.name as category_name
        FROM crm_opportunities crm
        LEFT JOIN opportunities o ON crm.opportunity_id = o.id
@@ -78,10 +79,48 @@ router.get('/:id', authRequired, async (req, res) => {
       [req.params.id]
     );
 
+    // 获取市场情报（共享摘要）
+    let marketIntelligence = null;
+    if (crm.opportunity_id) {
+      const shares = await query(
+        `SELECT status, summary, helpful_count, created_at 
+         FROM follow_up_shares 
+         WHERE opportunity_id = ? AND audit_status = 'approved'
+         ORDER BY created_at DESC LIMIT 10`,
+        [crm.opportunity_id]
+      );
+      const statusCounts = {};
+      shares.forEach((s) => {
+        statusCounts[s.status] = (statusCounts[s.status] || 0) + 1;
+      });
+      marketIntelligence = {
+        totalShares: shares.length,
+        statusDistribution: statusCounts,
+        latestShares: shares.slice(0, 5).map((s) => ({
+          status: s.status,
+          summary: s.summary,
+          helpfulCount: s.helpful_count,
+          createdAt: s.created_at,
+        })),
+      };
+    }
+
+    // 解析附件
+    let attachments = [];
+    if (crm.attachments) {
+      try {
+        attachments = JSON.parse(crm.attachments);
+      } catch {
+        attachments = [];
+      }
+    }
+
     res.json({
       code: 0,
       data: {
         ...crm,
+        attachments,
+        marketIntelligence,
         followUps,
       },
     });

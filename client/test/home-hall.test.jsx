@@ -170,8 +170,7 @@ describe('商机大厅 Hall', () => {
     await waitFor(() => expect(screen.getByText('某国际酒店装修总包项目')).toBeTruthy());
     expect(screen.getByText('弱电总包项目')).toBeTruthy();
     expect(screen.getAllByText(/积分/).length).toBeGreaterThanOrEqual(2);
-    expect(screen.getByText('已解锁')).toBeTruthy();
-    expect(screen.getByText(/已解锁全部联系方式/)).toBeTruthy();
+    expect(screen.getAllByText('已解锁').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('12人已购')).toBeTruthy();
   });
 

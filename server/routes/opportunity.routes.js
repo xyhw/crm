@@ -11,7 +11,13 @@ router.get('/', optionalAuth, async (req, res) => {
   try {
     const { category, keyword, status = 'active', page = 1, pageSize = 10, sort = 'newest' } = req.query;
     
-    let sql = 'SELECT o.*, c.name as category_name, c.icon as category_icon, u.nickname as publisher_name FROM opportunities o LEFT JOIN opportunity_categories c ON o.category_id = c.id LEFT JOIN users u ON o.user_id = u.id WHERE 1=1';
+    let sql = `SELECT o.*, c.name as category_name, c.icon as category_icon, u.nickname as publisher_name,
+              (SELECT COUNT(*) FROM follow_up_shares WHERE opportunity_id = o.id AND audit_status = 'approved') as total_shares,
+              (SELECT MAX(created_at) FROM follow_up_shares WHERE opportunity_id = o.id AND audit_status = 'approved') as latest_share_at
+              FROM opportunities o
+              LEFT JOIN opportunity_categories c ON o.category_id = c.id
+              LEFT JOIN users u ON o.user_id = u.id
+              WHERE 1=1`;
     const params = [];
 
     if (status) {
@@ -95,6 +101,8 @@ router.get('/', optionalAuth, async (req, res) => {
         viewCount: item.view_count,
         publisherName: item.publisher_name,
         createdAt: item.created_at,
+        totalShares: item.total_shares || 0,
+        latestShareAt: item.latest_share_at,
         // 仅购买者或投稿人可见
         ...(isPurchased || isPublisher ? {
           address: item.address,

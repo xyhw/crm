@@ -1373,9 +1373,103 @@ body {
 
 /* 交易状态标签（用于商机列表） */
 .opportunity-card.purchased {
-  border: 2px solid #07c160;
-  background: #07c160;
+  border: 1px solid #d6e0ff;
+  background: #f6f8ff;
+}
+.opportunity-card.purchased .opportunity-card__title {
+  color: var(--text-color);
+  font-weight: 500;
+}
+.opportunity-card.purchased .opportunity-card__meta {
+  color: var(--text-color-2);
+}
+.opportunity-card.purchased .opp-stage-tag {
+  background: #eef3ff;
+  color: #5b6bc2;
+}
+.opportunity-card.purchased .opportunity-card__footer {
+  border-top: 1px solid #e8eeff;
+}
+.opportunity-card.purchased .opportunity-card__price {
+  color: #f53f3f;
+}
+.opportunity-card.purchased .opportunity-card__price-label {
+  display: inline-block;
+  background: #e8eeff;
+  color: #5b6bc2;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  margin-right: 6px;
+  font-weight: 500;
+}
+.opportunity-card.purchased .opportunity-card__price-strike {
+  color: #999;
+  text-decoration: line-through;
+  font-size: 12px;
+  margin-right: 4px;
+}
+
+/* 顶部细线已购买标识 */
+.opportunity-card__purchased-mark {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #5b7cff;
   color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 2;
+}
+.opportunity-card__purchased-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  background: #e8eeff;
+  color: #5b6bc2;
+  font-size: 11px;
+  border-radius: 3px;
+  margin-left: 6px;
+  vertical-align: middle;
+  font-weight: 500;
+}
+
+/* 新共享跟进提醒 */
+.opportunity-card__new-share {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 6px;
+  padding: 3px 8px;
+  background: #fff4e6;
+  color: #ed7b2f;
+  font-size: 12px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+.opportunity-card__new-share::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ed7b2f;
+  margin-right: 5px;
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.opportunity-card__lock-icon {
+  display: inline-block;
+  margin-right: 4px;
+  color: #969799;
+  font-size: 12px;
 }
 .opportunity-card.purchased .opportunity-card__title {
   color: #fff;

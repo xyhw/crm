@@ -3,7 +3,17 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Toast, Button, Cell, CellGroup, Tag, Dialog, Field, Radio, Popup, DatetimePicker } from 'react-vant';
 import { api } from '../api';
 import PageNavBar from '../components/PageNavBar';
-import { crmStatusLabel, formatDate, FOLLOW_UP_STATUS, followUpStatusLabel } from '../constants';
+import { crmStatusLabel, formatDate, FOLLOW_UP_STATUS, followUpStatusLabel, stageLabel, timeAgo } from '../constants';
+
+const statusLabelMap = {
+  call_no_answer: '电话未接通',
+  added_wechat: '已加微信',
+  interested: '意向明确',
+  quoting: '报价中',
+  negotiating: '谈判中',
+  closed: '已成交',
+  abandoned: '已放弃',
+};
 
 export default function CRMDetail() {
   const { id } = useParams();
@@ -109,7 +119,82 @@ export default function CRMDetail() {
         <CellGroup inset style={{ marginTop: 12 }}>
           <Cell title="联系人" value={detail.contact_name || '未填写'} />
           <Cell title="电话" value={detail.contact_phone || '未填写'} isLink onClick={() => detail.contact_phone && (window.location.href = `tel:${detail.contact_phone}`)} />
+          {detail.wechat && <Cell title="微信号" value={detail.wechat} />}
         </CellGroup>
+      )}
+
+      {/* 具体地址 */}
+      {detail.address && (
+        <div className="section">
+          <div className="section-title">具体地址</div>
+          <div style={{ padding: '8px 12px', color: '#666' }}>{detail.address}</div>
+        </div>
+      )}
+
+      {/* 项目现状 */}
+      {detail.stage && (
+        <div className="section">
+          <div className="section-title">项目现状</div>
+          <div style={{ padding: '8px 12px', color: '#666' }}>{stageLabel(detail.stage)}</div>
+        </div>
+      )}
+
+      {/* 项目概要 */}
+      {detail.description_full && (
+        <div className="section">
+          <div className="section-title">项目概要</div>
+          <div style={{ padding: '8px 12px', color: '#333', lineHeight: 1.6 }}>{detail.description_full}</div>
+        </div>
+      )}
+
+      {/* 图纸附件 */}
+      {detail.attachments && detail.attachments.length > 0 && (
+        <div className="section">
+          <div className="section-title">图纸附件</div>
+          <div style={{ padding: '8px 12px', display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {detail.attachments.map((url, idx) => (
+              <div key={idx} style={{ width: 80, height: 80, position: 'relative' }}>
+                <img src={url} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }} />
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.5)', color: '#fff', textAlign: 'center', fontSize: 10, padding: '2px 0' }}>
+                  附件{idx + 1}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 市场情报（购买者可见） */}
+      {detail.marketIntelligence && detail.marketIntelligence.totalShares > 0 && (
+        <div className="section">
+          <div className="section-title">市场情报</div>
+          <div style={{ padding: '8px 12px', color: '#666', fontSize: 13 }}>
+            基于 {detail.marketIntelligence.totalShares} 位购买者跟进
+          </div>
+          {detail.marketIntelligence.statusDistribution && Object.entries(detail.marketIntelligence.statusDistribution).map(([status, count]) => (
+            <div key={status} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 12px', color: '#666' }}>
+              <span>{statusLabelMap[status] || status}</span>
+              <span>{count} 人</span>
+            </div>
+          ))}
+          {detail.marketIntelligence.latestShares && detail.marketIntelligence.latestShares.length > 0 && (
+            <div style={{ padding: '8px 12px' }}>
+              <div style={{ color: '#999', fontSize: 12, marginBottom: 6 }}>最近摘要</div>
+              {detail.marketIntelligence.latestShares.map((s, idx) => (
+                <div key={idx} style={{ padding: '8px 0', borderTop: idx > 0 ? '1px solid #eee' : 'none' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <Tag size="mini">{statusLabelMap[s.status] || s.status}</Tag>
+                    <span style={{ color: '#999', fontSize: 12 }}>{timeAgo(s.createdAt)}</span>
+                  </div>
+                  {s.summary && (
+                    <div style={{ color: '#333', fontSize: 13, lineHeight: 1.5 }}>{s.summary}</div>
+                  )}
+                  <div style={{ color: '#999', fontSize: 12, marginTop: 4 }}>👍 {s.helpfulCount || 0} 人觉得有用</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {/* 跟进记录 */}

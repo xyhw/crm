@@ -20,7 +20,14 @@ export default function OpportunityDetail() {
 
   useEffect(() => {
     api.opportunity(id)
-      .then(setDetail)
+      .then((res) => {
+        setDetail(res);
+        // 记录已读基线：商机详情页访问后，标记该商机摘要已读总数
+        const total = res?.marketIntelligence?.totalShares || 0;
+        try {
+          localStorage.setItem(`viewedShares_${id}`, String(total));
+        } catch {}
+      })
       .catch((e) => Toast.fail(e.message))
       .finally(() => setLoading(false));
   }, [id]);
@@ -260,9 +267,14 @@ export default function OpportunityDetail() {
           </Button>
         )}
         {detail.isPurchased && detail.crmId && (
-          <Button plain block round style={{ marginTop: 8 }} onClick={() => navigate(`/crm/${detail.crmId}#share`)}>
-            分享跟进
-          </Button>
+          <>
+            <Button plain block round style={{ marginTop: 8 }} onClick={() => navigate(`/crm/${detail.crmId}`)}>
+              新增跟进
+            </Button>
+            <Button plain block round style={{ marginTop: 8 }} onClick={() => navigate(`/crm/${detail.crmId}#share`)}>
+              分享摘要
+            </Button>
+          </>
         )}
         {detail.isPurchased && (
           <Button plain block round style={{ marginTop: 8 }} onClick={() => setShowInvalidDialog(true)}>

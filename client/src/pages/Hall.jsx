@@ -121,11 +121,26 @@ export default function Hall() {
                   <div className="opportunity-card__info">
                     <div className="opportunity-card__title">
                       {item.title}
+                      {item.isPurchased && <span className="opportunity-card__purchased-tag">已解锁</span>}
                     </div>
                     <div className="opportunity-card__meta">
                       {item.hotelName || item.brand || '未知品牌'} · {item.city || '未知城市'}
                       {item.stage && <span className="opp-stage-tag">{stageLabel(item.stage)}</span>}
                     </div>
+                    {item.isPurchased && (() => {
+                      try {
+                        const viewed = parseInt(localStorage.getItem(`viewedShares_${item.id}`) || '0', 10);
+                        const newCount = Math.max(0, (item.totalShares || 0) - viewed);
+                        if (newCount > 0) {
+                          return (
+                            <div className="opportunity-card__new-share">
+                              {newCount} 条新共享跟进
+                            </div>
+                          );
+                        }
+                      } catch {}
+                      return null;
+                    })()}
                   </div>
                 </div>
                 <div className="opportunity-card__footer">
@@ -148,9 +163,6 @@ export default function Hall() {
                     <span className="opportunity-card__time">{timeAgo(item.createdAt)}</span>
                   </div>
                 </div>
-                {item.isPurchased && (
-                  <div className="opportunity-card__purchased-bar">✓ 已解锁全部联系方式</div>
-                )}
               </div>
             ))
           )}
