@@ -1059,6 +1059,10 @@ body {
 }
 
 /* 商机卡片 */
+.opportunity-card {
+  position: relative;
+  overflow: hidden;
+}
 .opportunity-card__header {
   display: flex;
   align-items: center;
@@ -1366,11 +1370,39 @@ body {
 
 /* 交易状态标签（用于商机列表） */
 .opportunity-card.purchased {
-  border: 1px solid #e6ffed;
-  background: #f0fff9;
+  border: 1px solid #07c160;
+  background: linear-gradient(135deg, #e8f9ee 0%, #f0fff9 60%, #ffffff 100%);
+  padding-left: 14px;
+}
+.opportunity-card.purchased::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #07c160;
 }
 .opportunity-card.purchased .purchased-badge {
   background: #07c160;
+}
+.opportunity-card.purchased .opportunity-card__price {
+  color: #07c160;
+}
+.opportunity-card.purchased .opportunity-card__price-label {
+  font-size: 11px;
+  color: #07c160;
+  margin-right: 4px;
+  font-weight: 500;
+}
+.opportunity-card.purchased .opportunity-card__icon {
+  filter: none;
+}
+.opportunity-card__lock-icon {
+  display: inline-block;
+  margin-right: 4px;
+  color: #969799;
+  font-size: 12px;
 }
 
 /* 资质展示区 */
