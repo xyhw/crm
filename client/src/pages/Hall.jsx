@@ -113,7 +113,9 @@ export default function Hall() {
                 key={item.id}
                 onClick={() => navigate(`/opportunity/${item.id}`)}
               >
-                {item.isPurchased && <span className="purchased-badge">已购买</span>}
+                {item.isPurchased && (
+                  <span className="opportunity-card__purchased-mark" aria-label="已购买">✓</span>
+                )}
                 <div className="opportunity-card__header">
                   <div className="opportunity-card__icon">{item.categoryIcon || '📦'}</div>
                   <div className="opportunity-card__info">
@@ -131,7 +133,7 @@ export default function Hall() {
                     {item.isPurchased ? (
                       <>
                         <span className="opportunity-card__price-label">已解锁</span>
-                        <span style={{ textDecoration: 'line-through', color: '#999', fontSize: 12, marginRight: 4 }}>{item.price}</span>
+                        <span className="opportunity-card__price-strike">{item.price}</span>
                         <span style={{ fontSize: 12 }}>积分</span>
                       </>
                     ) : (
@@ -146,6 +148,9 @@ export default function Hall() {
                     <span className="opportunity-card__time">{timeAgo(item.createdAt)}</span>
                   </div>
                 </div>
+                {item.isPurchased && (
+                  <div className="opportunity-card__purchased-bar">✓ 已解锁全部联系方式</div>
+                )}
               </div>
             ))
           )}
