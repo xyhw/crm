@@ -1372,66 +1372,33 @@ body {
 }
 
 /* 交易状态标签（用于商机列表） */
+/* 已购买卡片：极简风——仅用左边框和小标签区分，底色与未购买保持一致 */
 .opportunity-card.purchased {
-  border: 1px solid #b6d4ff;
-  background: #eef5ff;
+  border-left: 3px solid #1989fa;
+  padding-left: 10px;
 }
 .opportunity-card.purchased .opportunity-card__title {
   color: var(--text-color);
-  font-weight: 500;
 }
-.opportunity-card.purchased .opportunity-card__meta {
-  color: var(--text-color-2);
-}
-.opportunity-card.purchased .opp-stage-tag {
-  background: #dbeafe;
-  color: #3b6fd0;
-}
-.opportunity-card.purchased .opportunity-card__footer {
-  border-top: 1px solid #d6e8ff;
-}
-.opportunity-card.purchased .opportunity-card__price {
-  color: #f53f3f;
-}
-.opportunity-card.purchased .opportunity-card__price-label {
-  display: inline-block;
-  background: #dbeafe;
-  color: #3b6fd0;
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-size: 11px;
-  margin-right: 6px;
-  font-weight: 500;
-}
-.opportunity-card.purchased .opportunity-card__price-strike {
-  color: #999;
-  text-decoration: line-through;
-  font-size: 12px;
-  margin-right: 4px;
-}
-
-/* 顶部细线已购买标识 */
 .opportunity-card__purchased-mark {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #3b82f6;
-  color: #fff;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #1989fa;
+  color: #fff;
+  font-size: 11px;
   font-weight: 600;
-  z-index: 2;
+  margin-right: 5px;
+  flex-shrink: 0;
 }
 .opportunity-card__purchased-tag {
   display: inline-block;
-  padding: 1px 6px;
-  background: #dbeafe;
-  color: #3b6fd0;
+  padding: 1px 5px;
+  background: #e8f3ff;
+  color: #1989fa;
   font-size: 11px;
   border-radius: 3px;
   margin-left: 6px;
