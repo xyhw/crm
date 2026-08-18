@@ -56,7 +56,7 @@ export default function AuditLogPage() {
           <Select placeholder="目标类型" style={{ width: 120 }} allowClear
             onChange={(v) => setParams({ ...params, targetType: v })}>
             <Option value="opportunities">商机</Option><Option value="users">用户</Option>
-            <Option value="orders">订单</Option><Option value="follow_up_shares">共享摘要</Option>
+            <Option value="orders">订单</Option><Option value="follow_up_shares">分享摘要</Option>
             <Option value="member_levels">等级</Option><Option value="system_configs">配置</Option>
             <Option value="role">角色</Option><Option value="admin_user">管理员</Option>
           </Select>

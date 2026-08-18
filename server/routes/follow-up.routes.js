@@ -84,7 +84,7 @@ router.post('/share', authRequired, async (req, res) => {
       [req.userId, opportunityId]
     );
     if (!purchase) {
-      return res.json({ code: 400, message: '只有购买者才能共享摘要' });
+      return res.json({ code: 400, message: '只有购买者才能分享摘要' });
     }
 
     // 检查用户等级，决定是否免审
@@ -119,7 +119,7 @@ router.post('/share', authRequired, async (req, res) => {
           );
           await conn.execute(
             `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-             VALUES (?, ?, ?, 'reward', '共享摘要奖励')`,
+             VALUES (?, ?, ?, 'reward', '分享摘要奖励')`,
             [req.userId, rewardPoints, account[0].balance]
           );
         });
@@ -129,7 +129,7 @@ router.post('/share', authRequired, async (req, res) => {
     res.json({
       code: 0,
       data: { id: share.id, auditStatus: share.audit_status },
-      message: freeAudit ? '共享成功' : '共享成功，等待审核',
+      message: freeAudit ? '分享成功' : '分享成功，等待审核',
     });
   } catch (err) {
     console.error('Share follow-up error:', err);

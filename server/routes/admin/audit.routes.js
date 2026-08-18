@@ -78,7 +78,7 @@ router.put('/follow-up-shares/:id', async (req, res) => {
           );
           await conn.execute(
             `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-             VALUES (?, ?, ?, 'reward', '共享摘要审核通过奖励')`,
+             VALUES (?, ?, ?, 'reward', '分享摘要审核通过奖励')`,
             [share.user_id, rewardPoints, account[0].balance]
           );
         });

@@ -68,7 +68,7 @@ export default function CRMDetail() {
   };
 
   const handleShare = async () => {
-    if (!shareForm.summary.trim()) return Toast.fail('请填写共享摘要');
+    if (!shareForm.summary.trim()) return Toast.fail('请填写分享摘要');
 
     setSubmitting(true);
     try {
@@ -77,7 +77,7 @@ export default function CRMDetail() {
         status: shareForm.status,
         summary: shareForm.summary,
       });
-      Toast.success('共享成功');
+      Toast.success('分享成功');
       setShowShare(false);
       setShareForm({ status: 'call_no_answer', summary: '' });
     } catch (e) {
@@ -141,7 +141,7 @@ export default function CRMDetail() {
           新增进跟
         </Button>
         <Button type="success" block round onClick={() => setShowShare(true)}>
-          共享进度
+          分享摘要
         </Button>
       </div>
 
@@ -200,10 +200,10 @@ export default function CRMDetail() {
         />
       </Popup>
 
-      {/* 共享进度弹窗 */}
+      {/* 分享摘要弹窗 */}
       <Dialog
         visible={showShare}
-        title="共享进度"
+        title="分享摘要"
         showCancelButton
         onConfirm={handleShare}
         onCancel={() => setShowShare(false)}
@@ -223,13 +223,13 @@ export default function CRMDetail() {
             ))}
           </div>
           <Field
-            label="共享摘要"
+            label="分享摘要"
             placeholder="一句话描述进度（匿名展示）"
             value={shareForm.summary}
             onChange={(v) => setShareForm({ ...shareForm, summary: v })}
           />
           <div style={{ marginTop: 8, color: '#999', fontSize: 12 }}>
-            您的共享摘要将匿名展示给其他购买者，帮助他们判断商机价值。
+            您分享的摘要将匿名展示给其他购买者，帮助他们判断商机价值。
           </div>
           <div style={{ marginTop: 8, padding: 8, background: '#fff7e6', borderRadius: 4, color: '#d48806', fontSize: 12 }}>
             奖励规则：分享通过审核 +2 积分；摘要被标记有用 +1 积分

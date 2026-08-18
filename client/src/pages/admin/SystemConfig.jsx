@@ -69,7 +69,7 @@ export default function SystemConfig() {
           </Row>
           <Row gutter={24}>
             <Col span={8}>
-              <Form.Item name="share_reward_points" label="共享奖励积分">
+              <Form.Item name="share_reward_points" label="分享奖励积分">
                 <InputNumber min={0} style={{ width: '100%' }} />
               </Form.Item>
             </Col>

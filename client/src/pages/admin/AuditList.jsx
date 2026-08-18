@@ -35,7 +35,7 @@ export default function AuditList() {
     { title: '商机标题', dataIndex: 'opportunity_title', ellipsis: true },
     { title: '提交者', dataIndex: 'user_name', width: 100 },
     { title: '进度状态', dataIndex: 'status', width: 100, render: (v) => <Tag>{followUpStatusLabel(v)}</Tag> },
-    { title: '共享摘要', dataIndex: 'summary', ellipsis: true },
+    { title: '分享摘要', dataIndex: 'summary', ellipsis: true },
     { title: '提交时间', dataIndex: 'created_at', width: 160, render: formatDate },
     {
       title: '操作',
@@ -101,7 +101,7 @@ export default function AuditList() {
       >
         {auditItem && (
           <div>
-            <Paragraph>确定要{auditItem.auditStatus === 'approved' ? '通过' : '驳回'}这条共享摘要吗？</Paragraph>
+            <Paragraph>确定要{auditItem.auditStatus === 'approved' ? '通过' : '驳回'}这条分享摘要吗？</Paragraph>
             <Paragraph type="secondary">摘要内容：{auditItem.summary}</Paragraph>
           </div>
         )}

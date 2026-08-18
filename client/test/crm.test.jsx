@@ -100,7 +100,7 @@ describe('个人 CRM 列表（开发需求 6.1.4）', () => {
   });
 });
 
-describe('CRM 详情（开发需求 5.8 跟进记录 + 共享进度）', () => {
+describe('CRM 详情（开发需求 5.8 跟进记录 + 分享摘要）', () => {
   afterEach(() => cleanup());
 
   beforeEach(() => {
@@ -141,7 +141,7 @@ describe('CRM 详情（开发需求 5.8 跟进记录 + 共享进度）', () => {
     expect(screen.getByText('13800000001')).toBeTruthy();
     expect(screen.getByText('客户很感兴趣，约了下周面谈')).toBeTruthy();
     expect(screen.getByText('新增进跟')).toBeTruthy();
-    expect(screen.getByText('共享进度')).toBeTruthy();
+    expect(screen.getByText('分享摘要')).toBeTruthy();
   });
 
   it('手动录入来源不展示联系方式', async () => {
@@ -184,7 +184,7 @@ describe('CRM 详情（开发需求 5.8 跟进记录 + 共享进度）', () => {
     });
   });
 
-  it('共享进度：填写摘要后提交 shareFollowUp', async () => {
+  it('分享摘要：填写摘要后提交 shareFollowUp', async () => {
     const { api } = await import('../src/api');
     api.crmDetail.mockResolvedValue(makeCrm());
     api.shareFollowUp.mockResolvedValue({});
@@ -195,8 +195,8 @@ describe('CRM 详情（开发需求 5.8 跟进记录 + 共享进度）', () => {
         </Routes>
       </MemoryRouter>
     );
-    await waitFor(() => expect(screen.getByText('共享进度')).toBeTruthy());
-    fireEvent.click(screen.getByText('共享进度'));
+    await waitFor(() => expect(screen.getByText('分享摘要')).toBeTruthy());
+    fireEvent.click(screen.getByText('分享摘要'));
     await waitFor(() => expect(screen.getByText(/匿名展示/)).toBeTruthy());
     fireEvent.change(screen.getByPlaceholderText('一句话描述进度（匿名展示）'), { target: { value: '已初步接触，对方态度积极' } });
     fireEvent.click(screen.getAllByText('确认')[0]);

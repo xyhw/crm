@@ -122,7 +122,7 @@ export default function LevelConfig() {
           <Form.Item name="mark_weight" label="无效标记权重" rules={[{ required: true }]}>
             <InputNumber min={1} max={3} style={{ width: '100%' }} />
           </Form.Item>
-          <Form.Item name="free_audit" label="共享摘要免审" valuePropName="checked">
+          <Form.Item name="free_audit" label="分享摘要免审" valuePropName="checked">
             <Switch />
           </Form.Item>
         </Form>
