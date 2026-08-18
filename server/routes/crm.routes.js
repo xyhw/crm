@@ -58,7 +58,7 @@ router.get('/', authRequired, async (req, res) => {
 router.get('/:id', authRequired, async (req, res) => {
   try {
     const crm = await queryOne(
-      `SELECT crm.*, o.title, o.description_public, o.description_full, 
+      `SELECT crm.*, o.title, o.description_full, 
               o.city, o.hotel_name, o.price, o.contact_name, o.contact_phone,
               c.name as category_name
        FROM crm_opportunities crm
@@ -105,7 +105,6 @@ router.post('/', authRequired, async (req, res) => {
       user_id: req.userId,
       title,
       category_id: 1, // 默认分类
-      description_public: description || '',
       description_full: description || '',
       contact_name: contactName || '',
       contact_phone: contactPhone || '',
@@ -150,7 +149,7 @@ router.post('/:id/publish', authRequired, async (req, res) => {
       return res.json({ code: 400, message: '购买的商机不能投稿' });
     }
 
-    const { price, descriptionPublic, descriptionFull } = req.body || {};
+    const { price, descriptionFull } = req.body || {};
     if (!price) {
       return res.json({ code: 400, message: '请设置定价' });
     }
@@ -158,7 +157,6 @@ router.post('/:id/publish', authRequired, async (req, res) => {
     // 更新商机信息
     await update('opportunities', {
       price: Number(price),
-      description_public: descriptionPublic || '',
       description_full: descriptionFull || '',
     }, 'id = ?', [crm.opportunity_id]);
 

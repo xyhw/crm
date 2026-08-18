@@ -47,7 +47,6 @@ const makeDetail = (over = {}) => ({
   purchaseCount: 12,
   viewCount: 30,
   status: 'active',
-  descriptionPublic: '公开描述',
   descriptionFull: '完整联系方式与详情',
   contactName: '张工',
   contactPhone: '13800000001',
@@ -80,7 +79,6 @@ describe('商机详情（开发需求 6.1.2/6.1.3 购买解锁）', () => {
       </MemoryRouter>
     );
     await waitFor(() => expect(screen.getByText('某国际酒店装修总包项目')).toBeTruthy());
-    expect(screen.getByText('公开描述')).toBeTruthy();
     expect(screen.queryByText('西湖区文三路100号维也纳酒店')).toBeNull();
     expect(screen.getByText(/购买后查看/)).toBeTruthy();
     expect(screen.queryByText('完整联系方式与详情')).toBeNull();

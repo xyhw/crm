@@ -76,7 +76,6 @@ describe('P1 关键能力', () => {
       categoryId: 3,
       brand: '测试酒店品牌',
       city: '北京',
-      descriptionPublic: '公开简介',
       contactName: '王经理',
       contactPhone: '13711112222',
       stage: 'design',

@@ -45,8 +45,9 @@ export default function OpportunityDetail() {
     }).then(async () => {
       setPurchasing(true);
       try {
-        await api.purchase({ opportunityId: Number(id) });
-        Toast.success('购买成功');
+        const res = await api.purchase({ opportunityId: Number(id) });
+        const actual = res?.actualPrice;
+        Toast.success(actual != null ? `购买成功，实付 ${actual} 积分` : '购买成功');
         const newDetail = await api.opportunity(id);
         setDetail(newDetail);
       } catch (e) {
@@ -121,14 +122,6 @@ export default function OpportunityDetail() {
           ))}
         </div>
       )}
-
-      {/* 项目简介 - 始终展示（公开描述） */}
-      <div className="detail-section">
-        <div className="detail-section__title">项目简介</div>
-        <div className="detail-section__content" style={{ lineHeight: 1.6, color: '#333' }}>
-          {detail.descriptionPublic || '暂无简介'}
-        </div>
-      </div>
 
       {/* 已购买标识 - 右上角 */}
       {detail.isPurchased && (
@@ -244,7 +237,7 @@ export default function OpportunityDetail() {
         )}
         {canViewFull && (
           <Button type="success" block round onClick={() => navigate('/crm')}>
-            进入CRM管理
+            {detail.isPublisher ? '查看跟进分布' : '进入CRM管理'}
           </Button>
         )}
         {detail.isPurchased && (

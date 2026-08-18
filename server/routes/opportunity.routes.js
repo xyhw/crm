@@ -95,8 +95,6 @@ router.get('/', optionalAuth, async (req, res) => {
         viewCount: item.view_count,
         publisherName: item.publisher_name,
         createdAt: item.created_at,
-        // 公开字段
-        descriptionPublic: item.description_public,
         // 仅购买者或投稿人可见
         ...(isPurchased || isPublisher ? {
           address: item.address,
@@ -185,7 +183,6 @@ router.get('/:id', optionalAuth, async (req, res) => {
       title: opportunity.title,
       categoryName: opportunity.category_name,
       categoryIcon: opportunity.category_icon,
-      descriptionPublic: opportunity.description_public,
       city: opportunity.city,
       brand: opportunity.brand || opportunity.hotel_name,
       hotelName: opportunity.hotel_name,
@@ -241,7 +238,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
 // 发布商机
 router.post('/', authRequired, async (req, res) => {
   try {
-    const { title, categoryId, descriptionPublic, descriptionFull, contactName, contactPhone, city, address, brand, wechat, stage, price, tags, attachments } = req.body || {};
+    const { title, categoryId, descriptionFull, contactName, contactPhone, city, address, brand, wechat, stage, price, tags, attachments } = req.body || {};
 
     if (!title || !categoryId || !brand || !city || !contactName || !contactPhone || !price) {
       return res.json({ code: 400, message: '请完善必填信息' });
@@ -261,7 +258,6 @@ router.post('/', authRequired, async (req, res) => {
       user_id: req.userId,
       title,
       category_id: categoryId,
-      description_public: descriptionPublic || '',
       description_full: descriptionFull || '',
       contact_name: contactName || '',
       contact_phone: contactPhone || '',

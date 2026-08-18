@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Tag, Toast, Search, PullRefresh, List } from 'react-vant';
 import { api } from '../api';
 import PageNavBar from '../components/PageNavBar';
-import { SUPPLIER_CATEGORIES, timeAgo } from '../constants';
+import { SUPPLIER_CATEGORIES, timeAgo, stageLabel } from '../constants';
 
 export default function Hall() {
   const navigate = useNavigate();
@@ -61,7 +61,7 @@ export default function Hall() {
 
   const categoryTabs = [
     { title: '全部', value: '' },
-    ...SUPPLIER_CATEGORIES.slice(0, 5).map((c) => ({ title: c.label, value: c.value })),
+    ...SUPPLIER_CATEGORIES.map((c) => ({ title: c.label, value: c.value })),
   ];
 
   return (
@@ -122,7 +122,7 @@ export default function Hall() {
                     </div>
                     <div className="opportunity-card__meta">
                       {item.hotelName || item.brand || '未知品牌'} · {item.city || '未知城市'}
-                      {item.stage && <span className="opp-stage-tag">{item.stage}</span>}
+                      {item.stage && <span className="opp-stage-tag">{stageLabel(item.stage)}</span>}
                     </div>
                   </div>
                 </div>
