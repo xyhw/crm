@@ -107,6 +107,7 @@ describe('商机详情（开发需求 6.1.2/6.1.3 购买解锁）', () => {
     expect(screen.getByText('已完成设计，正在招投标')).toBeTruthy();
     expect(screen.getByText('基于 2 位购买者跟进')).toBeTruthy();
     expect(screen.getByText('意向明确')).toBeTruthy();
+    expect(screen.getByText('标记无效')).toBeTruthy();
   });
 
   it('发布者身份无需购买即可查看完整内容', async () => {

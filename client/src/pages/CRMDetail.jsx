@@ -39,6 +39,12 @@ export default function CRMDetail() {
     fetchDetail();
   }, [id]);
 
+  useEffect(() => {
+    if (window.location.hash === '#share') {
+      setShowShare(true);
+    }
+  }, [id]);
+
   const handleAddFollowUp = async () => {
     if (!followUpForm.contentPrivate.trim()) return Toast.fail('请填写跟进内容');
 

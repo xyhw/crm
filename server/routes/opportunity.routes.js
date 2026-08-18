@@ -143,15 +143,24 @@ router.get('/:id', optionalAuth, async (req, res) => {
 
     // 增加浏览量
     await update('opportunities', { view_count: opportunity.view_count + 1 }, 'id = ?', [opportunity.id]);
+    const finalViewCount = opportunity.view_count + 1;
 
     // 检查购买态
     let isPurchased = false;
+    let crmId = null;
     if (req.userId) {
       const purchase = await queryOne(
         'SELECT id FROM orders WHERE user_id = ? AND opportunity_id = ? AND status = "paid"',
         [req.userId, opportunity.id]
       );
       isPurchased = !!purchase;
+      if (isPurchased) {
+        const crm = await queryOne(
+          'SELECT id FROM crm_opportunities WHERE user_id = ? AND opportunity_id = ?',
+          [req.userId, opportunity.id]
+        );
+        crmId = crm?.id || null;
+      }
     }
     const isPublisher = req.userId === opportunity.user_id;
 
@@ -189,7 +198,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
       price: opportunity.price,
       status: opportunity.status,
       purchaseCount: opportunity.purchase_count,
-      viewCount: opportunity.view_count + 1,
+      viewCount: finalViewCount,
       invalidMarkCount: opportunity.invalid_mark_count,
       publisherName: opportunity.publisher_name,
       publisherCompany: opportunity.publisher_company,
@@ -227,6 +236,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
 
     result.isPurchased = isPurchased;
     result.isPublisher = isPublisher;
+    result.crmId = crmId;
 
     res.json({ code: 0, data: result });
   } catch (err) {

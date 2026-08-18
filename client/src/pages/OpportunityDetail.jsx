@@ -240,6 +240,11 @@ export default function OpportunityDetail() {
             {detail.isPublisher ? '查看跟进分布' : '进入CRM管理'}
           </Button>
         )}
+        {detail.isPurchased && detail.crmId && (
+          <Button plain block round style={{ marginTop: 8 }} onClick={() => navigate(`/crm/${detail.crmId}#share`)}>
+            分享跟进
+          </Button>
+        )}
         {detail.isPurchased && (
           <Button plain block round style={{ marginTop: 8 }} onClick={() => setShowInvalidDialog(true)}>
             标记无效
