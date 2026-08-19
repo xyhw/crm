@@ -111,18 +111,29 @@ export default function Hall() {
               <div
                 className={`opportunity-card ${item.isPurchased ? 'purchased' : ''}`}
                 key={item.id}
+                role="button"
+                tabIndex={0}
+                aria-label={`查看商机：${item.title}`}
                 onClick={() => navigate(`/opportunity/${item.id}`)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    navigate(`/opportunity/${item.id}`);
+                  }
+                }}
               >
                 <div className="opportunity-card__header">
                   <div className="opportunity-card__icon">{item.categoryIcon || '📦'}</div>
                   <div className="opportunity-card__info">
                     <div className="opportunity-card__title">
                       {item.isPurchased && <span className="opportunity-card__purchased-mark" aria-label="已购买">✓</span>}
-                      {item.title}
+                      <span className="opportunity-card__title-text">{item.title}</span>
                       {item.isPurchased && <span className="opportunity-card__purchased-tag">已解锁</span>}
                     </div>
                     <div className="opportunity-card__meta">
-                      {item.hotelName || item.brand || '未知品牌'} · {item.city || '未知城市'}
+                      <span className="opportunity-card__meta-text">
+                        {item.hotelName || item.brand || '未知品牌'} · {item.city || '未知城市'}
+                      </span>
                       {item.stage && <span className="opp-stage-tag">{stageLabel(item.stage)}</span>}
                     </div>
                     {item.isPurchased && (() => {
