@@ -37,7 +37,7 @@ export default function Profile() {
           <Tag color={level.color}>{level.label}</Tag>
         </div>
         <div className="profile-card__credit">
-          信用分：<span style={{ color: (user?.creditScore || 100) >= 60 ? '#07c160' : '#ee0a24' }}>
+          信用分：<span style={{ color: (user?.creditScore || 100) >= 60 ? '#148a57' : '#d93a2b' }}>
             {user?.creditScore || 100}
           </span>
         </div>

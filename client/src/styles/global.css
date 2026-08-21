@@ -1,12 +1,25 @@
 :root {
-  --primary-color: #1677ff;
-  --success-color: #07c160;
-  --warning-color: #ff976a;
-  --danger-color: #ee0a24;
-  --text-color: #323233;
-  --text-color-2: #969799;
-  --bg-color: #f7f8fa;
-  --border-color: #ebedf0;
+  /* 工地蓝本 · Construction Blueprint 设计系统 */
+  --primary-color: #143a75;      /* 蓝图藏青 · 品牌主轴 */
+  --primary-deep: #0b2552;       /* 深蓝 · 渐变低点/页头 */
+  --accent-color: #ff6b1a;       /* 安全橙 · 唯一高亮（价格/积分/CTA） */
+  --success-color: #148a57;      /* 正绿 · 成交/已购 */
+  --warning-color: #d88006;      /* 警示橙 · 待跟进/提醒 */
+  --danger-color: #d93a2b;       /* 危险红 · 仅失败/拒单 */
+  --text-color: #152139;         /* 墨青 · 正文 */
+  --text-color-2: #5d6b7c;       /* 钢板灰 · 次级文字 */
+  --text-color-3: #8b97a8;       /* 板岩灰 · 占位/三级 */
+  --bg-color: #eef2f7;           /* 蓝图纸底 */
+  --border-color: #e3e9f2;       /* 图纸网格线 */
+
+  /* react-vant 组件主题同步 */
+  --rv-primary-color: #143a75;
+  --rv-success-color: #148a57;
+  --rv-warning-color: #d88006;
+  --rv-danger-color: #d93a2b;
+  --rv-text-color: #152139;
+  --rv-text-color-2: #5d6b7c;
+  --rv-border-color: #e3e9f2;
 }
 
 * {
@@ -33,12 +46,12 @@ body {
   display: flex;
   gap: 8px;
   padding: 8px 16px;
-  background: #fff7e8;
-  border-bottom: 1px solid #ffe7c2;
+  background: #fbf7ec;
+  border-bottom: 1px solid #f2e8d2;
 }
 .home-reminder-bar__item {
   font-size: 13px;
-  color: #ed6a0c;
+  color: #d88006;
   cursor: pointer;
 }
 .home-reminder-bar__item::before {
@@ -54,15 +67,15 @@ body {
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  background: #f4f8ff;
-  border-bottom: 1px solid #e6eefc;
+  background: #eef2f8;
+  border-bottom: 1px solid #e0e6f0;
   cursor: pointer;
 }
 .announcement-bar__badge {
   flex-shrink: 0;
   padding: 1px 6px;
   border-radius: 3px;
-  background: #1677ff;
+  background: #143a75;
   color: #fff;
   font-size: 11px;
   line-height: 16px;
@@ -75,7 +88,7 @@ body {
 .announcement-bar__more {
   flex-shrink: 0;
   font-size: 12px;
-  color: #1677ff;
+  color: #143a75;
 }
 
 /* 公告详情 */
@@ -113,13 +126,17 @@ body {
   display: inline-block;
   margin-top: 16px;
   font-size: 14px;
-  color: #1677ff;
+  color: #143a75;
   text-decoration: none;
 }
 
 /* 首页用户卡片 */
 .home-user {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  /* 蓝图藏青渐变 + 细网格纹理（签名元素） */
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 34px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 34px),
+    linear-gradient(135deg, #1b4a8f 0%, #0b2552 100%);
   padding: 20px 16px;
   color: #fff;
   margin-bottom: 12px;
@@ -159,7 +176,9 @@ body {
 
 .home-user__points-num {
   font-size: 24px;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--accent-color);
 }
 
 .home-user__points-label {
@@ -254,7 +273,7 @@ body {
 }
 
 .points-text {
-  color: var(--warning-color);
+  color: var(--accent-color);
   font-weight: 600;
 }
 
@@ -338,7 +357,7 @@ body {
 .detail-price__amount {
   font-size: 28px;
   font-weight: 600;
-  color: var(--warning-color);
+  color: var(--accent-color);
 }
 
 .detail-price__amount span {
@@ -365,7 +384,7 @@ body {
   margin-top: 4px;
   padding-top: 8px;
   font-weight: 600;
-  color: var(--warning-color);
+  color: var(--accent-color);
 }
 
 .detail-section {
@@ -401,7 +420,7 @@ body {
 }
 
 .detail-intelligence {
-  background: #f7f8fa;
+  background: #eef2f7;
   padding: 12px;
   border-radius: 8px;
 }
@@ -451,7 +470,10 @@ body {
 
 /* 积分卡片 */
 .points-card {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 34px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 34px),
+    linear-gradient(135deg, #1b4a8f 0%, #0b2552 100%);
   padding: 24px 16px;
   color: #fff;
   text-align: center;
@@ -513,7 +535,10 @@ body {
 
 /* 个人中心 */
 .profile-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 34px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 34px),
+    linear-gradient(135deg, #1b4a8f 0%, #0b2552 100%);
   padding: 24px 16px;
   color: #fff;
   display: flex;
@@ -560,7 +585,7 @@ body {
 .profile-points__num {
   font-size: 20px;
   font-weight: 600;
-  color: var(--warning-color);
+  color: var(--accent-color);
 }
 
 .profile-stat-num {
@@ -691,7 +716,10 @@ body {
 
 /* 邀请卡片 */
 .invite-card {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 34px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 34px),
+    linear-gradient(135deg, #1b4a8f 0%, #0b2552 100%);
   padding: 24px 16px;
   color: #fff;
   text-align: center;
@@ -754,7 +782,7 @@ body {
 }
 
 .ranking-item__rank.top {
-  background: var(--warning-color);
+  background: var(--accent-color);
   color: #fff;
 }
 
@@ -793,7 +821,7 @@ body {
 }
 
 .notification-item.unread {
-  background: #f7f8fa;
+  background: #eef2f7;
 }
 
 .notification-item__dot {
@@ -913,7 +941,10 @@ body {
   background: var(--bg-color);
 }
 .auth-hero {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 34px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 34px),
+    linear-gradient(135deg, #1b4a8f 0%, #0b2552 100%);
   padding: 48px 24px;
   color: #fff;
   text-align: center;
@@ -1011,7 +1042,7 @@ body {
 /* 信用分卡片 */
 .credit-card {
   margin: 16px;
-  background: linear-gradient(135deg, #ffffff, #f7f8fa);
+  background: linear-gradient(135deg, #ffffff, #eef2f7);
   border-radius: 12px;
   padding: 32px 20px;
   text-align: center;
@@ -1040,7 +1071,7 @@ body {
   padding: 6px 14px;
   font-size: 13px;
   color: var(--text-color-2);
-  background: #f7f8fa;
+  background: #ebeff4;
   border-radius: 16px;
 }
 .category-tab.active {
@@ -1053,7 +1084,7 @@ body {
   margin-left: 6px;
   font-size: 11px;
   color: var(--primary-color);
-  background: #e8f1ff;
+  background: #e7ecf5;
   padding: 1px 6px;
   border-radius: 8px;
 }
@@ -1077,7 +1108,7 @@ body {
   width: 44px;
   height: 44px;
   border-radius: 10px;
-  background: #f2f3f5;
+  background: #edf1f6;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1134,7 +1165,7 @@ body {
 .opportunity-card__price {
   font-size: 16px;
   font-weight: 600;
-  color: #f53f3f;
+  color: var(--accent-color);
 }
 .opportunity-card__stats {
   display: flex;
@@ -1178,7 +1209,7 @@ body {
 .order-card__price {
   font-size: 15px;
   font-weight: 600;
-  color: #f53f3f;
+  color: var(--accent-color);
 }
 .order-card__stats {
   display: flex;
@@ -1230,10 +1261,10 @@ body {
   font-weight: 600;
 }
 .points-flow-item__amount.positive {
-  color: #f53f3f;
+  color: var(--accent-color);
 }
 .points-flow-item__amount.negative {
-  color: #07c160;
+  color: var(--text-color-2);
 }
 
 /* 积分明细 */
@@ -1287,7 +1318,7 @@ body {
 /* 案例描述 */
 .case-card__desc {
   font-size: 12px;
-  color: #999;
+  color: var(--text-color-3);
   line-height: 1.4;
   margin-top: 4px;
 }
@@ -1311,14 +1342,14 @@ body {
   position: absolute;
   top: 0;
   right: 0;
-  background: #07c160;
+  background: #148a57;
   color: #fff;
   font-size: 12px;
   padding: 3px 10px;
   border-bottom-left-radius: 8px;
   font-weight: 500;
   z-index: 2;
-  box-shadow: 0 1px 3px rgba(7, 193, 96, 0.3);
+  box-shadow: 0 1px 3px rgba(20, 138, 87, 0.3);
 }
 
 /* 资质与案例展示 */
@@ -1347,8 +1378,8 @@ body {
 .case-card {
   min-width: 140px;
   text-align: center;
-  background: #f8f9ff;
-  border: 1px solid #e0e7ff;
+  background: #eef2f8;
+  border: 1px solid #dfe5f2;
   border-radius: 8px;
   padding: 10px;
 }
@@ -1366,7 +1397,7 @@ body {
 }
 .case-card .case-desc {
   font-size: 12px;
-  color: #999;
+  color: var(--text-color-3);
   line-height: 1.4;
 }
 
@@ -1379,38 +1410,38 @@ body {
   font-weight: 500;
 }
 .followup-status-tag.call_no_answer {
-  background: #f2f3f5;
-  color: #969799;
+  background: #eff2f7;
+  color: #5d6b7c;
 }
 .followup-status-tag.added_wechat {
-  background: #e9faef;
-  color: #07c160;
+  background: #e6f4ec;
+  color: #148a57;
 }
 .followup-status-tag.interested {
-  background: #e8f1ff;
-  color: #1677ff;
+  background: #e7ecf5;
+  color: #143a75;
 }
 .followup-status-tag.quoting {
-  background: #fff4e8;
-  color: #ff976a;
+  background: #fbf1e4;
+  color: #d88006;
 }
 .followup-status-tag.negotiating {
-  background: #fef0f0;
-  color: #ee0a24;
+  background: #fbeae9;
+  color: #d93a2b;
 }
 .followup-status-tag.closed {
-  background: #e9faef;
-  color: #07c160;
+  background: #e6f4ec;
+  color: #148a57;
 }
 .followup-status-tag.abandoned {
-  background: #f2f3f5;
-  color: #969799;
+  background: #eff2f7;
+  color: #5d6b7c;
 }
 
 /* 已购买卡片：浅绿主题 + 左侧绿边区分 */
 .opportunity-card.purchased {
-  background: linear-gradient(135deg, #f0fff6 0%, #e6f9ed 100%);
-  border-left: 3px solid #07c160;
+  background: linear-gradient(135deg, #eaf6f0 0%, #dff0e6 100%);
+  border-left: 3px solid #148a57;
 }
 .opportunity-card__purchased-mark {
   display: inline-flex;
@@ -1419,7 +1450,7 @@ body {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #07c160;
+  background: #148a57;
   color: #fff;
   font-size: 11px;
   font-weight: 600;
@@ -1429,8 +1460,8 @@ body {
 .opportunity-card__purchased-tag {
   display: inline-block;
   padding: 1px 5px;
-  background: #e7f8f0;
-  color: #07c160;
+  background: #e6f4ec;
+  color: #148a57;
   font-size: 11px;
   border-radius: 3px;
   margin-left: 6px;
@@ -1443,8 +1474,8 @@ body {
   align-items: center;
   margin-top: 6px;
   padding: 3px 8px;
-  background: #fff4e6;
-  color: #ed7b2f;
+  background: #fbf1e4;
+  color: #d88006;
   font-size: 12px;
   border-radius: 4px;
   font-weight: 500;
@@ -1455,7 +1486,7 @@ body {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #ed7b2f;
+  background: #d88006;
   margin-right: 5px;
   animation: pulse 1.5s infinite;
 }
@@ -1466,17 +1497,17 @@ body {
 .opportunity-card__lock-icon {
   display: inline-block;
   margin-right: 4px;
-  color: #969799;
+  color: var(--text-color-3);
   font-size: 12px;
 }
 .opportunity-card.purchased .opportunity-card__meta-text {
   color: #5a6b63;
 }
 .opportunity-card.purchased .opportunity-card__price {
-  color: #05964f;
+  color: #0f7a4f;
 }
 .opportunity-card.purchased .opportunity-card__icon {
-  background: #d9f2e5;
+  background: #d9ecdf;
 }
 
 /* 资质展示区 */

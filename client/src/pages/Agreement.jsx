@@ -74,7 +74,7 @@ export default function Agreement() {
         ))}
         <p className="agreement__footer">最后更新：2026-08-05</p>
         {/* 底部链接导航 */}
-        <div style={{ marginTop: 20, display: 'flex', justifyContent: 'center', gap: 16, fontSize: 13, color: '#1677ff' }}>
+        <div style={{ marginTop: 20, display: 'flex', justifyContent: 'center', gap: 16, fontSize: 13, color: '#143a75' }}>
           <span onClick={() => navigate('/agreement/agreement')}>用户协议</span>
           <span onClick={() => navigate('/agreement/privacy')}>隐私政策</span>
           <span onClick={() => navigate('/agreement/summary')}>平台须知</span>

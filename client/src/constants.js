@@ -28,9 +28,9 @@ export const ORDER_STATUS = {
 };
 
 export const ORDER_STATUS_META = {
-  active: { label: '进行中', color: '#1677ff', bg: '#e8f1ff' },
-  inactive: { label: '已下架', color: '#969799', bg: '#f2f3f5' },
-  invalid: { label: '已失效', color: '#ee0a24', bg: '#fef0f0' },
+  active: { label: '进行中', color: '#143a75', bg: '#e7ecf5' },
+  inactive: { label: '已下架', color: '#5d6b7c', bg: '#eff2f7' },
+  invalid: { label: '已失效', color: '#d93a2b', bg: '#fbeae9' },
 };
 
 export const FOLLOW_UP_STATUS = [
@@ -44,20 +44,20 @@ export const FOLLOW_UP_STATUS = [
 ];
 
 export const FOLLOW_UP_STATUS_META = {
-  call_no_answer: { label: '电话未接通', color: '#969799', bg: '#f2f3f5' },
-  added_wechat: { label: '已加微信', color: '#07c160', bg: '#e9faef' },
-  interested: { label: '意向明确', color: '#1677ff', bg: '#e8f1ff' },
-  quoting: { label: '报价中', color: '#ff976a', bg: '#fff4e8' },
-  negotiating: { label: '谈判中', color: '#ee0a24', bg: '#fef0f0' },
-  closed: { label: '成交', color: '#07c160', bg: '#e9faef' },
-  abandoned: { label: '已放弃', color: '#969799', bg: '#f2f3f5' },
+  call_no_answer: { label: '电话未接通', color: '#5d6b7c', bg: '#eff2f7' },
+  added_wechat: { label: '已加微信', color: '#148a57', bg: '#e6f4ec' },
+  interested: { label: '意向明确', color: '#143a75', bg: '#e7ecf5' },
+  quoting: { label: '报价中', color: '#d88006', bg: '#fbf1e4' },
+  negotiating: { label: '谈判中', color: '#d93a2b', bg: '#fbeae9' },
+  closed: { label: '成交', color: '#148a57', bg: '#e6f4ec' },
+  abandoned: { label: '已放弃', color: '#5d6b7c', bg: '#eff2f7' },
 };
 
 export const CRM_STATUS_META = {
-  pending: { label: '待跟进', color: '#ff976a', bg: '#fff4e8' },
-  following: { label: '跟进中', color: '#1677ff', bg: '#e8f1ff' },
-  closed: { label: '已成交', color: '#07c160', bg: '#e9faef' },
-  abandoned: { label: '已放弃', color: '#969799', bg: '#f2f3f5' },
+  pending: { label: '待跟进', color: '#d88006', bg: '#fbf1e4' },
+  following: { label: '跟进中', color: '#143a75', bg: '#e7ecf5' },
+  closed: { label: '已成交', color: '#148a57', bg: '#e6f4ec' },
+  abandoned: { label: '已放弃', color: '#5d6b7c', bg: '#eff2f7' },
 };
 
 export const INVALID_REASONS = [
@@ -68,10 +68,10 @@ export const INVALID_REASONS = [
 ];
 
 export const LEVEL_META = {
-  normal: { label: '普通会员', color: '#969799', discount: '无折扣' },
-  silver: { label: '银牌会员', color: '#1677ff', discount: '9折' },
-  gold: { label: '金牌会员', color: '#ff976a', discount: '8折' },
-  expert: { label: '认证达人', color: '#ee0a24', discount: '7折' },
+  normal: { label: '普通会员', color: '#5d6b7c', discount: '无折扣' },
+  silver: { label: '银牌会员', color: '#143a75', discount: '9折' },
+  gold: { label: '金牌会员', color: '#d88006', discount: '8折' },
+  expert: { label: '认证达人', color: '#d93a2b', discount: '7折' },
 };
 
 export function categoryLabel(value) {
@@ -137,14 +137,14 @@ export function formatDateTime(ts) {
 }
 
 export const OPPORTUNITY_STATUS_META = {
-  active: { label: '销售中', color: '#07c160', bg: '#e9faef' },
-  inactive: { label: '已下架', color: '#969799', bg: '#f2f3f5' },
-  invalid: { label: '已失效', color: '#ee0a24', bg: '#fef0f0' },
+  active: { label: '销售中', color: '#148a57', bg: '#e6f4ec' },
+  inactive: { label: '已下架', color: '#5d6b7c', bg: '#eff2f7' },
+  invalid: { label: '已失效', color: '#d93a2b', bg: '#fbeae9' },
 };
 
 export const ORDER_STATUS_META_ADMIN = {
-  paid: { label: '已支付', color: '#07c160', bg: '#e9faef' },
-  refunded: { label: '已退款', color: '#ee0a24', bg: '#fef0f0' },
+  paid: { label: '已支付', color: '#148a57', bg: '#e6f4ec' },
+  refunded: { label: '已退款', color: '#d93a2b', bg: '#fbeae9' },
 };
 
 export const POINTS_SOURCE_TYPES = {

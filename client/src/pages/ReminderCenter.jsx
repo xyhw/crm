@@ -50,7 +50,7 @@ export default function ReminderCenter() {
                 <span>{item.city}</span>
                 <span>{followUpStatusLabel(item.status)}</span>
               </div>
-              <div className="crm-card__remind" style={{ color: tab === 'overdue' ? '#ee0a24' : '#ff976a' }}>
+              <div className="crm-card__remind" style={{ color: tab === 'overdue' ? '#d93a2b' : '#d88006' }}>
                 {tab === 'today' ? '今日需跟进' : tab === 'overdue' ? '已逾期' : `到期日 ${formatDate(item.nextFollowDate)}`}
               </div>
             </div>

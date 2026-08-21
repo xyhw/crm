@@ -51,7 +51,7 @@ export default function Credit() {
   if (loading) return <div className="empty-tip">加载中...</div>;
 
   const score = user?.creditScore ?? 100;
-  const color = score >= 80 ? '#07c160' : score >= 60 ? '#ff976a' : '#ee0a24';
+  const color = score >= 80 ? '#148a57' : score >= 60 ? '#d88006' : '#d93a2b';
   const label = score >= 80 ? '信用良好' : score >= 60 ? '信用一般' : '信用较差';
 
   return (
@@ -78,7 +78,7 @@ export default function Credit() {
                 title={log.reason || CHANGE_LABELS[log.sourceType] || '信用分变动'}
                 label={timeAgo(log.createdAt)}
                 value={
-                  <span style={{ color: log.changeAmount >= 0 ? '#07c160' : '#ee0a24', fontWeight: 600 }}>
+                  <span style={{ color: log.changeAmount >= 0 ? '#148a57' : '#d93a2b', fontWeight: 600 }}>
                     {log.changeAmount >= 0 ? `+${log.changeAmount}` : log.changeAmount}
                   </span>
                 }

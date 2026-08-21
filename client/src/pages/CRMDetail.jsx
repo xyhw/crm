@@ -316,7 +316,7 @@ export default function CRMDetail() {
           <div style={{ marginTop: 8, color: '#999', fontSize: 12 }}>
             您分享的摘要将匿名展示给其他购买者，帮助他们判断商机价值。
           </div>
-          <div style={{ marginTop: 8, padding: 8, background: '#fff7e6', borderRadius: 4, color: '#d48806', fontSize: 12 }}>
+          <div style={{ marginTop: 8, padding: 8, background: '#fbf1e4', borderRadius: 4, color: '#d88006', fontSize: 12 }}>
             奖励规则：分享通过审核 +2 积分；摘要被标记有用 +1 积分
           </div>
         </div>

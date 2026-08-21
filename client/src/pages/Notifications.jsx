@@ -55,7 +55,7 @@ export default function Notifications() {
       <PageNavBar
         title="通知中心"
         onClickLeft={() => navigate(-1)}
-        right={unreadCount > 0 ? <span onClick={handleReadAll} style={{ color: '#1677ff' }}>全部已读</span> : undefined}
+        right={unreadCount > 0 ? <span onClick={handleReadAll} style={{ color: '#143a75' }}>全部已读</span> : undefined}
         safeAreaInsetTop
       />
 

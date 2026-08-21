@@ -34,7 +34,7 @@ export default function PointsList() {
     { title: 'ID', dataIndex: 'id', width: 60 },
     { title: '用户', dataIndex: 'user_name', width: 100 },
     { title: '变化类型', dataIndex: 'source_type', width: 100, render: (v) => pointsSourceTypeLabel(v) },
-    { title: '变化积分', dataIndex: 'delta', width: 100, render: (v) => <span style={{ color: v > 0 ? '#52c41a' : '#f5222d' }}>{v > 0 ? '+' : ''}{v}</span> },
+    { title: '变化积分', dataIndex: 'delta', width: 100, render: (v) => <span style={{ color: v > 0 ? '#148a57' : '#d93a2b' }}>{v > 0 ? '+' : ''}{v}</span> },
     { title: '变化后余额', dataIndex: 'balance_after', width: 100 },
     { title: '来源说明', dataIndex: 'source_title', width: 150 },
     { title: '时间', dataIndex: 'created_at', width: 160, render: formatDate },

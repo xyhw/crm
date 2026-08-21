@@ -38,7 +38,7 @@ export default function MyOrders() {
           <div className="order-card__title">{item.title}</div>
           <div className="order-status">
             {isPublisher && <Tag color={meta.color} bg={meta.bg}>我发布</Tag>}
-            {isPurchased && <Tag color="#07c160" plain>我已购</Tag>}
+            {isPurchased && <Tag color="#148a57" plain>我已购</Tag>}
             {!isPublisher && !isPurchased && <Tag color={meta.color} bg={meta.bg}>{meta.label}</Tag>}
           </div>
         </div>

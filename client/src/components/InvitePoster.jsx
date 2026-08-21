@@ -17,8 +17,8 @@ export default function InvitePoster({ inviteCode, nickname = '酒店商机伙�
       canvas.height = POSTER_HEIGHT;
 
       const bg = ctx.createLinearGradient(0, 0, POSTER_WIDTH, POSTER_HEIGHT);
-      bg.addColorStop(0, '#1b7af2');
-      bg.addColorStop(1, '#0d5fc7');
+      bg.addColorStop(0, '#1b4a8f');
+      bg.addColorStop(1, '#0b2552');
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, POSTER_WIDTH, POSTER_HEIGHT);
 

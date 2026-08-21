@@ -45,7 +45,7 @@ export default function Home() {
         safeAreaInsetTop
         right={
           <Badge content={unreadCount > 0 ? unreadCount : ''} showZero={false}>
-            <Icon name="bell" size={22} color="#323233" onClick={() => navigate('/notifications')} />
+            <Icon name="bell" size={22} color="#152139" onClick={() => navigate('/notifications')} />
           </Badge>
         }
       />
@@ -105,19 +105,19 @@ export default function Home() {
       {/* 快捷入口 */}
       <div className="home-entry">
         <div className="home-entry__item" onClick={() => navigate('/opportunities')}>
-          <Icon name="search" size={26} color="#1677ff" />
+          <Icon name="search" size={26} color="#143a75" />
           <span>商机大厅</span>
         </div>
         <div className="home-entry__item" onClick={() => navigate('/publish')}>
-          <Icon name="edit" size={26} color="#ed6a0c" />
+          <Icon name="edit" size={26} color="#ff6b1a" />
           <span>发布商机</span>
         </div>
         <div className="home-entry__item" onClick={() => navigate('/crm')}>
-          <Icon name="contact" size={26} color="#07c160" />
+          <Icon name="contact" size={26} color="#148a57" />
           <span>我的CRM</span>
         </div>
         <div className="home-entry__item" onClick={() => navigate('/ranking')}>
-          <Icon name="medal-o" size={26} color="#ff976a" />
+          <Icon name="medal-o" size={26} color="#d88006" />
           <span>排行榜</span>
         </div>
       </div>
