@@ -158,8 +158,8 @@ router.get('/my', authRequired, async (req, res) => {
     const { page = 1, pageSize = 10 } = req.query;
     const offset = (Number(page) - 1) * Number(pageSize);
 
-    const list = await query(
-      `SELECT o.*, opp.title, opp.city, opp.hotel_name, c.name as category_name
+    const rawList = await query(
+      `SELECT o.*, opp.title, opp.city, opp.hotel_name, opp.price, opp.status as opp_status, opp.purchase_count, c.name as category_name
        FROM orders o
        JOIN opportunities opp ON o.opportunity_id = opp.id
        LEFT JOIN opportunity_categories c ON opp.category_id = c.id
@@ -168,6 +168,21 @@ router.get('/my', authRequired, async (req, res) => {
        LIMIT ? OFFSET ?`,
       [req.userId, Number(pageSize), offset]
     );
+
+    const list = rawList.map(item => ({
+      id: item.opportunity_id,
+      orderId: item.id,
+      title: item.title,
+      categoryName: item.category_name,
+      city: item.city,
+      hotelName: item.hotel_name,
+      price: item.price,
+      status: item.opp_status,
+      purchaseCount: item.purchase_count,
+      isPurchased: true,
+      isPublisher: false,
+      createdAt: item.created_at,
+    }));
 
     const [countResult] = await query(
       'SELECT COUNT(*) as total FROM orders WHERE user_id = ? AND status = "paid"',

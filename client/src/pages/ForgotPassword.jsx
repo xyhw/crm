@@ -25,19 +25,13 @@ export default function ForgotPassword() {
     return (
       <div className="auth-page">
         <div className="auth-hero auth-hero--sm">
-          <div className="auth-logo">{result.code === 0 ? '重置成功' : '重置失败'}</div>
-          <p className="auth-slogan">
-            {result.code === 0
-              ? `新密码为注册手机号后6位，请登录后及时修改`
-              : result.message}
-          </p>
+          <div className="auth-logo">重置成功</div>
+          <p className="auth-slogan">新密码为注册手机号后6位，请登录后及时修改</p>
         </div>
-        <div className="auth-form" style={{ textAlign: 'center' }}>
-          {result.code === 0 && (
-            <Button type="primary" block round onClick={() => navigate('/login')}>
-              前往登录
-            </Button>
-          )}
+        <div className="auth-form auth-form--center">
+          <Button type="primary" block round onClick={() => navigate('/login')}>
+            前往登录
+          </Button>
         </div>
       </div>
     );

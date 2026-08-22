@@ -76,11 +76,11 @@ export default function Uploader({ files = [], onChange }) {
         {files.length < MAX_FILES && (
           <div className={`uploader-add ${uploading ? 'uploading' : ''}`} onClick={handleSelect}>
             <span>+</span>
-            <span style={{ fontSize: 12 }}>{uploading ? '上传中' : '上传'}</span>
+            <span className="uploader-add__text">{uploading ? '上传中' : '上传'}</span>
           </div>
         )}
       </div>
-      <input ref={inputRef} type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" multiple style={{ display: 'none' }} onChange={handleFiles} />
+      <input ref={inputRef} type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" multiple className="uploader-input" onChange={handleFiles} />
     </div>
   );
 }

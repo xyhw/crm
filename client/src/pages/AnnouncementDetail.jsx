@@ -18,8 +18,8 @@ export default function AnnouncementDetail() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <div className="empty-tip">加载中...</div>;
-  if (!detail) return <div className="empty-tip">公告不存在</div>;
+  if (loading) return <div className="page"><PageNavBar title="公告详情" onClickLeft={() => navigate(-1)} /><div className="empty-tip">加载中...</div></div>;
+  if (!detail) return <div className="page"><PageNavBar title="公告详情" onClickLeft={() => navigate(-1)} /><div className="empty-tip">公告不存在</div></div>;
 
   const isVideo = detail.media_type === 'video';
   const isImage = detail.media_type === 'image' || detail.media_type === 'mixed';

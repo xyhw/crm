@@ -59,7 +59,7 @@ export default function AuditList() {
 
   const confirmAudit = async () => {
     try {
-      await adminApi.auditFollowUp(auditItem.id, { auditStatus: auditItem.auditStatus });
+      await adminApi.auditFollowUp(auditItem.id, { status: auditItem.auditStatus });
       message.success('审核完成');
       setAuditItem(null);
       fetchList();

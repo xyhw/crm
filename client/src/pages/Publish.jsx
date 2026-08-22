@@ -4,6 +4,7 @@ import { Field, CellGroup, Button, Toast, Picker, Popup, Tag, Steps } from 'reac
 import { api } from '../api';
 import PageNavBar from '../components/PageNavBar';
 import { SUPPLIER_CATEGORIES } from '../constants';
+import { categoryPickerColumns, findCategoryLabel } from '../utils/category';
 import Uploader from '../components/Uploader';
 
 export default function Publish() {
@@ -32,25 +33,26 @@ export default function Publish() {
 
   const updateForm = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
+  const validate = () => {
+    if (!form.title.trim()) return '请输入项目名称';
+    if (!form.categoryId) return '请选择需求分类';
+    if (!form.brand.trim()) return '请输入品牌';
+    if (!form.city.trim()) return '请输入城市';
+    if (!form.contactName.trim()) return '请输入联系人';
+    if (!form.contactPhone.trim()) return '请输入联系电话';
+    if (!form.price || Number(form.price) <= 0) return '请设置积分定价';
+    return null;
+  };
+
   const goNext = () => {
-    if (!form.title.trim()) return Toast.fail('请输入项目名称');
-    if (!form.categoryId) return Toast.fail('请选择需求分类');
-    if (!form.brand.trim()) return Toast.fail('请输入品牌');
-    if (!form.city.trim()) return Toast.fail('请输入城市');
-    if (!form.contactName.trim()) return Toast.fail('请输入联系人');
-    if (!form.contactPhone.trim()) return Toast.fail('请输入联系电话');
-    if (!form.price || Number(form.price) <= 0) return Toast.fail('请设置积分定价');
+    const err = validate();
+    if (err) return Toast.fail(err);
     setStep(2);
   };
 
   const handlePublish = async () => {
-    if (!form.title.trim()) return Toast.fail('请输入项目名称');
-    if (!form.categoryId) return Toast.fail('请选择需求分类');
-    if (!form.brand.trim()) return Toast.fail('请输入品牌');
-    if (!form.city.trim()) return Toast.fail('请输入城市');
-    if (!form.contactName.trim()) return Toast.fail('请输入联系人');
-    if (!form.contactPhone.trim()) return Toast.fail('请输入联系电话');
-    if (!form.price || Number(form.price) <= 0) return Toast.fail('请设置积分定价');
+    const err = validate();
+    if (err) return Toast.fail(err);
 
     setSubmitting(true);
     try {
@@ -72,7 +74,7 @@ export default function Publish() {
 
       if (data?.similarOpportunities?.length) {
         setSimilarList(data.similarOpportunities);
-        Toast.fail('存在相似商机，请检查');
+        Toast.info('存在相似商机，请检查');
       } else {
         Toast.success('发布成功');
         navigate('/');
@@ -96,18 +98,18 @@ export default function Publish() {
     updateForm('tags', form.tags.filter((t) => t !== tag));
   };
 
-  const categoryColumns = SUPPLIER_CATEGORIES.map((c) => ({ text: c.label, value: c.value }));
+  const categoryColumns = categoryPickerColumns();
 
   return (
     <div className="page">
       <PageNavBar title="发布商机" onClickLeft={() => navigate(-1)} />
 
-      <Steps active={step - 1} style={{ padding: '16px 24px 0' }}>
+      <Steps active={step - 1} className="publish-steps">
         <Steps.Item>基本信息</Steps.Item>
         <Steps.Item>补充详情</Steps.Item>
       </Steps>
 
-      <CellGroup inset style={{ marginTop: 12 }}>
+      <CellGroup inset className="publish-cellgroup">
         <Field
           label="项目名称"
           placeholder="如：某酒店弱电总包采购"
@@ -203,37 +205,35 @@ export default function Publish() {
         <>
           {/* 标签 */}
           <div className="section">
-            <div className="section-title" style={{ marginBottom: 8 }}>标签（最多5个）</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', marginBottom: 8 }}>
+            <div className="section-title publish-sub-title">标签（最多5个）</div>
+            <div className="tag-list">
               {form.tags.map((tag) => (
-                <Tag key={tag} closeable onClose={() => removeTag(tag)} style={{ margin: '0 8px 8px 0' }}>
+                <Tag key={tag} closeable onClose={() => removeTag(tag)} className="tag-list__item">
                   {tag}
                 </Tag>
               ))}
             </div>
             {form.tags.length < 5 && (
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  placeholder="输入标签"
-                  style={{ flex: 1, padding: '8px 12px', border: '1px solid #ddd', borderRadius: 4 }}
-                  onKeyDown={(e) => e.key === 'Enter' && addTag()}
-                />
-                <Button size="small" onClick={addTag}>添加</Button>
-              </div>
+              <Field
+                className="tag-input"
+                value={tagInput}
+                onChange={setTagInput}
+                placeholder="输入标签后回车添加"
+                onKeyDown={(e) => e.key === 'Enter' && addTag()}
+                rightIcon={<span className="tag-input__btn" onClick={addTag}>添加</span>}
+              />
             )}
           </div>
 
           {/* 图纸附件 */}
           <div className="section">
-            <div className="section-title" style={{ marginBottom: 8 }}>项目图纸（最多9个）</div>
+            <div className="section-title publish-sub-title">项目图纸（最多9个）</div>
             <Uploader files={form.files} onChange={(files) => updateForm('files', files)} />
           </div>
         </>
       )}
 
-      <div style={{ padding: '16px' }}>
+      <div className="publish-actions">
         {step === 1 && (
           <Button type="primary" block round onClick={goNext}>
             下一步
@@ -241,7 +241,7 @@ export default function Publish() {
         )}
         {step === 2 && (
           <>
-            <Button block round style={{ marginBottom: 12 }} onClick={() => setStep(1)}>
+            <Button block round className="publish-actions__btn" onClick={() => setStep(1)}>
               上一步
             </Button>
             <Button type="primary" block round loading={submitting} onClick={handlePublish}>
@@ -253,13 +253,13 @@ export default function Publish() {
 
       {/* 相似商机提示 */}
       {similarList && (
-        <Popup visible={!!similarList} onClose={() => setSimilarList(null)} style={{ padding: 20, borderRadius: 12, margin: 20, width: 'calc(100% - 40px)' }}>
-          <h3 style={{ margin: '0 0 12px' }}>发现相似商机</h3>
-          <div style={{ marginBottom: 12, color: '#666' }}>以下商机与您发布的商机相似：</div>
+        <Popup visible={!!similarList} onClose={() => setSimilarList(null)} className="similar-popup" round>
+          <h3 className="similar-popup__title">发现相似商机</h3>
+          <div className="similar-popup__desc">以下商机与您发布的商机相似：</div>
           {similarList.map((s) => (
-            <div key={s.id} style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>{s.title}</div>
+            <div key={s.id} className="similar-popup__item">{s.title}</div>
           ))}
-          <Button type="primary" block round style={{ marginTop: 12 }} onClick={() => setSimilarList(null)}>
+          <Button type="primary" block round className="similar-popup__btn" onClick={() => setSimilarList(null)}>
             我知道了
           </Button>
         </Popup>
@@ -271,7 +271,7 @@ export default function Publish() {
           columns={categoryColumns}
           onConfirm={(val) => {
             updateForm('categoryId', val);
-            updateForm('categoryName', SUPPLIER_CATEGORIES.find((c) => c.value === val)?.label || '');
+            updateForm('categoryName', findCategoryLabel(val));
             setShowCategoryPicker(false);
           }}
           onCancel={() => setShowCategoryPicker(false)}

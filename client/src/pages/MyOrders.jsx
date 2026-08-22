@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Toast, Tabs, Empty, Tag } from 'react-vant';
 import { api } from '../api';
 import PageNavBar from '../components/PageNavBar';
+import Pagination from '../components/Pagination';
 import { statusMeta, timeAgo } from '../constants';
 
 const TABS = [
@@ -15,17 +16,23 @@ export default function MyOrders() {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('published');
+  const [page, setPage] = useState(1);
+  const pageSize = 6;
 
   useEffect(() => {
-    api.opportunities({ pageSize: 50 })
+    setLoading(true);
+    setPage(1);
+    const req = tab === 'purchased'
+      ? api.myOrders({ pageSize: 50 })
+      : api.opportunities({ mine: 1, pageSize: 50 });
+    req
       .then((res) => setList(res.list || []))
       .catch((e) => Toast.fail(e.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [tab]);
 
-  const published = list.filter((o) => o.isPublisher);
-  const purchased = list.filter((o) => o.isPurchased);
-  const current = tab === 'published' ? published : purchased;
+  const visible = list.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = Math.ceil(list.length / pageSize);
 
   const renderItem = (item) => {
     const meta = statusMeta(item.status);
@@ -33,12 +40,12 @@ export default function MyOrders() {
     const isPublisher = item.isPublisher;
 
     return (
-      <div className="order-card" key={item.id} onClick={() => navigate(`/opportunity/${item.id}`)}>
+      <div className="order-card pressable" key={item.id} onClick={() => navigate(`/opportunity/${item.id}`)}>
         <div className="order-card__header">
           <div className="order-card__title">{item.title}</div>
           <div className="order-status">
             {isPublisher && <Tag color={meta.color} bg={meta.bg}>我发布</Tag>}
-            {isPurchased && <Tag color="#148a57" plain>我已购</Tag>}
+            {isPurchased && <Tag color="var(--success-color)" plain>我已购</Tag>}
             {!isPublisher && !isPurchased && <Tag color={meta.color} bg={meta.bg}>{meta.label}</Tag>}
           </div>
         </div>
@@ -69,11 +76,14 @@ export default function MyOrders() {
 
       {loading ? (
         <div className="empty-tip">加载中...</div>
-      ) : current.length === 0 ? (
-        <Empty description={tab === 'published' ? '暂无发布记录，去大厅发布第一条商机吧' : '暂无购买记录，去大厅看看'} style={{ marginTop: 40 }} />
+      ) : list.length === 0 ? (
+        <Empty description={tab === 'published' ? '暂无发布记录，去大厅发布第一条商机吧' : '暂无购买记录，去大厅看看'} className="empty-top" />
       ) : (
         <div className="order-list">
-          {current.map(renderItem)}
+          {visible.map(renderItem)}
+          {totalPages > 1 && (
+            <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+          )}
         </div>
       )}
     </div>

@@ -1,24 +1,26 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { NavBar, Form, Input, Button, Picker, Cell, Field, Toast } from 'react-vant';
+import { Form, Input, Button, Picker, Cell, Field, Toast } from 'react-vant';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { SUPPLIER_CATEGORIES } from '../constants';
+import { categoryPickerColumns, findCategoryLabel } from '../utils/category';
+import PageNavBar from '../components/PageNavBar';
 
 export default function ProfileEdit() {
   const navigate = useNavigate();
-  const { user, updateUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [showCategory, setShowCategory] = useState(false);
   const [category, setCategory] = useState(user?.category || SUPPLIER_CATEGORIES[0].value);
 
-  const categoryColumns = SUPPLIER_CATEGORIES.map((c) => ({ text: `${c.icon} ${c.label}`, value: c.value }));
+  const categoryColumns = categoryPickerColumns();
 
   const onFinish = async (values) => {
     setSubmitting(true);
     try {
-      const res = await api.updateMe({ ...values, category });
-      updateUser(res);
+      await api.updateMe({ ...values, category });
+      await refreshUser();
       Toast.success('保存成功');
       navigate('/profile');
     } catch (e) {
@@ -30,7 +32,7 @@ export default function ProfileEdit() {
 
   return (
     <div className="page">
-      <NavBar title="编辑资料" leftText="返回" onClickLeft={() => navigate(-1)} safeAreaInsetTop />
+      <PageNavBar title="编辑资料" onClickLeft={() => navigate(-1)} />
       <div className="publish-card">
         <Form
           initialValues={{ nickname: user?.nickname, company: user?.company, bio: user?.bio, qualifications: user?.qualifications || '', cases: user?.cases || '' }}
@@ -49,7 +51,7 @@ export default function ProfileEdit() {
           </Form.Item>
           <Cell
             title="供应商类型"
-            value={SUPPLIER_CATEGORIES.find((c) => c.value === category)?.label}
+            value={findCategoryLabel(category)}
             isLink
             onClick={() => setShowCategory(true)}
           />

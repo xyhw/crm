@@ -118,7 +118,7 @@ export default function RoleManagement() {
   const handleSaveAdmin = async () => {
     try {
       const vals = await adminForm.validateFields();
-      await adminApi.updateAdmin(editAdmin.id, vals);
+      await adminApi.updateAdminWithRoles(editAdmin.id, vals);
       message.success('管理员已更新');
       setEditAdmin(null);
       adminForm.resetFields();
@@ -137,7 +137,7 @@ export default function RoleManagement() {
   const handleCreateAdmin = async () => {
     try {
       const vals = await adminForm.validateFields();
-      await adminApi.createAdmin(vals);
+      await adminApi.createAdminWithRoles(vals);
       message.success('管理员创建成功');
       setNewAdminOpen(false);
       adminForm.resetFields();

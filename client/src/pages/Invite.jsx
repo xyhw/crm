@@ -4,6 +4,7 @@ import { Toast, Button, Cell, CellGroup, Empty, Tabs } from 'react-vant';
 import { api } from '../api';
 import { timeAgo } from '../constants';
 import InvitePoster from '../components/InvitePoster';
+import Pagination from '../components/Pagination';
 import { GiftO } from '@react-vant/icons';
 import PageNavBar from '../components/PageNavBar';
 
@@ -13,6 +14,8 @@ export default function Invite() {
   const [nickname, setNickname] = useState('');
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('code');
+  const [page, setPage] = useState(1);
+  const pageSize = 6;
 
   useEffect(() => {
     api.invitationMe()
@@ -32,7 +35,7 @@ export default function Invite() {
     }
   };
 
-  if (loading) return <div className="empty-tip">加载中...</div>;
+  if (loading) return <div className="page"><PageNavBar title="邀请好友" onClickLeft={() => navigate(-1)} /><div className="empty-tip">加载中...</div></div>;
 
   return (
     <div className="page">
@@ -56,7 +59,7 @@ export default function Invite() {
       </div>
 
       {/* 邀请奖励说明 */}
-      <CellGroup inset style={{ marginTop: 12 }}>
+      <CellGroup inset className="profile-section--gap">
         <Cell title="邀请奖励" label="邀请人和被邀请人各得5积分" icon={<GiftO width={20} height={20} />} />
         <Cell title="已邀请人数" value={data?.stats?.totalInvited || 0} />
         <Cell title="累计奖励" value={`${data?.stats?.totalReward || 0} 积分`} />
@@ -65,15 +68,25 @@ export default function Invite() {
       {/* 邀请记录 */}
       <div className="section">
         <div className="section-title">邀请记录</div>
-        {data?.records?.length > 0 ? (
-          data.records.map((record) => (
-            <div key={record.id} className="invite-record">
-              <div className="invite-record__user">{record.invitee_nickname || '新用户'}</div>
-              <div className="invite-record__time">{timeAgo(record.created_at)}</div>
-              <div className="invite-record__reward">+{record.inviter_reward} 积分</div>
-            </div>
-          ))
-        ) : (
+        {data?.records?.length > 0 ? (() => {
+          const records = data.records;
+          const totalPages = Math.ceil(records.length / pageSize);
+          const visible = records.slice((page - 1) * pageSize, page * pageSize);
+          return (
+            <>
+              {visible.map((record) => (
+                <div key={record.id} className="invite-record">
+                  <div className="invite-record__user">{record.invitee_nickname || '新用户'}</div>
+                  <div className="invite-record__time">{timeAgo(record.created_at)}</div>
+                  <div className="invite-record__reward">+{record.inviter_reward} 积分</div>
+                </div>
+              ))}
+              {totalPages > 1 && (
+                <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+              )}
+            </>
+          );
+        })() : (
           <Empty description="暂无邀请记录" />
         )}
       </div>

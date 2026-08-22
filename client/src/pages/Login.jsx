@@ -33,7 +33,7 @@ export default function Login() {
         <Form
           onFinish={onFinish}
           footer={
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="auth-form__footer">
               <Button type="primary" block round nativeType="submit" loading={submitting}>
                 登录
               </Button>

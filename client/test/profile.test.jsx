@@ -11,10 +11,12 @@ vi.mock('../src/api', () => ({
     myStats: vi.fn(),
     updateMe: vi.fn(),
     me: vi.fn().mockResolvedValue({ nickname: '测试' }),
+    myOrders: vi.fn().mockResolvedValue({ list: [], total: 0 }),
   },
 }));
 
 const updateUserMock = vi.fn();
+const refreshUserMock = vi.fn().mockResolvedValue({});
 
 vi.mock('../src/context/AuthContext', async (importOriginal) => {
   const actual = await importOriginal();
@@ -39,7 +41,7 @@ vi.mock('../src/context/AuthContext', async (importOriginal) => {
       isAuthenticated: true,
       login: vi.fn(),
       logout: vi.fn(),
-      refreshUser: vi.fn().mockResolvedValue({}),
+      refreshUser: refreshUserMock,
       updateUser: updateUserMock,
     }),
   };
@@ -156,7 +158,7 @@ describe('编辑资料 ProfileEdit', () => {
     expect(screen.getByText('保存')).toBeTruthy();
   });
 
-  it('提交保存调用 updateMe 并同步 updateUser', async () => {
+  it('提交保存调用 updateMe 并刷新用户信息', async () => {
     const { api } = await import('../src/api');
     api.updateMe.mockResolvedValue({ nickname: '新昵称', company: '新公司' });
     render(
@@ -169,6 +171,6 @@ describe('编辑资料 ProfileEdit', () => {
     fireEvent.change(screen.getByPlaceholderText('公司名称'), { target: { value: '新公司' } });
     fireEvent.click(screen.getByText('保存'));
     await waitFor(() => expect(api.updateMe).toHaveBeenCalled());
-    expect(updateUserMock).toHaveBeenCalled();
+    expect(refreshUserMock).toHaveBeenCalled();
   });
 });

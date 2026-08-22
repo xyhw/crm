@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Form, Input, Button, Picker, Toast, Cell } from 'react-vant';
 import { useAuth } from '../context/AuthContext';
 import { SUPPLIER_CATEGORIES } from '../constants';
+import { categoryPickerColumns, findCategoryLabel } from '../utils/category';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -11,10 +12,7 @@ export default function Register() {
   const [showPicker, setShowPicker] = useState(false);
   const [category, setCategory] = useState(SUPPLIER_CATEGORIES[0].value);
 
-  const columns = SUPPLIER_CATEGORIES.map((c) => ({
-    text: `${c.icon} ${c.label}`,
-    value: c.value,
-  }));
+  const columns = categoryPickerColumns();
 
   const onFinish = async (values) => {
     setSubmitting(true);
@@ -77,9 +75,7 @@ export default function Register() {
           </Form.Item>
           <Cell
             title="供应商类型"
-            value={`${SUPPLIER_CATEGORIES.find((c) => c.value === category)?.icon} ${
-              SUPPLIER_CATEGORIES.find((c) => c.value === category)?.label
-            }`}
+            value={findCategoryLabel(category)}
             isLink
             onClick={() => setShowPicker(true)}
           />

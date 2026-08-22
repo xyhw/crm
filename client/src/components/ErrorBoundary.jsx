@@ -22,12 +22,9 @@ export class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback(this.state.error, this.reset);
       return (
-        <div style={{ padding: 24, textAlign: 'center' }}>
-          <div style={{ color: '#999', marginBottom: 12 }}>页面出错了</div>
-          <button
-            onClick={this.reset}
-            style={{ padding: '6px 16px', border: '1px solid #ddd', borderRadius: 4, background: '#fff', cursor: 'pointer' }}
-          >
+        <div className="error-boundary">
+          <div className="error-boundary__text">页面出错了</div>
+          <button className="error-boundary__btn" onClick={this.reset}>
             重试
           </button>
         </div>

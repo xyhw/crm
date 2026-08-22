@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Toast, Tabs, Empty, Badge } from 'react-vant';
 import { api } from '../api';
 import PageNavBar from '../components/PageNavBar';
+import Pagination from '../components/Pagination';
 import { timeAgo } from '../constants';
 
 export default function Notifications() {
@@ -11,10 +12,13 @@ export default function Notifications() {
   const [loading, setLoading] = useState(true);
   const [type, setType] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const pageSize = 6;
 
   useEffect(() => {
     setLoading(true);
-    api.notifications({ type: type || undefined, pageSize: 20 })
+    setPage(1);
+    api.notifications({ type: type || undefined, pageSize: 50 })
       .then((res) => {
         setList(res.list || []);
         setUnreadCount(res.unreadCount || 0);
@@ -27,6 +31,7 @@ export default function Notifications() {
     try {
       await api.markAllRead();
       setUnreadCount(0);
+      setList((prev) => prev.map((n) => ({ ...n, is_read: 1 })));
       Toast.success('已全部标记已读');
     } catch (e) {
       Toast.fail(e.message);
@@ -36,8 +41,8 @@ export default function Notifications() {
   const handleRead = async (id) => {
     try {
       await api.markNotificationRead(id);
-      setList(list.map((n) => n.id === id ? { ...n, is_read: 1 } : n));
-      setUnreadCount(Math.max(0, unreadCount - 1));
+      setList((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: 1 } : n)));
+      setUnreadCount((c) => Math.max(0, c - 1));
     } catch (e) {
       Toast.fail(e.message);
     }
@@ -50,12 +55,15 @@ export default function Notifications() {
     { title: '互动', name: 'interaction' },
   ];
 
+  const totalPages = Math.ceil(list.length / pageSize);
+  const visible = list.slice((page - 1) * pageSize, page * pageSize);
+
   return (
     <div className="page">
       <PageNavBar
         title="通知中心"
         onClickLeft={() => navigate(-1)}
-        right={unreadCount > 0 ? <span onClick={handleReadAll} style={{ color: '#143a75' }}>全部已读</span> : undefined}
+        right={unreadCount > 0 ? <span onClick={handleReadAll} className="text-primary navbar-action">全部已读</span> : undefined}
         safeAreaInsetTop
       />
 
@@ -68,10 +76,10 @@ export default function Notifications() {
       {loading ? (
         <div className="empty-tip">加载中...</div>
       ) : list.length === 0 ? (
-        <Empty description="暂无通知" style={{ marginTop: 40 }} />
+        <Empty description="暂无通知" className="empty-top" />
       ) : (
         <div className="notification-list">
-          {list.map((item) => (
+          {visible.map((item) => (
             <div
               key={item.id}
               className={`notification-item ${!item.is_read ? 'unread' : ''}`}
@@ -85,6 +93,9 @@ export default function Notifications() {
               </div>
             </div>
           ))}
+          {totalPages > 1 && (
+            <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+          )}
         </div>
       )}
     </div>

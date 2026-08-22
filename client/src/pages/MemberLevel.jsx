@@ -17,7 +17,7 @@ export default function MemberLevel() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="empty-tip">加载中...</div>;
+  if (loading) return <div className="page"><PageNavBar title="会员等级" onClickLeft={() => navigate(-1)} /><div className="empty-tip">加载中...</div></div>;
 
   const level = stats?.level || {};
   const currentLevel = LEVEL_META[level.level] || LEVEL_META.normal;
@@ -42,7 +42,7 @@ export default function MemberLevel() {
       </div>
 
       {/* 维度进度 */}
-      <CellGroup inset style={{ marginTop: 12 }}>
+      <CellGroup inset className="profile-section--gap">
         <Cell title="投稿购买率" value={`${level.purchase_rate || 0}%`} />
         <Cell title="投稿无效率" value={`${level.invalid_rate || 0}%`} />
         <Cell title="共享有用率" value={`${level.helpful_rate || 0}%`} />
@@ -54,7 +54,7 @@ export default function MemberLevel() {
       <div className="section">
         <div className="section-title">等级说明</div>
         {levels.map((l, i) => (
-          <div key={l.key} className="level-item" style={{ opacity: i <= currentIndex ? 1 : 0.5 }}>
+          <div key={l.key} className={`level-item ${i <= currentIndex ? 'level-item--active' : 'level-item--locked'}`}>
             <div className="level-item__header">
               <Tag color={l.color}>{l.label}</Tag>
               <span>{l.discount}</span>

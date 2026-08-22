@@ -7,7 +7,7 @@ import React from 'react';
 vi.mock('../src/api', () => ({
   api: {
     opportunities: vi.fn().mockResolvedValue({ list: [], total: 0 }),
-    getMyOrders: vi.fn().mockResolvedValue({ list: [], total: 0 }),
+    myOrders: vi.fn().mockResolvedValue({ list: [], total: 0 }),
     notifications: vi.fn().mockResolvedValue({ list: [], total: 0 }),
     reminders: vi.fn().mockResolvedValue({ list: [], total: 0 }),
     crm: vi.fn().mockResolvedValue({ list: [], total: 0 }),

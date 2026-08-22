@@ -12,8 +12,11 @@ vi.mock('../src/api', () => ({
     opportunity: vi.fn(),
     purchase: vi.fn(),
     markInvalid: vi.fn(),
+    markHelpful: vi.fn(),
+    reportShare: vi.fn(),
     createOpportunity: vi.fn(),
     opportunities: vi.fn(),
+    myOrders: vi.fn(),
     banners: vi.fn().mockResolvedValue({ list: [] }),
     me: vi.fn().mockResolvedValue({ nickname: '测试' }),
   },
@@ -90,7 +93,36 @@ describe('商机详情（开发需求 6.1.2/6.1.3 购买解锁）', () => {
     const { api } = await import('../src/api');
     api.opportunity.mockResolvedValue(makeDetail({
       isPurchased: true,
-      marketIntelligence: { totalShares: 2, statusDistribution: { interested: 1, negotiating: 1 } },
+      marketIntelligence: {
+        totalShares: 2,
+        statusDistribution: { interested: 1, negotiating: 1 },
+        shareBoard: [
+          {
+            shareId: 1,
+            status: 'interested',
+            summary: '甲方明确意向',
+            helpfulCount: 3,
+            createdAt: '2026-08-20T00:00:00.000Z',
+            nickname: '投稿人乙',
+            isOwn: false,
+            isLiked: false,
+            reportCount: 0,
+            isReported: false,
+          },
+          {
+            shareId: 2,
+            status: 'negotiating',
+            summary: '已约二次报价',
+            helpfulCount: 0,
+            createdAt: '2026-08-19T00:00:00.000Z',
+            nickname: '投稿人丙',
+            isOwn: false,
+            isLiked: true,
+            reportCount: 2,
+            isReported: false,
+          },
+        ],
+      },
     }));
     render(
       <MemoryRouter initialEntries={['/opportunity/25']}>
@@ -105,7 +137,12 @@ describe('商机详情（开发需求 6.1.2/6.1.3 购买解锁）', () => {
     expect(screen.getByText('zhang_gong')).toBeTruthy();
     expect(screen.getByText('西湖区文三路100号维也纳酒店')).toBeTruthy();
     expect(screen.getByText('已完成设计，正在招投标')).toBeTruthy();
-    expect(screen.getByText('基于 2 位购买者跟进')).toBeTruthy();
+    expect(screen.getByText('2 位购买者共享了进度')).toBeTruthy();
+    expect(screen.getByText('共享进度榜')).toBeTruthy();
+    expect(screen.getByText('甲方明确意向')).toBeTruthy();
+    expect(screen.getByText('已约二次报价')).toBeTruthy();
+    expect(document.querySelector('.mi-report-btn')).toBeTruthy();
+    expect(document.querySelector('.mi-like-btn')).toBeTruthy();
     expect(screen.getByText('意向明确')).toBeTruthy();
     expect(screen.getByText('标记无效')).toBeTruthy();
   });
@@ -121,11 +158,109 @@ describe('商机详情（开发需求 6.1.2/6.1.3 购买解锁）', () => {
       </MemoryRouter>
     );
     await waitFor(() => expect(screen.getByText('完整联系方式与详情')).toBeTruthy());
-    expect(screen.getByText('投稿人甲')).toBeTruthy();
-    expect(screen.getByText('某某工程公司')).toBeTruthy();
+    expect(document.querySelector('.detail-publisher__name').textContent).toBe('投**甲');
+    expect(screen.queryByText('某某工程公司')).toBeNull();
     expect(screen.getByText('zhang_gong')).toBeTruthy();
     expect(screen.getByText('西湖区文三路100号维也纳酒店')).toBeTruthy();
     expect(screen.getByText('已完成设计，正在招投标')).toBeTruthy();
+  });
+
+  it('点击无效：选择原因后提交 reportShare', async () => {
+    const { api } = await import('../src/api');
+    api.opportunity.mockResolvedValue(makeDetail({
+      isPurchased: true,
+      marketIntelligence: {
+        totalShares: 1,
+        statusDistribution: { interested: 1 },
+        shareBoard: [
+          { shareId: 1, status: 'interested', summary: '甲方明确意向', helpfulCount: 3, createdAt: '2026-08-20T00:00:00.000Z', nickname: '投稿人乙', isOwn: false, isLiked: false, reportCount: 0, isReported: false },
+        ],
+      },
+    }));
+    api.reportShare.mockResolvedValue({});
+    render(
+      <MemoryRouter initialEntries={['/opportunity/25']}>
+        <Routes>
+          <Route path="/opportunity/:id" element={<OpportunityDetail />} />
+        </Routes>
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(screen.getByText('共享进度榜')).toBeTruthy());
+    fireEvent.click(screen.getByText('无效'));
+    await waitFor(() => expect(screen.getByText('举报无效情报')).toBeTruthy());
+    fireEvent.click(screen.getByText('信息虚假'));
+    fireEvent.click(screen.getAllByText('提交')[0]);
+    await waitFor(() => expect(api.reportShare).toHaveBeenCalled());
+    expect(api.reportShare).toHaveBeenCalledWith({ shareId: 1, reason: 'info_fake', reasonText: undefined });
+  });
+
+  it('共享进度超过 10 条时分页展示并支持查看更多', async () => {
+    const { api } = await import('../src/api');
+    const shares = Array.from({ length: 13 }, (_, i) => ({
+      shareId: i + 1,
+      status: 'interested',
+      summary: `第 ${i + 1} 条情报`,
+      helpfulCount: 0,
+      createdAt: '2026-08-20T00:00:00.000Z',
+      nickname: '投稿人乙',
+      isOwn: false,
+      isLiked: false,
+      reportCount: 0,
+      isReported: false,
+    }));
+    api.opportunity.mockResolvedValue(makeDetail({
+      isPurchased: true,
+      marketIntelligence: { totalShares: 13, statusDistribution: { interested: 13 }, shareBoard: shares },
+    }));
+    render(
+      <MemoryRouter initialEntries={['/opportunity/25']}>
+        <Routes>
+          <Route path="/opportunity/:id" element={<OpportunityDetail />} />
+        </Routes>
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(screen.getByText('第 1 条情报')).toBeTruthy());
+    expect(screen.queryByText('第 7 条情报')).toBeNull();
+    expect(screen.getAllByText('无效').length).toBe(6);
+    expect(screen.getByText('1/3')).toBeTruthy();
+    expect(screen.getByText('下一页')).toBeTruthy();
+    expect(screen.getByText('上一页').closest('button').disabled).toBe(true);
+    fireEvent.click(screen.getByText('下一页'));
+    await waitFor(() => expect(screen.getByText('第 7 条情报')).toBeTruthy());
+    expect(screen.getByText('2/3')).toBeTruthy();
+    expect(screen.getByText('上一页').closest('button').disabled).toBe(false);
+    fireEvent.click(screen.getByText('下一页'));
+    await waitFor(() => expect(screen.getByText('第 13 条情报')).toBeTruthy());
+    expect(screen.getByText('3/3')).toBeTruthy();
+    expect(screen.getByText('下一页').closest('button').disabled).toBe(true);
+    fireEvent.click(screen.getByText('上一页'));
+    await waitFor(() => expect(screen.getByText('2/3')).toBeTruthy());
+  });
+
+  it('点赞其他购买者的共享进度并携带 shareId', async () => {
+    const { api } = await import('../src/api');
+    api.opportunity.mockResolvedValue(makeDetail({
+      isPurchased: true,
+      marketIntelligence: {
+        totalShares: 1,
+        statusDistribution: { interested: 1 },
+        shareBoard: [
+          { shareId: 1, status: 'interested', summary: '甲方明确意向', helpfulCount: 3, createdAt: '2026-08-20T00:00:00.000Z', nickname: '投稿人乙', isOwn: false, isLiked: false, reportCount: 0, isReported: false },
+        ],
+      },
+    }));
+    api.markHelpful.mockResolvedValue({});
+    render(
+      <MemoryRouter initialEntries={['/opportunity/25']}>
+        <Routes>
+          <Route path="/opportunity/:id" element={<OpportunityDetail />} />
+        </Routes>
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(screen.getByText('甲方明确意向')).toBeTruthy());
+    fireEvent.click(document.querySelector('.mi-like-btn'));
+    await waitFor(() => expect(api.markHelpful).toHaveBeenCalled());
+    expect(api.markHelpful).toHaveBeenCalledWith({ shareId: 1 });
   });
 
   it('购买按钮调用 purchase 接口并携带 opportunityId', async () => {
@@ -315,9 +450,14 @@ describe('我的订单 MyOrders', () => {
     api.opportunities.mockResolvedValue({
       list: [
         { id: 1, title: '我发布的单', status: 'active', price: 50, city: '上海', isPurchased: false, isPublisher: true, purchaseCount: 3, createdAt: '2026-08-01T00:00:00.000Z' },
+      ],
+      total: 1,
+    });
+    api.myOrders.mockResolvedValue({
+      list: [
         { id: 2, title: '我购买的单', status: 'active', price: 88, city: '杭州', isPurchased: true, isPublisher: false, purchaseCount: 12, createdAt: '2026-08-01T00:00:00.000Z' },
       ],
-      total: 2,
+      total: 1,
     });
     render(
       <MemoryRouter>
@@ -334,6 +474,7 @@ describe('我的订单 MyOrders', () => {
   it('空数据展示空态', async () => {
     const { api } = await import('../src/api');
     api.opportunities.mockResolvedValue({ list: [], total: 0 });
+    api.myOrders.mockResolvedValue({ list: [], total: 0 });
     render(
       <MemoryRouter>
         <MyOrders />

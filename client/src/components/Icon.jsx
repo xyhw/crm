@@ -1,5 +1,6 @@
 import {
   WapHomeO,
+  HomeO,
   Search,
   Edit,
   GoldCoinO,
@@ -33,10 +34,46 @@ import {
   BullhornO,
   GiftO,
   AwardO,
+  MedalO,
+  Lock,
+  ShieldO,
+  GemO,
+  DiamondO,
+  GoodJobO,
+  FireO,
+  LikeO,
+  ShareO,
+  EyeO,
+  ClosedEye,
+  BulbO,
+  TvO,
+  DesktopO,
+  ShoppingCartO,
+  FlowerO,
+  AppsO,
+  Certificate,
+  Idcard,
+  CreditPay,
+  BarChartO,
+  Descending,
+  Ascending,
+  NewO,
+  ThumbCircleO,
+  Setting,
+  BrushO,
+  Sort,
+  FilterO,
+  Photograph,
+  MusicO,
+  CartO,
+  UnderwayO,
+  Aim,
+  More,
 } from '@react-vant/icons';
 
 const ICON_MAP = {
   'wap-home-o': WapHomeO,
+  'home-o': HomeO,
   search: Search,
   edit: Edit,
   'gold-coin-o': GoldCoinO,
@@ -71,7 +108,48 @@ const ICON_MAP = {
   'bullhorn-o': BullhornO,
   'gift-o': GiftO,
   'award-o': AwardO,
+  'medal-o': MedalO,
+  lock: Lock,
+  'shield-o': ShieldO,
+  'gem-o': GemO,
+  'diamond-o': DiamondO,
+  'good-job-o': GoodJobO,
+  fire: FireO,
+  'like-o': LikeO,
+  'share-o': ShareO,
+  'eye-o': EyeO,
+  'closed-eye': ClosedEye,
+  'bulb-o': BulbO,
+  'tv-o': TvO,
+  'desktop-o': DesktopO,
+  'shopping-cart-o': ShoppingCartO,
+  'flower-o': FlowerO,
+  'apps-o': AppsO,
+  'apps': AppsO,
+  certificate: Certificate,
+  idcard: Idcard,
+  'credit-pay': CreditPay,
+  'crown-o': AwardO,
+  'bar-chart-o': BarChartO,
+  descending: Descending,
+  ascending: Ascending,
+  'new-o': NewO,
+  'thumb-circle-o': ThumbCircleO,
+  settings: Setting,
+  'brush-o': BrushO,
+  sort: Sort,
+  filter: FilterO,
+  photograph: Photograph,
+  'music-o': MusicO,
+  'cart-o': CartO,
+  'underway-o': UnderwayO,
+  aim: Aim,
+  more: More,
 };
+
+export function resolveIcon(name) {
+  return ICON_MAP[name] || null;
+}
 
 export default function Icon({ name, size = 16, color, style, className }) {
   const Cmp = ICON_MAP[name];
@@ -80,6 +158,7 @@ export default function Icon({ name, size = 16, color, style, className }) {
     <Cmp
       width={size}
       height={size}
+      aria-hidden="true"
       style={{ color, ...style }}
       className={className}
     />

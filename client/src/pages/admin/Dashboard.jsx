@@ -17,10 +17,10 @@ export default function Dashboard() {
   }, []);
 
   const statCards = [
-    { title: '用户总数', value: stats?.totalUsers || 0, icon: <UserOutlined />, color: '#143a75' },
-    { title: '商机总数', value: stats?.totalOpportunities || 0, icon: <FileTextOutlined />, color: '#148a57' },
-    { title: '订单总数', value: stats?.totalOrders || 0, icon: <OrderedListOutlined />, color: '#d88006' },
-    { title: '积分总量', value: stats?.totalPoints || 0, icon: <CreditCardOutlined />, color: '#d93a2b' },
+    { title: '用户总数', value: stats?.totalUsers || 0, icon: <UserOutlined />, color: '#048C47' },
+    { title: '商机总数', value: stats?.totalOpportunities || 0, icon: <FileTextOutlined />, color: '#048C47' },
+    { title: '订单总数', value: stats?.totalOrders || 0, icon: <OrderedListOutlined />, color: '#E8920A' },
+    { title: '积分总量', value: stats?.totalPoints || 0, icon: <CreditCardOutlined />, color: '#E54848' },
   ];
 
   return (

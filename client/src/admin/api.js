@@ -68,10 +68,10 @@ export const adminApi = {
   updateRole: (id, data) => apiClient.put(`/roles/${id}`, data),
   deleteRole: (id) => apiClient.delete(`/roles/${id}`),
   
-  // 管理员管理
+  // 管理员管理（含角色分配，用于角色管理页）
   fetchAdmins: () => apiClient.get('/roles/admins'),
-  createAdmin: (data) => apiClient.post('/roles/admins', data),
-  updateAdmin: (id, data) => apiClient.put(`/roles/admin/${id}`, data),
+  createAdminWithRoles: (data) => apiClient.post('/roles/admins', data),
+  updateAdminWithRoles: (id, data) => apiClient.put(`/roles/admin/${id}`, data),
   toggleAdminStatus: (id) => apiClient.put(`/roles/admin/${id}/status`),
   
   // 操作日志

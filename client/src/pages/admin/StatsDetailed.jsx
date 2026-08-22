@@ -24,12 +24,12 @@ export default function StatsDetailed() {
       <Title level={4}>数据统计</Title>
 
       <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col span={4}><Card><Statistic title="总用户数" value={dashboard?.totalUsers || 0} prefix={<UserOutlined />} valueStyle={{ color: '#143a75' }} /></Card></Col>
-        <Col span={4}><Card><Statistic title="总商机数" value={dashboard?.totalOpportunities || 0} prefix={<FileTextOutlined />} valueStyle={{ color: '#148a57' }} /></Card></Col>
-        <Col span={4}><Card><Statistic title="总订单数" value={dashboard?.totalOrders || 0} prefix={<OrderedListOutlined />} valueStyle={{ color: '#d88006' }} /></Card></Col>
-        <Col span={4}><Card><Statistic title="总积分量" value={dashboard?.totalPoints || 0} prefix={<CreditCardOutlined />} valueStyle={{ color: '#d93a2b' }} /></Card></Col>
-        <Col span={4}><Card><Statistic title="今日订单" value={dashboard?.todayOrders || 0} prefix={<RiseOutlined />} valueStyle={{ color: '#143a75' }} /></Card></Col>
-        <Col span={4}><Card><Statistic title="今日收入" value={dashboard?.todayRevenue || 0} suffix="积分" prefix={<DollarOutlined />} valueStyle={{ color: '#148a57' }} /></Card></Col>
+        <Col span={4}><Card><Statistic title="总用户数" value={dashboard?.totalUsers || 0} prefix={<UserOutlined />} valueStyle={{ color: '#048C47' }} /></Card></Col>
+        <Col span={4}><Card><Statistic title="总商机数" value={dashboard?.totalOpportunities || 0} prefix={<FileTextOutlined />} valueStyle={{ color: '#048C47' }} /></Card></Col>
+        <Col span={4}><Card><Statistic title="总订单数" value={dashboard?.totalOrders || 0} prefix={<OrderedListOutlined />} valueStyle={{ color: '#E8920A' }} /></Card></Col>
+        <Col span={4}><Card><Statistic title="总积分量" value={dashboard?.totalPoints || 0} prefix={<CreditCardOutlined />} valueStyle={{ color: '#E54848' }} /></Card></Col>
+        <Col span={4}><Card><Statistic title="今日订单" value={dashboard?.todayOrders || 0} prefix={<RiseOutlined />} valueStyle={{ color: '#048C47' }} /></Card></Col>
+        <Col span={4}><Card><Statistic title="今日收入" value={dashboard?.todayRevenue || 0} suffix="积分" prefix={<DollarOutlined />} valueStyle={{ color: '#048C47' }} /></Card></Col>
       </Row>
 
       <Row gutter={16}>

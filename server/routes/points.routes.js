@@ -7,14 +7,14 @@ const router = Router();
 // 获取积分余额
 router.get('/balance', authRequired, async (req, res) => {
   try {
-    const [account] = await query(
+    const account = await queryOne(
       'SELECT * FROM points_accounts WHERE user_id = ?',
       [req.userId]
     );
     
     res.json({
       code: 0,
-      data: account[0] || { balance: 0, total_recharged: 0, total_consumed: 0, total_expired: 0 },
+      data: account || { balance: 0, total_recharged: 0, total_consumed: 0, total_expired: 0 },
     });
   } catch (err) {
     console.error('Get balance error:', err);

@@ -35,7 +35,7 @@ const PageLoading = () => (
 
 function RequireAuth({ children }) {
   const token = localStorage.getItem('admin_token');
-  if (!token) return <Navigate to="/admin/login" replace />;
+  if (!token) return <Navigate to="/login" replace />;
   return children;
 }
 

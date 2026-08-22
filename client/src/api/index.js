@@ -175,6 +175,7 @@ export const api = {
   addFollowUp: (data) => request('/follow-ups', { method: 'POST', body: data }),
   shareFollowUp: (data) => request('/follow-ups/share', { method: 'POST', body: data }),
   markHelpful: (data) => request('/follow-ups/helpful', { method: 'POST', body: data }),
+  reportShare: (data) => request('/follow-ups/report', { method: 'POST', body: data }),
 
   // 邀请
   invitationMe: () => request('/invitations/me'),

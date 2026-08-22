@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Tag, Toast, Search, PullRefresh, List } from 'react-vant';
 import { api } from '../api';
 import PageNavBar from '../components/PageNavBar';
+import Icon from '../components/Icon';
+import { SkeletonList } from '../components/StateView';
 import { SUPPLIER_CATEGORIES, timeAgo, stageLabel } from '../constants';
+import { resolveCategoryIcon } from '../utils/category';
 
 export default function Hall() {
   const navigate = useNavigate();
@@ -27,7 +30,7 @@ export default function Hall() {
         pageSize: 10,
       });
       const newList = res.list || [];
-      setList(reset ? newList : [...list, ...newList]);
+      setList(reset ? newList : (prev) => [...prev, ...newList]);
       setHasMore(newList.length === 10);
       setPage(p);
     } catch (e) {
@@ -75,7 +78,7 @@ export default function Hall() {
         onSearch={onSearch}
         placeholder="搜索商机"
         shape="round"
-        style={{ padding: '8px 12px' }}
+        className="search-bar"
       />
 
       {/* 分类筛选 */}
@@ -95,21 +98,28 @@ export default function Hall() {
       <div className="sort-bar">
         <span className={sort === 'newest' ? 'active' : ''} onClick={() => setSort('newest')}>最新</span>
         <span className={sort === 'popular' ? 'active' : ''} onClick={() => setSort('popular')}>最热</span>
-        <span className={sort === 'price_asc' ? 'active' : ''} onClick={() => setSort('price_asc')}>价格↑</span>
-        <span className={sort === 'price_desc' ? 'active' : ''} onClick={() => setSort('price_desc')}>价格↓</span>
+        <span className={sort === 'price_asc' ? 'active' : ''} onClick={() => setSort('price_asc')}>
+          价格<Icon name="ascending" size={12} />
+        </span>
+        <span className={sort === 'price_desc' ? 'active' : ''} onClick={() => setSort('price_desc')}>
+          价格<Icon name="descending" size={12} />
+        </span>
       </div>
 
       {/* 列表 */}
       <PullRefresh onRefresh={onRefresh} successDuration={500}>
         <List finished={!hasMore} onLoad={loadMore}>
           {loading && list.length === 0 ? (
-            <div className="empty-tip">加载中...</div>
+            <SkeletonList count={4} />
           ) : list.length === 0 ? (
-            <div className="empty-tip" style={{ marginTop: 40 }}>暂无商机</div>
+            <div className="state-empty">
+              <div className="state-empty__title">暂无商机</div>
+              <div className="state-empty__desc">换个分类或关键词试试</div>
+            </div>
           ) : (
             list.map((item) => (
               <div
-                className={`opportunity-card ${item.isPurchased ? 'purchased' : ''}`}
+                className={`opportunity-card pressable ${item.isPurchased ? 'purchased' : ''}`}
                 key={item.id}
                 role="button"
                 tabIndex={0}
@@ -123,10 +133,16 @@ export default function Hall() {
                 }}
               >
                 <div className="opportunity-card__header">
-                  <div className="opportunity-card__icon">{item.categoryIcon || '📦'}</div>
+                  <div className="cat-icon">
+                    <Icon name={resolveCategoryIcon(item)} size={24} />
+                  </div>
                   <div className="opportunity-card__info">
                     <div className="opportunity-card__title">
-                      {item.isPurchased && <span className="opportunity-card__purchased-mark" aria-label="已购买">✓</span>}
+                      {item.isPurchased && (
+                        <span className="opportunity-card__purchased-mark" aria-label="已购买">
+                          <Icon name="success" size={11} color="#ffffff" />
+                        </span>
+                      )}
                       <span className="opportunity-card__title-text">{item.title}</span>
                       {item.isPurchased && <span className="opportunity-card__purchased-tag">已解锁</span>}
                     </div>
@@ -158,7 +174,7 @@ export default function Hall() {
                       <>{item.price} 积分</>
                     ) : (
                       <>
-                        <span className="opportunity-card__lock-icon">🔒</span>
+                        <Icon name="lock" size={12} className="opportunity-card__lock-icon" />
                         {item.price} 积分
                       </>
                     )}

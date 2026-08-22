@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NavBar, Tag, Toast, Button, Badge } from 'react-vant';
 import Icon from '../components/Icon';
+import { SkeletonList } from '../components/StateView';
 import HomeBanner from '../components/HomeBanner';
 import AnnouncementBar from '../components/AnnouncementBar';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
-import { categoryIcon, categoryLabel, statusMeta, timeAgo, levelMeta } from '../constants';
+import { categoryLabel, statusMeta, timeAgo, levelMeta } from '../constants';
+import { resolveCategoryIcon } from '../utils/category';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -45,7 +47,7 @@ export default function Home() {
         safeAreaInsetTop
         right={
           <Badge content={unreadCount > 0 ? unreadCount : ''} showZero={false}>
-            <Icon name="bell" size={22} color="#152139" onClick={() => navigate('/notifications')} />
+            <Icon name="bell" size={22} onClick={() => navigate('/notifications')} />
           </Badge>
         }
       />
@@ -74,9 +76,7 @@ export default function Home() {
           <div className="home-user__avatar">{user?.nickname?.[0] || '友'}</div>
           <div className="home-user__info">
             <div className="home-user__name">{user?.nickname || '未登录'}</div>
-            <Tag color="#fff" style={{ background: level.color }}>
-              {level.label}
-            </Tag>
+            <Tag className="home-user__level-tag">{level.label}</Tag>
           </div>
           <div className="home-user__points" onClick={() => navigate('/points')}>
             <div className="home-user__points-num">{user?.pointsBalance ?? 0}</div>
@@ -93,7 +93,7 @@ export default function Home() {
             <div className="home-user__stat-label">我的CRM</div>
           </div>
           <div className="home-user__stat" onClick={() => navigate('/member-level')}>
-            <div className="home-user__stat-num" style={{ color: level.color }}>{level.label}</div>
+            <div className="home-user__stat-num">{level.label}</div>
             <div className="home-user__stat-label">会员等级</div>
           </div>
         </div>
@@ -104,20 +104,20 @@ export default function Home() {
 
       {/* 快捷入口 */}
       <div className="home-entry">
-        <div className="home-entry__item" onClick={() => navigate('/opportunities')}>
-          <Icon name="search" size={26} color="#143a75" />
+        <div className="home-entry__item home-entry__item--primary" onClick={() => navigate('/opportunities')}>
+          <Icon name="search" size={26} />
           <span>商机大厅</span>
         </div>
-        <div className="home-entry__item" onClick={() => navigate('/publish')}>
-          <Icon name="edit" size={26} color="#ff6b1a" />
+        <div className="home-entry__item home-entry__item--accent" onClick={() => navigate('/publish')}>
+          <Icon name="edit" size={26} />
           <span>发布商机</span>
         </div>
-        <div className="home-entry__item" onClick={() => navigate('/crm')}>
-          <Icon name="contact" size={26} color="#148a57" />
+        <div className="home-entry__item home-entry__item--success" onClick={() => navigate('/crm')}>
+          <Icon name="contact" size={26} />
           <span>我的CRM</span>
         </div>
-        <div className="home-entry__item" onClick={() => navigate('/ranking')}>
-          <Icon name="medal-o" size={26} color="#d88006" />
+        <div className="home-entry__item home-entry__item--warning" onClick={() => navigate('/ranking')}>
+          <Icon name="medal-o" size={26} />
           <span>排行榜</span>
         </div>
       </div>
@@ -131,7 +131,7 @@ export default function Home() {
       </div>
 
       {loading ? (
-        <div className="empty-tip">加载中...</div>
+        <SkeletonList count={3} />
       ) : orders.length === 0 ? (
         <div className="home-empty">
           <div className="home-empty__title">暂无商机</div>
@@ -142,8 +142,25 @@ export default function Home() {
         </div>
       ) : (
         orders.map((o) => (
-          <div className="home-order" key={o.id} onClick={() => navigate(`/opportunity/${o.id}`)}>
-            <div className="home-order__icon">{o.categoryIcon || '📦'}</div>
+          <div
+            className="home-order pressable"
+            key={o.id}
+            role="button"
+            tabIndex={0}
+            aria-label={`查看商机：${o.title}`}
+            onClick={() => navigate(`/opportunity/${o.id}`)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                navigate(`/opportunity/${o.id}`);
+              }
+            }}
+          >
+            <div className="home-order__icon">
+              <div className="cat-icon cat-icon--sm">
+                <Icon name={resolveCategoryIcon(o)} size={22} />
+              </div>
+            </div>
             <div className="home-order__body">
               <div className="home-order__title text-ellipsis">{o.title}</div>
               <div className="home-order__meta">

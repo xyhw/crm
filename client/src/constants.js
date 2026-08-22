@@ -1,14 +1,14 @@
 export const SUPPLIER_CATEGORIES = [
-  { value: 1, label: '装修总包', icon: '🏗️' },
-  { value: 2, label: '弱电总包', icon: '🔌' },
-  { value: 3, label: '软装总包', icon: '🛋️' },
-  { value: 4, label: '酒店家具', icon: '🛏️' },
-  { value: 5, label: '酒店运营物资', icon: '🧴' },
-  { value: 6, label: '厨房设备', icon: '🍳' },
-  { value: 7, label: '照明灯具', icon: '💡' },
-  { value: 8, label: '布草布艺', icon: '🧺' },
-  { value: 9, label: '家电设备', icon: '📺' },
-  { value: 10, label: '其他', icon: '📦' },
+  { value: 1, label: '装修总包', icon: 'home-o' },
+  { value: 2, label: '弱电总包', icon: 'tv-o' },
+  { value: 3, label: '软装总包', icon: 'hotel-o' },
+  { value: 4, label: '酒店家具', icon: 'shop-o' },
+  { value: 5, label: '酒店运营物资', icon: 'bag-o' },
+  { value: 6, label: '厨房设备', icon: 'shopping-cart-o' },
+  { value: 7, label: '照明灯具', icon: 'bulb-o' },
+  { value: 8, label: '布草布艺', icon: 'flower-o' },
+  { value: 9, label: '家电设备', icon: 'desktop-o' },
+  { value: 10, label: '其他', icon: 'apps-o' },
 ];
 
 export const ORDER_STAGES = [
@@ -28,9 +28,9 @@ export const ORDER_STATUS = {
 };
 
 export const ORDER_STATUS_META = {
-  active: { label: '进行中', color: '#143a75', bg: '#e7ecf5' },
-  inactive: { label: '已下架', color: '#5d6b7c', bg: '#eff2f7' },
-  invalid: { label: '已失效', color: '#d93a2b', bg: '#fbeae9' },
+  active: { label: '进行中', color: '#048C47', bg: '#E4F7EC' },
+  inactive: { label: '已下架', color: '#7A7A7A', bg: '#F2F4F5' },
+  invalid: { label: '已失效', color: '#E54848', bg: '#FDECEC' },
 };
 
 export const FOLLOW_UP_STATUS = [
@@ -44,20 +44,20 @@ export const FOLLOW_UP_STATUS = [
 ];
 
 export const FOLLOW_UP_STATUS_META = {
-  call_no_answer: { label: '电话未接通', color: '#5d6b7c', bg: '#eff2f7' },
-  added_wechat: { label: '已加微信', color: '#148a57', bg: '#e6f4ec' },
-  interested: { label: '意向明确', color: '#143a75', bg: '#e7ecf5' },
-  quoting: { label: '报价中', color: '#d88006', bg: '#fbf1e4' },
-  negotiating: { label: '谈判中', color: '#d93a2b', bg: '#fbeae9' },
-  closed: { label: '成交', color: '#148a57', bg: '#e6f4ec' },
-  abandoned: { label: '已放弃', color: '#5d6b7c', bg: '#eff2f7' },
+  call_no_answer: { label: '电话未接通', color: '#7A7A7A', bg: '#F2F4F5' },
+  added_wechat: { label: '已加微信', color: '#048C47', bg: '#E4F7EC' },
+  interested: { label: '意向明确', color: '#048C47', bg: '#E4F7EC' },
+  quoting: { label: '报价中', color: '#E8920A', bg: '#FFF4E0' },
+  negotiating: { label: '谈判中', color: '#E54848', bg: '#FDECEC' },
+  closed: { label: '成交', color: '#048C47', bg: '#E4F7EC' },
+  abandoned: { label: '已放弃', color: '#7A7A7A', bg: '#F2F4F5' },
 };
 
 export const CRM_STATUS_META = {
-  pending: { label: '待跟进', color: '#d88006', bg: '#fbf1e4' },
-  following: { label: '跟进中', color: '#143a75', bg: '#e7ecf5' },
-  closed: { label: '已成交', color: '#148a57', bg: '#e6f4ec' },
-  abandoned: { label: '已放弃', color: '#5d6b7c', bg: '#eff2f7' },
+  pending: { label: '待跟进', color: '#E8920A', bg: '#FFF4E0' },
+  following: { label: '跟进中', color: '#048C47', bg: '#E4F7EC' },
+  closed: { label: '已成交', color: '#048C47', bg: '#E4F7EC' },
+  abandoned: { label: '已放弃', color: '#7A7A7A', bg: '#F2F4F5' },
 };
 
 export const INVALID_REASONS = [
@@ -67,11 +67,18 @@ export const INVALID_REASONS = [
   { value: 'other', label: '其他' },
 ];
 
+export const SHARE_INVALID_REASONS = [
+  { value: 'info_fake', label: '信息虚假' },
+  { value: 'misleading', label: '夸大误导' },
+  { value: 'duplicate', label: '重复情报' },
+  { value: 'other', label: '其他' },
+];
+
 export const LEVEL_META = {
-  normal: { label: '普通会员', color: '#5d6b7c', discount: '无折扣' },
-  silver: { label: '银牌会员', color: '#143a75', discount: '9折' },
-  gold: { label: '金牌会员', color: '#d88006', discount: '8折' },
-  expert: { label: '认证达人', color: '#d93a2b', discount: '7折' },
+  normal: { label: '普通会员', color: '#7A7A7A', discount: '无折扣' },
+  silver: { label: '银牌会员', color: '#048C47', discount: '9折' },
+  gold: { label: '金牌会员', color: '#E8920A', discount: '8折' },
+  expert: { label: '认证达人', color: '#E54848', discount: '7折' },
 };
 
 export function categoryLabel(value) {
@@ -79,11 +86,22 @@ export function categoryLabel(value) {
 }
 
 export function categoryIcon(value) {
-  return SUPPLIER_CATEGORIES.find((c) => c.value === value || c.value === Number(value))?.icon || '📦';
+  return SUPPLIER_CATEGORIES.find((c) => c.value === value || c.value === Number(value))?.icon || 'apps-o';
+}
+
+export function categoryIconName(value) {
+  return categoryIcon(value);
 }
 
 export function stageLabel(value) {
-  return ORDER_STAGES.find((s) => s.value === value)?.label || value;
+  return ORDER_STAGES.find((s) => s.value === value)?.label || value || '未填写';
+}
+
+export function maskName(name) {
+  if (!name) return '匿名用户';
+  if (name.length <= 1) return name[0] + '*';
+  if (name.length === 2) return name[0] + '*';
+  return name[0] + '*'.repeat(name.length - 2) + name[name.length - 1];
 }
 
 export function statusMeta(value) {
@@ -137,14 +155,14 @@ export function formatDateTime(ts) {
 }
 
 export const OPPORTUNITY_STATUS_META = {
-  active: { label: '销售中', color: '#148a57', bg: '#e6f4ec' },
-  inactive: { label: '已下架', color: '#5d6b7c', bg: '#eff2f7' },
-  invalid: { label: '已失效', color: '#d93a2b', bg: '#fbeae9' },
+  active: { label: '销售中', color: '#048C47', bg: '#E4F7EC' },
+  inactive: { label: '已下架', color: '#7A7A7A', bg: '#F2F4F5' },
+  invalid: { label: '已失效', color: '#E54848', bg: '#FDECEC' },
 };
 
 export const ORDER_STATUS_META_ADMIN = {
-  paid: { label: '已支付', color: '#148a57', bg: '#e6f4ec' },
-  refunded: { label: '已退款', color: '#d93a2b', bg: '#fbeae9' },
+  paid: { label: '已支付', color: '#048C47', bg: '#E4F7EC' },
+  refunded: { label: '已退款', color: '#E54848', bg: '#FDECEC' },
 };
 
 export const POINTS_SOURCE_TYPES = {

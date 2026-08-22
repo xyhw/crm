@@ -14,9 +14,9 @@ export default function Login() {
     setLoading(true);
     try {
       const res = await adminApi.login(values);
-      localStorage.setItem('admin_token', res.access_token);
+      localStorage.setItem('admin_token', res.token);
       message.success('登录成功');
-      navigate('/admin');
+      navigate('/');
     } catch (e) {
       message.error(e.response?.data?.message || e.message);
     } finally {

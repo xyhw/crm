@@ -53,7 +53,7 @@ export default function Points() {
     }
   };
 
-  if (loading) return <div className="empty-tip">加载中...</div>;
+  if (loading) return <div className="page"><PageNavBar title="积分中心" onClickLeft={() => navigate(-1)} /><div className="empty-tip">加载中...</div></div>;
 
   const rechargeOptions = [50, 100, 200, 500, 1000];
 
@@ -75,7 +75,7 @@ export default function Points() {
       </div>
 
       {/* 快捷入口 */}
-      <Grid columnNum={3} style={{ marginBottom: 12 }}>
+      <Grid columnNum={3} className="profile-grid">
         <GridItem icon={<BillO width={22} height={22} />} text="积分流水" onClick={() => navigate('/points/flow')} />
         <GridItem icon={<CouponO width={22} height={22} />} text="购买记录" onClick={() => navigate('/my/orders')} />
         <GridItem icon={<Invitation width={22} height={22} />} text="邀请好友" onClick={() => navigate('/invite')} />
@@ -88,7 +88,9 @@ export default function Points() {
       </div>
 
       {logs.length === 0 ? (
-        <div className="empty-tip">暂无流水记录</div>
+        <div className="state-empty">
+          <div className="state-empty__title">暂无流水记录</div>
+        </div>
       ) : (
         logs.map((log) => (
           <div className="points-log" key={log.id}>
@@ -111,9 +113,9 @@ export default function Points() {
         onConfirm={handleRecharge}
         onCancel={() => setShowRecharge(false)}
       >
-        <div style={{ padding: '16px 0' }}>
-          <div style={{ marginBottom: 12, color: '#666' }}>选择充值金额：</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+        <div className="dialog-body">
+          <div className="dialog-body__label">选择充值金额：</div>
+          <div className="recharge-chips">
             {rechargeOptions.map((amount) => (
               <Button
                 key={amount}
@@ -132,7 +134,6 @@ export default function Points() {
             onChange={setRechargeAmount}
             type="digit"
           />
-          <div style={{ marginTop: 8, color: '#999', fontSize: 12 }}>Mock 模式：充值即到账，无需支付</div>
         </div>
       </Dialog>
     </div>

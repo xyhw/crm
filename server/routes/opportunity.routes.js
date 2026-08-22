@@ -9,7 +9,7 @@ const router = Router();
 // 商机列表（支持筛选、搜索、分页）
 router.get('/', optionalAuth, async (req, res) => {
   try {
-    const { category, keyword, status = 'active', page = 1, pageSize = 10, sort = 'newest' } = req.query;
+    const { category, keyword, status = 'active', page = 1, pageSize = 10, sort = 'newest', mine } = req.query;
     
     let sql = `SELECT o.*, c.name as category_name, c.icon as category_icon, u.nickname as publisher_name,
               (SELECT COUNT(*) FROM follow_up_shares WHERE opportunity_id = o.id AND audit_status = 'approved') as total_shares,
@@ -20,7 +20,10 @@ router.get('/', optionalAuth, async (req, res) => {
               WHERE 1=1`;
     const params = [];
 
-    if (status) {
+    if (mine === '1' && req.userId) {
+      sql += ' AND o.user_id = ?';
+      params.push(req.userId);
+    } else if (status) {
       sql += ' AND o.status = ?';
       params.push(status);
     }
@@ -57,7 +60,10 @@ router.get('/', optionalAuth, async (req, res) => {
     // 获取总数
     let countSql = 'SELECT COUNT(*) as total FROM opportunities o WHERE 1=1';
     const countParams = [];
-    if (status) {
+    if (mine === '1' && req.userId) {
+      countSql += ' AND o.user_id = ?';
+      countParams.push(req.userId);
+    } else if (status) {
       countSql += ' AND o.status = ?';
       countParams.push(status);
     }
@@ -180,12 +186,13 @@ router.get('/:id', optionalAuth, async (req, res) => {
       [opportunity.id]
     );
 
-    // 获取市场情报（已审核的共享摘要）
+    // 获取市场情报（已审核的共享摘要，按点赞数排序做进度榜）
     const shares = await query(
-      `SELECT status, summary, helpful_count, created_at 
-       FROM follow_up_shares 
-       WHERE opportunity_id = ? AND audit_status = 'approved'
-       ORDER BY created_at DESC LIMIT 10`,
+      `SELECT s.id, s.status, s.summary, s.helpful_count, s.report_count, s.created_at, s.user_id, u.nickname
+       FROM follow_up_shares s
+       LEFT JOIN users u ON s.user_id = u.id
+       WHERE s.opportunity_id = ? AND s.audit_status = 'approved'
+       ORDER BY s.helpful_count DESC, s.created_at DESC`,
       [opportunity.id]
     );
 
@@ -194,6 +201,30 @@ router.get('/:id', optionalAuth, async (req, res) => {
     shares.forEach(s => {
       statusCounts[s.status] = (statusCounts[s.status] || 0) + 1;
     });
+
+    // 当前用户点赞过的共享（用于回显点赞状态，防重复点赞）
+    let myLikedShares = new Set();
+    if (req.userId && isPurchased) {
+      const likes = await query(
+        `SELECT m.share_id FROM follow_up_helpful_marks m
+         JOIN follow_up_shares s ON m.share_id = s.id
+         WHERE m.user_id = ? AND s.opportunity_id = ?`,
+        [req.userId, opportunity.id]
+      );
+      myLikedShares = new Set(likes.map(l => l.share_id));
+    }
+
+    // 当前用户举报过的共享（用于回显举报状态，防重复举报）
+    let myReportedShares = new Set();
+    if (req.userId && isPurchased) {
+      const reports = await query(
+        `SELECT m.share_id FROM follow_up_share_invalid_marks m
+         JOIN follow_up_shares s ON m.share_id = s.id
+         WHERE m.user_id = ? AND s.opportunity_id = ?`,
+        [req.userId, opportunity.id]
+      );
+      myReportedShares = new Set(reports.map(r => r.share_id));
+    }
 
     const result = {
       id: opportunity.id,
@@ -218,7 +249,9 @@ router.get('/:id', optionalAuth, async (req, res) => {
     if (isPurchased || isPublisher) {
       result.address = opportunity.address;
       result.stage = opportunity.stage;
+      result.descriptionPublic = opportunity.description_public;
       result.descriptionFull = opportunity.description_full;
+      result.validUntil = opportunity.valid_until;
       result.contactName = opportunity.contact_name;
       result.contactPhone = opportunity.contact_phone;
       result.wechat = opportunity.wechat;
@@ -230,11 +263,17 @@ router.get('/:id', optionalAuth, async (req, res) => {
       result.marketIntelligence = {
         totalShares: shares.length,
         statusDistribution: statusCounts,
-        latestShares: shares.slice(0, 5).map(s => ({
+        shareBoard: shares.slice(0, 100).map(s => ({
+          shareId: s.id,
           status: s.status,
           summary: s.summary,
           helpfulCount: s.helpful_count,
           createdAt: s.created_at,
+          nickname: s.nickname || '匿名用户',
+          isOwn: req.userId === s.user_id,
+          isLiked: myLikedShares.has(s.id),
+          reportCount: s.report_count || 0,
+          isReported: myReportedShares.has(s.id),
         })),
       };
     } else {

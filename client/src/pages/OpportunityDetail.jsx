@@ -4,8 +4,10 @@ import { Tag, Toast, Button, Dialog, Field, CellGroup, Cell, Radio } from 'react
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
 import PageNavBar from '../components/PageNavBar';
-import { stageLabel, statusMeta, INVALID_REASONS, levelMeta, timeAgo } from '../constants';
 import Icon from '../components/Icon';
+import MarketIntelligence from '../components/MarketIntelligence';
+import AttachmentGrid from '../components/AttachmentGrid';
+import { stageLabel, statusMeta, INVALID_REASONS, levelMeta, maskName, formatDate } from '../constants';
 
 export default function OpportunityDetail() {
   const { id } = useParams();
@@ -31,6 +33,13 @@ export default function OpportunityDetail() {
       .catch((e) => Toast.fail(e.message))
       .finally(() => setLoading(false));
   }, [id]);
+
+  const refreshDetail = async () => {
+    try {
+      const res = await api.opportunity(id);
+      setDetail(res);
+    } catch (e) {}
+  };
 
   const handlePurchase = async () => {
     if (!user) return navigate('/login');
@@ -85,77 +94,121 @@ export default function OpportunityDetail() {
   const meta = statusMeta(detail.status);
   const canViewFull = detail.isPurchased || detail.isPublisher;
   const displayBrand = detail.brand || detail.hotelName || '未知品牌';
+  const publisherDisplay = maskName(detail.publisherName);
 
-  const statusLabelMap = {
-    call_no_answer: '电话未接通',
-    added_wechat: '已加微信',
-    interested: '意向明确',
-    quoting: '报价中',
-    negotiating: '谈判中',
-    closed: '已成交',
-    abandoned: '已放弃',
-  };
+  // 未购买时的预览文本：仅从公开描述取前 2 行
+  const previewSource = detail.descriptionPublic || '';
+  const previewLines = previewSource.split('\n').filter(Boolean).slice(0, 2).join('\n');
 
   return (
     <div className="page">
       <PageNavBar title="商机详情" onClickLeft={() => navigate(-1)} />
 
-      {/* 标题区域 */}
-      <div className="detail-header">
-        <div className="detail-header__top">
+      {/* 概览卡片：标题 + 标签 + 价格 + 统计 */}
+      <div className="detail-overview">
+        {detail.isPurchased && (
+          <div className="detail-overview__badge">
+            <Tag type="success" plain>已购买</Tag>
+          </div>
+        )}
+        <div className="detail-overview__tags">
           <Tag color={meta.color} bg={meta.bg}>{meta.label}</Tag>
           <Tag type="primary">{detail.categoryName}</Tag>
         </div>
-        <h2 className="detail-header__title">{detail.title}</h2>
-        <div className="detail-header__meta">
-          <span><Icon name="location-o" size={14} /> {detail.city || '未知城市'}</span>
-          <span><Icon name="hotel-o" size={14} /> {displayBrand}</span>
+        <h2 className="detail-overview__title">{detail.title}</h2>
+        <div className="detail-overview__meta">
+          <span><Icon name="location-o" size={13} /> {detail.city || '未知城市'}</span>
+          <span><Icon name="hotel-o" size={13} /> {displayBrand}</span>
+          {detail.createdAt && <span><Icon name="clock-o" size={13} /> {formatDate(detail.createdAt) || '未知'}</span>}
+        </div>
+        {detail.tags && detail.tags.length > 0 && (
+          <div className="detail-overview__tag-list">
+            {detail.tags.map((t) => (
+              <Tag key={t.id} type="primary" plain size="medium">{t.name}</Tag>
+            ))}
+          </div>
+        )}
+        <div className="detail-overview__price-bar">
+          <div className="detail-overview__price">
+            {detail.price} <span>积分</span>
+          </div>
+          <div className="detail-overview__stats">
+            <span>{detail.purchaseCount || 0} 人购买</span>
+            <span>{detail.viewCount || 0} 次浏览</span>
+            {detail.invalidMarkCount > 0 && <span className="text-danger">{detail.invalidMarkCount} 人标记无效</span>}
+          </div>
         </div>
       </div>
-      {/* 价格区 */}
-      <div className="detail-price">
-        <div className="detail-price__amount">{detail.price} <span>积分</span></div>
-        <div className="detail-price__info">
-          <span>{detail.purchaseCount || 0} 人已购买</span>
-          <span>{detail.viewCount || 0} 次浏览</span>
-        </div>
-      </div>
 
-      {/* 标签 */}
-      {detail.tags && detail.tags.length > 0 && (
-        <div className="detail-tags">
-          {detail.tags.map((t) => (
-            <Tag key={t.id} type="primary" plain style={{ margin: '0 4px 4px 0' }}>{t.name}</Tag>
-          ))}
-        </div>
-      )}
-
-      {/* 已购买标识 - 右上角 */}
-      {detail.isPurchased && (
-        <div style={{ position: 'absolute', top: 12, right: 12 }}>
-          <Tag type="success" plain>已购买</Tag>
-        </div>
-      )}
-
-      {/* 购买后才显示的内容 */}
-      {canViewFull ? (
+      {/* === 未购买：预览 + 渐变遮罩 === */}
+      {!canViewFull ? (
         <>
-          {/* 具体地址 */}
-          {detail.address && (
+          {previewLines ? (
+            <div className="detail-preview">
+              <div className="detail-section__title">需求描述</div>
+              <div className="detail-preview__text">
+                {previewLines}
+              </div>
+              <div className="detail-preview__mask" />
+              <div className="detail-preview__lock">
+                <Icon name="lock" size={36} color="var(--text-color-3)" />
+                <span>购买后查看完整内容</span>
+              </div>
+            </div>
+          ) : (
+            <div className="detail-section detail-lock">
+              <Icon name="lock" size={48} color="var(--text-color-3)" />
+              <div className="detail-lock__text">购买后查看需求描述、项目现状、具体地址、联系人、项目概要及图纸附件</div>
+            </div>
+          )}
+
+          {/* 投稿人（脱敏） */}
+          <div className="detail-section">
+            <div className="detail-section__title">投稿人</div>
+            <div className="detail-publisher">
+              <div className="detail-publisher__avatar">{publisherDisplay?.[0] || '匿'}</div>
+              <div className="detail-publisher__info">
+                <div className="detail-publisher__name">{publisherDisplay}</div>
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+        /* === 购买后：完整信息展示 === */
+        <>
+          {/* 需求描述 */}
+          {detail.descriptionPublic && (
             <div className="detail-section">
-              <div className="detail-section__title">具体地址</div>
-              <div className="detail-section__content" style={{ color: '#666' }}>
-                {detail.address}
+              <div className="detail-section__title">需求描述</div>
+              <div className="detail-section__content detail-section__content--rich">
+                {detail.descriptionPublic}
               </div>
             </div>
           )}
 
-          {/* 项目现状 */}
-          {detail.stage && (
+          {/* 项目信息 */}
+          {(detail.stage || detail.validUntil || detail.address) && (
             <div className="detail-section">
-              <div className="detail-section__title">项目现状</div>
-              <div className="detail-section__content" style={{ color: '#666' }}>
-                {stageLabel(detail.stage)}
+              <div className="detail-section__title">项目信息</div>
+              <div className="detail-info-grid">
+                {detail.stage && (
+                  <div className="detail-info-grid__item">
+                    <span className="detail-info-grid__label">项目现状</span>
+                    <span className="detail-info-grid__value">{stageLabel(detail.stage)}</span>
+                  </div>
+                )}
+                {detail.validUntil && (
+                  <div className="detail-info-grid__item">
+                    <span className="detail-info-grid__label">有效期</span>
+                    <span className="detail-info-grid__value">{formatDate(detail.validUntil)}</span>
+                  </div>
+                )}
+                {detail.address && (
+                  <div className="detail-info-grid__item detail-info-grid__item--full">
+                    <span className="detail-info-grid__label">具体地址</span>
+                    <span className="detail-info-grid__value">{detail.address}</span>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -174,113 +227,63 @@ export default function OpportunityDetail() {
           {detail.attachments && detail.attachments.length > 0 && (
             <div className="detail-section">
               <div className="detail-section__title">图纸附件</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-                {detail.attachments.map((url, idx) => (
-                  <div key={idx} style={{ width: 80, height: 80, position: 'relative' }}>
-                    <img src={url} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }} />
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.5)', color: '#fff', textAlign: 'center', fontSize: 10, padding: '2px 0' }}>
-                      附件{idx + 1}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <AttachmentGrid files={detail.attachments} />
             </div>
           )}
 
-          {/* 项目概要（购买后可见） */}
+          {/* 项目概要 */}
           {detail.descriptionFull && (
             <div className="detail-section">
               <div className="detail-section__title">项目概要</div>
-              <div className="detail-section__content" style={{ lineHeight: 1.6, color: '#333' }}>
+              <div className="detail-section__content detail-section__content--rich">
                 {detail.descriptionFull}
               </div>
             </div>
           )}
+
+          {/* 共享进度榜 */}
+          {detail.marketIntelligence && detail.marketIntelligence.totalShares > 0 && (
+            <div className="detail-section">
+              <div className="detail-section__title">共享进度</div>
+              <MarketIntelligence intelligence={detail.marketIntelligence} onLiked={refreshDetail} />
+            </div>
+          )}
+
+          {/* 投稿人（匿名） */}
+          <div className="detail-section">
+            <div className="detail-section__title">投稿人</div>
+            <div className="detail-publisher">
+              <div className="detail-publisher__avatar">{publisherDisplay?.[0] || '匿'}</div>
+              <div className="detail-publisher__info">
+                <div className="detail-publisher__name">{publisherDisplay}</div>
+              </div>
+            </div>
+          </div>
         </>
-      ) : (
-        /* 未购买时的锁定提示 */
-        <div className="detail-section detail-lock" style={{ textAlign: 'center', padding: '40px 0' }}>
-          <Icon name="lock" size={48} color="#969799" />
-          <div style={{ marginTop: 16, fontSize: 14, color: '#666' }}>购买后查看具体地址、联系人、项目现状、项目概要及图纸附件</div>
-        </div>
       )}
 
-      {/* 市场情报（若存在，仅购买同一条商机的人可见） */}
-      {canViewFull && detail.marketIntelligence && detail.marketIntelligence.totalShares > 0 && (
-        <div className="detail-section">
-          <div className="detail-section__title">市场情报</div>
-          <div className="detail-intelligence">
-            <div className="detail-intelligence__summary">
-              基于 {detail.marketIntelligence.totalShares} 位购买者跟进
-            </div>
-            {detail.marketIntelligence.statusDistribution && Object.entries(detail.marketIntelligence.statusDistribution).map(([status, count]) => (
-              <div key={status} className="detail-intelligence__item" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span>{statusLabelMap[status] || status}</span>
-                <span>{count} 人</span>
-              </div>
-            ))}
-            {detail.marketIntelligence.latestShares && detail.marketIntelligence.latestShares.length > 0 && (
-              <div className="detail-intelligence__shares">
-                <div className="detail-intelligence__shares-title" style={{ marginTop: 12, marginBottom: 8, color: '#666', fontSize: 13 }}>
-                  最近摘要
-                </div>
-                {detail.marketIntelligence.latestShares.map((s, idx) => (
-                  <div key={idx} className="detail-intelligence__share-item" style={{ padding: '8px 0', borderTop: idx > 0 ? '1px solid #eee' : 'none' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <Tag size="mini">{statusLabelMap[s.status] || s.status}</Tag>
-                      <span style={{ color: '#999', fontSize: 12 }}>{timeAgo(s.createdAt)}</span>
-                    </div>
-                    {s.summary && (
-                      <div style={{ color: '#333', fontSize: 13, lineHeight: 1.5 }}>{s.summary}</div>
-                    )}
-                    <div style={{ color: '#999', fontSize: 12, marginTop: 4 }}>👍 {s.helpfulCount || 0} 人觉得有用</div>
-                  </div>
-                ))}
-              </div>
+      {/* 底部固定操作栏 */}
+      <div className="detail-action-bar">
+        {!canViewFull && detail.status === 'active' ? (
+          <Button type="primary" block round size="large" loading={purchasing} onClick={handlePurchase}>
+            花费 {detail.price} 积分解锁全部信息
+          </Button>
+        ) : canViewFull ? (
+          <div className="detail-action-bar__group">
+            <Button type="success" round onClick={() => navigate('/crm')}>
+              {detail.isPublisher ? '查看跟进分布' : '进入CRM'}
+            </Button>
+            {detail.isPurchased && detail.crmId && (
+              <>
+                <Button plain round onClick={() => navigate(`/crm/${detail.crmId}`)}>新增跟进</Button>
+                <Button plain round onClick={() => navigate(`/crm/${detail.crmId}#share`)}>共享进度</Button>
+              </>
+            )}
+            {detail.isPurchased && (
+              <Button plain round className="detail-action-bar__btn-warn" onClick={() => setShowInvalidDialog(true)}>标记无效</Button>
             )}
           </div>
-        </div>
-      )}
-
-      {/* 投稿人 */}
-      <div className="detail-section">
-        <div className="detail-section__title">投稿人</div>
-        <div className="detail-publisher">
-          <div className="detail-publisher__avatar">{detail.publisherName?.[0] || '匿'}</div>
-          <div className="detail-publisher__info">
-            <div className="detail-publisher__name">{detail.publisherName || '匿名用户'}</div>
-            {detail.publisherCompany && <div className="detail-publisher__company">{detail.publisherCompany}</div>}
-          </div>
-        </div>
-      </div>
-
-      {/* 操作按钮 */}
-      <div className="detail-footer">
-        {!canViewFull && detail.status === 'active' && (
-          <Button type="primary" block round loading={purchasing} onClick={handlePurchase}>
-            花费 {detail.price} 积分解锁
-          </Button>
-        )}
-        {canViewFull && (
-          <Button type="success" block round onClick={() => navigate('/crm')}>
-            {detail.isPublisher ? '查看跟进分布' : '进入CRM管理'}
-          </Button>
-        )}
-        {detail.isPurchased && detail.crmId && (
-          <>
-            <Button plain block round style={{ marginTop: 8 }} onClick={() => navigate(`/crm/${detail.crmId}`)}>
-              新增跟进
-            </Button>
-            <Button plain block round style={{ marginTop: 8 }} onClick={() => navigate(`/crm/${detail.crmId}#share`)}>
-              分享摘要
-            </Button>
-          </>
-        )}
-        {detail.isPurchased && (
-          <Button plain block round style={{ marginTop: 8 }} onClick={() => setShowInvalidDialog(true)}>
-            标记无效
-          </Button>
-        )}
+        ) : null}
       </div>
 
       {/* 无效标记弹窗 */}
@@ -291,10 +294,10 @@ export default function OpportunityDetail() {
         onConfirm={handleMarkInvalid}
         onCancel={() => setShowInvalidDialog(false)}
       >
-        <div style={{ padding: '16px 0' }}>
-          <div style={{ marginBottom: 8 }}>请选择标记原因：</div>
+        <div className="dialog-body">
+          <div className="dialog-body__label">请选择标记原因：</div>
           {INVALID_REASONS.map((r) => (
-            <Radio key={r.value} checked={invalidReason === r.value} onChange={() => setInvalidReason(r.value)} style={{ display: 'block', margin: '8px 0' }}>
+            <Radio key={r.value} checked={invalidReason === r.value} onChange={() => setInvalidReason(r.value)} className="dialog-radio">
               {r.label}
             </Radio>
           ))}

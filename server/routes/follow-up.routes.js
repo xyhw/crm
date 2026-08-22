@@ -221,4 +221,104 @@ router.post('/helpful', authRequired, async (req, res) => {
   }
 });
 
+// 标记共享信息无效（举报），达阈值自动下架
+router.post('/report', authRequired, async (req, res) => {
+  try {
+    const { shareId, reason, reasonText } = req.body || {};
+
+    if (!shareId || !reason) {
+      return res.json({ code: 400, message: '参数错误' });
+    }
+
+    // 获取分享者及对应商机
+    const share = await queryOne(
+      'SELECT user_id, opportunity_id FROM follow_up_shares WHERE id = ? AND audit_status = "approved"',
+      [shareId]
+    );
+    if (!share) {
+      return res.json({ code: 404, message: '摘要不存在或未审核通过' });
+    }
+
+    // 不能举报自己
+    if (share.user_id === req.userId) {
+      return res.json({ code: 403, message: '不能举报自己的分享' });
+    }
+
+    // 举报者必须购买过同一条商机
+    const purchase = await queryOne(
+      'SELECT id FROM orders WHERE user_id = ? AND opportunity_id = ? AND status = "paid"',
+      [req.userId, share.opportunity_id]
+    );
+    if (!purchase) {
+      return res.json({ code: 403, message: '只有购买同条商机的用户才能举报' });
+    }
+
+    // 检查是否已举报
+    const existing = await queryOne(
+      'SELECT id FROM follow_up_share_invalid_marks WHERE share_id = ? AND user_id = ?',
+      [shareId, req.userId]
+    );
+    if (existing) {
+      return res.json({ code: 409, message: '你已经举报过这条信息' });
+    }
+
+    await transaction(async (conn) => {
+      // 插入举报记录
+      await conn.execute(
+        'INSERT INTO follow_up_share_invalid_marks (share_id, user_id, reason, reason_text) VALUES (?, ?, ?, ?)',
+        [shareId, req.userId, reason, reasonText || '']
+      );
+
+      // 更新举报计数
+      await conn.execute(
+        'UPDATE follow_up_shares SET report_count = report_count + 1 WHERE id = ?',
+        [shareId]
+      );
+
+      // 读取举报后的计数，判断是否达阈值自动下架
+      const [latest] = await conn.execute(
+        'SELECT report_count FROM follow_up_shares WHERE id = ?',
+        [shareId]
+      );
+      const reportCount = latest[0]?.report_count || 0;
+
+      const [thresholdConfig] = await conn.execute(
+        "SELECT config_value FROM system_configs WHERE config_key = 'share_invalid_threshold'"
+      );
+      const threshold = parseInt(thresholdConfig[0]?.config_value || '3', 10);
+
+      if (reportCount >= threshold) {
+        // 自动下架：审核状态置为 rejected
+        await conn.execute(
+          "UPDATE follow_up_shares SET audit_status = 'rejected', audit_reason = '多人举报无效' WHERE id = ?",
+          [shareId]
+        );
+
+        // 扣分享者信用分并记录
+        await conn.execute(
+          'UPDATE users SET credit_score = GREATEST(0, credit_score - 5) WHERE id = ?',
+          [share.user_id]
+        );
+        await conn.execute(
+          `INSERT INTO user_credits (user_id, credit_score, change_amount, change_reason, source_type)
+           SELECT ?, credit_score, -5, '共享情报被判无效', 'invalid_mark' FROM users WHERE id = ?`,
+          [share.user_id, share.user_id]
+        );
+
+        // 通知分享者
+        await conn.execute(
+          `INSERT INTO notifications (user_id, type, title, content, related_type, related_id)
+           VALUES (?, 'system', '共享情报被判无效', '你共享的一条进度情报因多次被举报已下架', 'follow_up_share', ?)`,
+          [share.user_id, shareId]
+        );
+      }
+    });
+
+    res.json({ code: 0, message: '举报成功' });
+  } catch (err) {
+    console.error('Report share error:', err);
+    res.status(500).json({ code: 500, message: '举报处理失败' });
+  }
+});
+
 export default router;

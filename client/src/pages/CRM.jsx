@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tag, Toast, Button, Search, Tabs, Empty } from 'react-vant';
+import { Plus } from '@react-vant/icons';
 import { api } from '../api';
 import PageNavBar from '../components/PageNavBar';
-import { categoryIcon, crmStatusMeta, timeAgo } from '../constants';
+import Icon from '../components/Icon';
+import { crmStatusMeta, timeAgo } from '../constants';
+import { resolveCategoryIcon } from '../utils/category';
 
 export default function CRM() {
   const navigate = useNavigate();
@@ -13,12 +16,13 @@ export default function CRM() {
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const debounceRef = useRef(null);
 
   const fetchList = async (p = 1, reset = false) => {
     try {
       const res = await api.crmList({ status, keyword, page: p, pageSize: 10 });
       const newList = res.list || [];
-      setList(reset ? newList : [...list, ...newList]);
+      setList(reset ? newList : (prev) => [...prev, ...newList]);
       setHasMore(newList.length === 10);
       setPage(p);
     } catch (e) {
@@ -30,7 +34,11 @@ export default function CRM() {
 
   useEffect(() => {
     setLoading(true);
-    fetchList(1, true);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      fetchList(1, true);
+    }, keyword ? 350 : 0);
+    return () => clearTimeout(debounceRef.current);
   }, [status, keyword]);
 
   const loadMore = () => {
@@ -57,7 +65,7 @@ export default function CRM() {
         onChange={setKeyword}
         placeholder="搜索商机"
         shape="round"
-        style={{ padding: '8px 12px' }}
+        className="search-bar"
       />
 
       {/* 状态筛选 */}
@@ -72,14 +80,16 @@ export default function CRM() {
         {loading && list.length === 0 ? (
           <div className="empty-tip">加载中...</div>
         ) : list.length === 0 ? (
-          <Empty description="暂无CRM商机" style={{ marginTop: 40 }} />
+          <Empty description="暂无CRM商机" className="empty-top" />
         ) : (
           list.map((item) => {
             const statusMeta = crmStatusMeta(item.status);
             return (
-              <div className="crm-card" key={item.id} onClick={() => navigate(`/crm/${item.id}`)}>
+              <div className="crm-card pressable" key={item.id} onClick={() => navigate(`/crm/${item.id}`)}>
                 <div className="crm-card__header">
-                  <div className="crm-card__icon">{item.category_icon || '📦'}</div>
+                  <div className="cat-icon cat-icon--sm">
+                    <Icon name={resolveCategoryIcon(item)} size={20} />
+                  </div>
                   <div className="crm-card__title">{item.title || '手动录入商机'}</div>
                 </div>
                 <div className="crm-card__info">
@@ -113,8 +123,8 @@ export default function CRM() {
       <Button
         type="primary"
         round
-        icon={<span className="cell-icon">+</span>}
-        style={{ position: 'fixed', bottom: 80, right: 20 }}
+        icon={<Plus />}
+        className="crm-fab"
         onClick={() => navigate('/crm/add')}
       />
     </div>

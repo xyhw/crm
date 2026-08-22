@@ -16,7 +16,7 @@ export default function OpportunityImport() {
       formData.append('file', info.file);
       const res = await adminApi.importOpportunities(formData);
       setLastResult(res);
-      message.success(res.message);
+      message.success(`成功 ${res.successCount || 0} 条，失败 ${res.errorCount || 0} 条`);
     } catch (e) {
       message.error(e.message);
       setLastResult({ successCount: 0, errorCount: 1, errors: [e.message] });

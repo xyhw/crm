@@ -3,20 +3,27 @@ import { useNavigate } from 'react-router-dom';
 import { Toast, Tabs, Empty } from 'react-vant';
 import { api } from '../api';
 import PageNavBar from '../components/PageNavBar';
+import Pagination from '../components/Pagination';
 
 export default function Ranking() {
   const navigate = useNavigate();
   const [type, setType] = useState('publisher');
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const pageSize = 6;
 
   useEffect(() => {
     setLoading(true);
-    api.rankings({ type, pageSize: 20 })
+    setPage(1);
+    api.rankings({ type, pageSize: 50 })
       .then((res) => setList(res.list || []))
       .catch((e) => Toast.fail(e.message))
       .finally(() => setLoading(false));
   }, [type]);
+
+  const totalPages = Math.ceil(list.length / pageSize);
+  const visible = list.slice((page - 1) * pageSize, page * pageSize);
 
   return (
     <div className="page">
@@ -30,10 +37,10 @@ export default function Ranking() {
       {loading ? (
         <div className="empty-tip">加载中...</div>
       ) : list.length === 0 ? (
-        <Empty description="暂无排行数据" style={{ marginTop: 40 }} />
+        <Empty description="暂无排行数据" className="empty-top" />
       ) : (
         <div className="ranking-list">
-          {list.map((item) => (
+          {visible.map((item) => (
             <div className="ranking-item" key={item.id}>
               <div className={`ranking-item__rank ${item.rank <= 3 ? 'top' : ''}`}>
                 {item.rank}
@@ -47,6 +54,9 @@ export default function Ranking() {
               </div>
             </div>
           ))}
+          {totalPages > 1 && (
+            <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+          )}
         </div>
       )}
     </div>
