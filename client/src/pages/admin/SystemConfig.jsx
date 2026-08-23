@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, Typography, Form, InputNumber, Switch, Button, message, Divider, Row, Col } from 'antd';
+import { Card, Typography, Form, InputNumber, Switch, Button, message, Divider, Row, Col, Select, Input } from 'antd';
 import { SaveOutlined } from '@ant-design/icons';
 import { adminApi } from '../../admin/api';
 
@@ -148,6 +148,106 @@ export default function SystemConfig() {
               <Form.Item name="credit_ban_threshold" label="封禁信用阈值">
                 <InputNumber min={0} max={100} style={{ width: '100%' }} />
               </Form.Item>
+            </Col>
+          </Row>
+
+          <Divider />
+
+          <Title level={5}>支付渠道配置</Title>
+          <Row gutter={24}>
+            <Col span={6}>
+              <Form.Item name="pay_default_channel" label="默认支付渠道">
+                <Select options={[
+                  { value: 'mock', label: '模拟支付(开发)' },
+                  { value: 'wechat', label: '微信支付' },
+                  { value: 'alipay', label: '支付宝' },
+                  { value: 'stripe', label: 'Stripe' },
+                ]} />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item name="pay_mock_autopay" label="mock自动完成" valuePropName="checked">
+                <Switch />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item name="pay_points_to_yuan" label="1积分=多少元">
+                <InputNumber min={0} step={0.01} style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item name="pay_order_ttl" label="订单过期(秒)">
+                <InputNumber min={60} style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Title level={5}>微信支付</Title>
+          <Row gutter={24}>
+            <Col span={4}>
+              <Form.Item name="pay_wechat_enabled" label="启用" valuePropName="checked">
+                <Switch />
+              </Form.Item>
+            </Col>
+            <Col span={10}>
+              <Form.Item name="pay_wechat_appid" label="AppID"><Input /></Form.Item>
+            </Col>
+            <Col span={10}>
+              <Form.Item name="pay_wechat_mchid" label="商户号"><Input /></Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={24}>
+            <Col span={8}>
+              <Form.Item name="pay_wechat_apiv3key" label="APIv3密钥"><Input.Password /></Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="pay_wechat_serialno" label="证书序列号"><Input /></Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="pay_wechat_private_key_path" label="私钥文件路径"><Input /></Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={24}>
+            <Col span={24}>
+              <Form.Item name="pay_wechat_notify_url" label="回调通知URL"><Input /></Form.Item>
+            </Col>
+          </Row>
+
+          <Title level={5}>支付宝</Title>
+          <Row gutter={24}>
+            <Col span={4}>
+              <Form.Item name="pay_alipay_enabled" label="启用" valuePropName="checked">
+                <Switch />
+              </Form.Item>
+            </Col>
+            <Col span={10}>
+              <Form.Item name="pay_alipay_appid" label="AppID"><Input /></Form.Item>
+            </Col>
+            <Col span={10}>
+              <Form.Item name="pay_alipay_notify_url" label="回调通知URL"><Input /></Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={24}>
+            <Col span={12}>
+              <Form.Item name="pay_alipay_private_key" label="应用私钥"><Input.Password /></Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="pay_alipay_public_key" label="支付宝公钥"><Input.Password /></Form.Item>
+            </Col>
+          </Row>
+
+          <Title level={5}>Stripe</Title>
+          <Row gutter={24}>
+            <Col span={4}>
+              <Form.Item name="pay_stripe_enabled" label="启用" valuePropName="checked">
+                <Switch />
+              </Form.Item>
+            </Col>
+            <Col span={10}>
+              <Form.Item name="pay_stripe_secret_key" label="Secret Key"><Input.Password /></Form.Item>
+            </Col>
+            <Col span={10}>
+              <Form.Item name="pay_stripe_webhook_secret" label="Webhook Secret"><Input.Password /></Form.Item>
             </Col>
           </Row>
 

@@ -163,6 +163,9 @@ export const api = {
   pointsBalance: () => request('/points/balance'),
   pointsLogs: (params) => request('/points/logs' + qs(params)),
   recharge: (data) => request('/points/recharge', { method: 'POST', body: data }),
+  rechargeChannels: () => request('/points/recharge/channels'),
+  rechargeOrderStatus: (orderNo) => request('/points/recharge/order/' + orderNo),
+  rechargeMockPay: (orderNo) => request('/points/recharge/mock-pay/' + orderNo, { method: 'POST' }),
 
   // CRM
   crmList: (params) => request('/crm' + qs(params)),

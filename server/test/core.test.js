@@ -1,5 +1,6 @@
 import { describe, it, before, beforeEach } from 'node:test';
 import assert from 'node:assert';
+import bcrypt from 'bcryptjs';
 
 const BASE = 'http://localhost:3001/api';
 
@@ -41,6 +42,28 @@ describe('核心流程', () => {
   let user1Token, user2Token, publishedId;
 
   before(async () => {
+    // 确保测试用户存在且昵称正确（reset-password 测试依赖 nickname 匹配）
+    const { default: pkg } = await import('mysql2/promise');
+    const pool = pkg.createPool({
+      host: '127.0.0.1',
+      user: 'hof_user',
+      password: 'hof_pass_2026',
+      database: 'hotel_order_follow',
+    });
+    await pool.query(
+      `INSERT INTO users (phone, nickname, password_hash, status, credit_score, created_at)
+       VALUES ('13800000001', '测试用户1', ?, 'active', 100, NOW())
+       ON DUPLICATE KEY UPDATE nickname = '测试用户1', status = 'active', credit_score = 100`,
+      [await bcrypt.hash('123456', 10)]
+    );
+    await pool.query(
+      `INSERT INTO users (phone, nickname, password_hash, status, credit_score, created_at)
+       VALUES ('13800000002', '测试用户2', ?, 'active', 100, NOW())
+       ON DUPLICATE KEY UPDATE nickname = '测试用户2', status = 'active', credit_score = 100`,
+      [await bcrypt.hash('123456', 10)]
+    );
+    await pool.end();
+
     const res1 = await login('13800000001');
     assert.strictEqual(res1.code, 0);
     user1Token = res1.data.token;
@@ -50,22 +73,22 @@ describe('核心流程', () => {
     user2Token = res2.data.token;
 
     // 确保用户2有足够积分（直接写 points_logs）才能购买
-    const { default: pkg } = await import('mysql2/promise');
-    const pool = pkg.createPool({
+    const { default: pkg2 } = await import('mysql2/promise');
+    const pool2 = pkg2.createPool({
       host: '127.0.0.1',
       user: 'hof_user',
       password: 'hof_pass_2026',
       database: 'hotel_order_follow',
     });
-    await pool.query(
+    await pool2.query(
       `INSERT INTO points_logs (user_id, delta, balance_after, source_type, created_at)
        VALUES (2, 10000, 10000, 'recharge', NOW())`
     );
-    await pool.query(
+    await pool2.query(
       `INSERT INTO points_accounts (user_id, balance, total_recharged) VALUES (2, 10000, 10000)
        ON DUPLICATE KEY UPDATE balance = balance + 10000, total_recharged = total_recharged + 10000`
     );
-    await pool.end();
+    await pool2.end();
   });
 
   it('发布商机', async () => {

@@ -15,10 +15,10 @@ export async function migratePointsLogsRefund() {
       `ALTER TABLE points_logs
        MODIFY COLUMN source_type ENUM(
          'register_gift','invite_gift','purchase_income','commission',
-         'reward','consume','expire','recharge','admin_adjust','refund'
+         'reward','consume','expire','recharge','admin_adjust','refund','penalty'
        ) NOT NULL`
     );
-    console.log('[migration] points_logs.source_type enum added refund');
+    console.log('[migration] points_logs.source_type enum ready (refund+penalty)');
   } finally {
     await conn.end();
   }

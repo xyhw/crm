@@ -1,6 +1,14 @@
 import { Router } from 'express';
 import { query, queryOne, insert, transaction } from '../db.js';
 import { authRequired } from '../auth.js';
+import { config } from '../config.js';
+import {
+  createRechargeOrder,
+  settleRechargeOrder,
+  getOrderForUser,
+  getAdapter,
+  listAvailableChannels,
+} from '../services/payment/index.js';
 
 const router = Router();
 
@@ -70,54 +78,113 @@ router.get('/logs', authRequired, async (req, res) => {
   }
 });
 
-// 充值积分（Mock 模式）
+// 创建充值订单（发起支付）
 router.post('/recharge', authRequired, async (req, res) => {
   try {
-    const { amount } = req.body || {};
-    
-    if (!amount || amount <= 0) {
-      return res.json({ code: 400, message: '请输入有效的充值金额' });
-    }
-
-    // 检查充值上限
-    const [limitConfig] = await query(
-      "SELECT config_value FROM system_configs WHERE config_key = 'points_recharge_limit'"
-    );
-    const limit = parseInt(limitConfig[0]?.config_value || '10000');
-    
-    if (amount > limit) {
-      return res.json({ code: 400, message: `单次充值上限为 ${limit} 积分` });
-    }
-
-    await transaction(async (conn) => {
-      // 增加积分
-      await conn.execute(
-        'UPDATE points_accounts SET balance = balance + ?, total_recharged = total_recharged + ? WHERE user_id = ?',
-        [amount, amount, req.userId]
-      );
-
-      const [account] = await conn.execute(
-        'SELECT balance FROM points_accounts WHERE user_id = ?',
-        [req.userId]
-      );
-
-      // 记录流水
-      await conn.execute(
-        `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-         VALUES (?, ?, ?, 'recharge', '积分充值')`,
-        [req.userId, amount, account[0].balance]
-      );
+    const { amount, channel } = req.body || {};
+    const result = await createRechargeOrder({
+      userId: req.userId,
+      amount: Number(amount),
+      channel: channel || config.payment.defaultChannel,
     });
-
-    res.json({
-      code: 0,
-      data: { amount },
-      message: '充值成功',
-    });
+    res.json({ code: 0, data: result, message: '订单已创建，请完成支付' });
   } catch (err) {
-    console.error('Recharge error:', err);
-    res.status(500).json({ code: 500, message: '充值失败' });
+    if (err.code) return res.json({ code: err.code, message: err.message });
+    console.error('Create recharge order error:', err);
+    res.status(500).json({ code: 500, message: '创建充值订单失败' });
   }
+});
+
+// 查询充值订单状态（前端轮询支付结果）
+router.get('/recharge/order/:orderNo', authRequired, async (req, res) => {
+  try {
+    const order = await getOrderForUser(req.params.orderNo, req.userId);
+    if (!order) return res.json({ code: 404, message: '订单不存在' });
+
+    // pending 状态尝试主动对账渠道侧
+    if (order.status === 'pending') {
+      try {
+        const adapter = getAdapter(order.channel);
+        const result = await adapter.queryOrder({ orderNo: order.order_no, payChannelOrderNo: order.pay_channel_order_no });
+        if (result.status === 'paid') {
+          await settleRechargeOrder(order.order_no, {
+            payChannelOrderNo: order.pay_channel_order_no,
+            paidAt: result.paidAt,
+            rawNotify: result.raw,
+          });
+          const fresh = await getOrderForUser(req.params.orderNo, req.userId);
+          return res.json({ code: 0, data: fresh });
+        }
+      } catch {
+        // 渠道查单失败（占位未实现）则忽略，按订单当前状态返回
+      }
+    }
+    res.json({ code: 0, data: order });
+  } catch (err) {
+    console.error('Query recharge order error:', err);
+    res.status(500).json({ code: 500, message: '查询订单失败' });
+  }
+});
+
+// 模拟支付完成（仅 mock 渠道，开发联调用）
+router.post('/recharge/mock-pay/:orderNo', authRequired, async (req, res) => {
+  try {
+    const order = await getOrderForUser(req.params.orderNo, req.userId);
+    if (!order) return res.json({ code: 404, message: '订单不存在' });
+    if (order.channel !== 'mock') return res.json({ code: 400, message: '该订单渠道非 mock，无法模拟支付' });
+    if (order.status !== 'pending') return res.json({ code: 0, data: order, message: '订单已处理' });
+
+    const settled = await settleRechargeOrder(order.order_no, {
+      payChannelOrderNo: `MOCK${Date.now()}`,
+      paidAt: new Date(),
+      rawNotify: { mock: true, orderNo: order.order_no },
+    });
+    const fresh = await getOrderForUser(req.params.orderNo, req.userId);
+    res.json({ code: 0, data: fresh, message: settled.already ? '订单已支付过' : '模拟支付成功' });
+  } catch (err) {
+    if (err.code) return res.json({ code: err.code, message: err.message });
+    console.error('Mock pay error:', err);
+    res.status(500).json({ code: 500, message: '模拟支付失败' });
+  }
+});
+
+// 支付渠道回调 webhook（渠道服务器调用，无需登录态）
+router.post('/recharge/notify/:channel', async (req, res) => {
+  const channel = req.params.channel;
+  let adapter;
+  try {
+    adapter = getAdapter(channel);
+  } catch {
+    return res.status(400).json({ code: 400, message: `不支持的渠道: ${channel}` });
+  }
+
+  let verified = false;
+  try {
+    verified = await adapter.verifyNotify(req.headers, req.body);
+  } catch (err) {
+    console.error(`[${channel}] verifyNotify not implemented:`, err.message);
+  }
+  if (!verified) return res.status(400).json({ code: 400, message: '回调验签失败' });
+
+  try {
+    const result = await adapter.parseNotifyResult(req.headers, req.body);
+    if (!result.orderNo) return res.status(400).json({ code: 400, message: '回调缺少订单号' });
+
+    await settleRechargeOrder(result.orderNo, {
+      payChannelOrderNo: result.payChannelOrderNo,
+      paidAt: result.paidAt,
+      rawNotify: result.raw,
+    });
+    res.json(adapter.buildNotifyResponse());
+  } catch (err) {
+    console.error(`[${channel}] notify handle error:`, err);
+    res.status(500).json(adapter.buildNotifyResponse());
+  }
+});
+
+// 可用支付渠道列表（前端渲染渠道选择）
+router.get('/recharge/channels', authRequired, (_req, res) => {
+  res.json({ code: 0, data: { channels: listAvailableChannels(), defaultChannel: config.payment.defaultChannel } });
 });
 
 export default router;

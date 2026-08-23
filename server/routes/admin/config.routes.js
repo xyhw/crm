@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { query, queryOne, insert, update } from '../../db.js';
 import { recordLog } from '../../services/audit-log.service.js';
+import { ensureAndLoadPaymentConfig } from '../../services/payment/config-loader.js';
 
 const router = Router();
 
@@ -32,6 +33,9 @@ router.put('/', async (req, res) => {
       await upsertConfig(key, body[key], req.adminId);
     }
     await recordLog(req.adminId, 'edit', 'system_configs', null, keys.reduce((acc, k) => ({ ...acc, [k]: body[k] }), {}));
+    if (keys.some((k) => k.startsWith('pay_'))) {
+      await ensureAndLoadPaymentConfig();
+    }
     res.json({ code: 0, message: '配置更新成功' });
   } catch (err) {
     console.error('Admin update config error:', err);
@@ -49,6 +53,9 @@ router.put('/:key', async (req, res) => {
 
     await upsertConfig(req.params.key, value, req.adminId);
     await recordLog(req.adminId, 'edit', 'system_configs', null, { [req.params.key]: value });
+    if (req.params.key.startsWith('pay_')) {
+      await ensureAndLoadPaymentConfig();
+    }
     res.json({ code: 0, message: '配置更新成功' });
   } catch (err) {
     console.error('Admin update config error:', err);

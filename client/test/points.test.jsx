@@ -13,6 +13,9 @@ vi.mock('../src/api', () => ({
     pointsBalance: vi.fn(),
     pointsLogs: vi.fn(),
     recharge: vi.fn(),
+    rechargeChannels: vi.fn(),
+    rechargeOrderStatus: vi.fn(),
+    rechargeMockPay: vi.fn(),
     myStats: vi.fn(),
     credits: vi.fn(),
     me: vi.fn(),
@@ -39,8 +42,10 @@ vi.mock('../src/context/AuthContext', async (importOriginal) => {
 describe('积分中心 Points（开发需求 5.2 积分体系）', () => {
   afterEach(() => cleanup());
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    const { api } = await import('../src/api');
+    api.rechargeChannels.mockResolvedValue({ channels: ['mock'], defaultChannel: 'mock' });
   });
 
   it('展示积分余额/已充值/已消耗与充值入口', async () => {
@@ -62,7 +67,10 @@ describe('积分中心 Points（开发需求 5.2 积分体系）', () => {
     const { api } = await import('../src/api');
     api.pointsBalance.mockResolvedValue({ balance: 100, total_recharged: 0, total_consumed: 0 });
     api.pointsLogs.mockResolvedValue({ list: [], total: 0 });
-    api.recharge.mockResolvedValue({});
+    api.rechargeChannels.mockResolvedValue({ channels: ['mock'], defaultChannel: 'mock' });
+    api.recharge.mockResolvedValue({ orderNo: 'R123', channel: 'mock', payUrl: 'mock://pay', payMethod: 'manual', amount: 100 });
+    api.rechargeMockPay.mockResolvedValue({ code: 0, data: { status: 'paid', amount: 100 } });
+    api.rechargeOrderStatus.mockResolvedValue({ status: 'paid', amount: 100 });
     render(
       <MemoryRouter>
         <Points />
@@ -73,7 +81,7 @@ describe('积分中心 Points（开发需求 5.2 积分体系）', () => {
     await waitFor(() => expect(screen.getByText('100 积分')).toBeTruthy());
     fireEvent.click(screen.getByText('100 积分'));
     fireEvent.click(screen.getAllByText('确认')[0]);
-    await waitFor(() => expect(api.recharge).toHaveBeenCalledWith({ amount: 100 }));
+    await waitFor(() => expect(api.recharge).toHaveBeenCalledWith({ amount: 100, channel: 'mock' }));
   });
 
   it('积分流水列表展示来源标题与增减金额', async () => {

@@ -23,6 +23,34 @@ export const config = {
     charset: 'utf8mb4',
   },
   uploadDir: process.env.UPLOAD_DIR || '/workspace/uploads',
+  payment: {
+    // 1积分兑换金额（元），默认1积分=1元
+    pointsToYuan: parseFloat(process.env.PAY_POINTS_TO_YUAN || '1'),
+    // 订单过期时间（秒），默认30分钟
+    orderTtl: parseInt(process.env.PAY_ORDER_TTL || '1800', 10),
+    // 默认渠道（开发用 mock）
+    defaultChannel: process.env.PAY_DEFAULT_CHANNEL || 'mock',
+    // mock 渠道是否自动完成支付（开发默认 true）
+    mockAutoPay: process.env.PAY_MOCK_AUTOPAY !== 'false',
+    wechat: {
+      appId: process.env.PAY_WECHAT_APPID || '',
+      mchId: process.env.PAY_WECHAT_MCHID || '',
+      apiV3Key: process.env.PAY_WECHAT_APIV3KEY || '',
+      serialNo: process.env.PAY_WECHAT_SERIALNO || '',
+      privateKeyPath: process.env.PAY_WECHAT_PRIVATE_KEY_PATH || '',
+      notifyUrl: process.env.PAY_WECHAT_NOTIFY_URL || '',
+    },
+    alipay: {
+      appId: process.env.PAY_ALIPAY_APPID || '',
+      privateKey: process.env.PAY_ALIPAY_PRIVATE_KEY || '',
+      alipayPublicKey: process.env.PAY_ALIPAY_PUBLIC_KEY || '',
+      notifyUrl: process.env.PAY_ALIPAY_NOTIFY_URL || '',
+    },
+    stripe: {
+      secretKey: process.env.PAY_STRIPE_SECRET_KEY || '',
+      webhookSecret: process.env.PAY_STRIPE_WEBHOOK_SECRET || '',
+    },
+  },
   rateLimit: {
     api: parseInt(process.env.RATE_LIMIT_API_WINDOW_MS || '60000', 10),
     apiMax: parseInt(process.env.RATE_LIMIT_API_MAX || '300', 10),

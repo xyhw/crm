@@ -13,7 +13,9 @@ export default function Points() {
   const [loading, setLoading] = useState(true);
   const [showRecharge, setShowRecharge] = useState(false);
   const [rechargeAmount, setRechargeAmount] = useState('');
+  const [rechargeChannel, setRechargeChannel] = useState('mock');
   const [recharging, setRecharging] = useState(false);
+  const [channelsData, setChannelsData] = useState({ channels: ['mock'], defaultChannel: 'mock' });
 
   useEffect(() => {
     Promise.all([
@@ -26,6 +28,13 @@ export default function Points() {
       })
       .catch((e) => Toast.fail(e.message))
       .finally(() => setLoading(false));
+
+    api.rechargeChannels()
+      .then((data) => {
+        setChannelsData(data);
+        setRechargeChannel(data.defaultChannel || 'mock');
+      })
+      .catch(() => {});
   }, []);
 
   const handleRecharge = async () => {
@@ -35,11 +44,22 @@ export default function Points() {
 
     setRecharging(true);
     try {
-      await api.recharge({ amount });
-      Toast.success('充值成功');
+      const order = await api.recharge({ amount, channel: rechargeChannel });
+      const { orderNo, channel, payUrl, payMethod } = order;
+
+      if (channel === 'mock' && payMethod !== 'auto') {
+        await api.rechargeMockPay(orderNo);
+      } else if (payUrl && payUrl.startsWith('mock://')) {
+        await api.rechargeMockPay(orderNo);
+      } else if (payUrl) {
+        window.open(payUrl, '_blank');
+      }
+
+      const finalOrder = await pollOrderStatus(orderNo);
+      Toast.success(`充值成功，到账 ${finalOrder.amount} 积分`);
       setShowRecharge(false);
       setRechargeAmount('');
-      // 刷新数据
+      setRechargeChannel(channelsData?.defaultChannel || 'mock');
       const [balanceRes, logsRes] = await Promise.all([
         api.pointsBalance(),
         api.pointsLogs({ pageSize: 10 }),
@@ -52,6 +72,29 @@ export default function Points() {
       setRecharging(false);
     }
   };
+
+  const pollOrderStatus = (orderNo, times = 12, interval = 1000) =>
+    new Promise((resolve, reject) => {
+      let count = 0;
+      const timer = setInterval(async () => {
+        count += 1;
+        try {
+          const order = await api.rechargeOrderStatus(orderNo);
+          if (order.status === 'paid') {
+            clearInterval(timer);
+            resolve(order);
+          } else if (order.status !== 'pending' || count >= times) {
+            clearInterval(timer);
+            reject(new Error(order.status === 'paid' ? '充值成功' : '支付未完成，请稍后查看订单'));
+          }
+        } catch (e) {
+          if (count >= times) {
+            clearInterval(timer);
+            reject(new Error('查询订单状态失败'));
+          }
+        }
+      }, interval);
+    });
 
   if (loading) return <div className="page"><PageNavBar title="积分中心" onClickLeft={() => navigate(-1)} /><div className="empty-tip">加载中...</div></div>;
 
@@ -114,6 +157,23 @@ export default function Points() {
         onCancel={() => setShowRecharge(false)}
       >
         <div className="dialog-body">
+          {channelsData.channels.length > 1 && (
+            <>
+              <div className="dialog-body__label">支付方式：</div>
+              <div className="recharge-chips">
+                {channelsData.channels.map((ch) => (
+                  <Button
+                    key={ch}
+                    size="small"
+                    type={rechargeChannel === ch ? 'primary' : 'default'}
+                    onClick={() => setRechargeChannel(ch)}
+                  >
+                    {{ mock: '模拟支付', wechat: '微信支付', alipay: '支付宝', stripe: 'Stripe' }[ch] || ch}
+                  </Button>
+                ))}
+              </div>
+            </>
+          )}
           <div className="dialog-body__label">选择充值金额：</div>
           <div className="recharge-chips">
             {rechargeOptions.map((amount) => (
