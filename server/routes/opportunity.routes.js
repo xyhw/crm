@@ -300,6 +300,12 @@ router.post('/', authRequired, async (req, res) => {
       return res.json({ code: 400, message: '请完善必填信息' });
     }
 
+    // 信用分门槛（需求 5.7：40 分以下封禁，60 分以下禁止投稿）登录已被 banned 拦截，此处校验投稿门槛
+    const user = await queryOne('SELECT credit_score, status FROM users WHERE id = ?', [req.userId]);
+    if (user && user.credit_score < 60) {
+      return res.json({ code: 422, message: '信用分低于60，暂时无法投稿跟单' });
+    }
+
     // 检查价格范围
     const [priceConfig] = await query(
       "SELECT config_value FROM system_configs WHERE config_key IN ('opportunity_price_min', 'opportunity_price_max')"
@@ -439,12 +445,48 @@ router.post('/:id/invalid-mark', authRequired, async (req, res) => {
           );
         }
 
-        // 扣回投稿人分佣
+        // 扣回投稿人分佣 + 积分惩罚（需求 5.5：按配置比例扣惩罚积分）
         const [penaltyConfig] = await conn.execute(
           "SELECT config_value FROM system_configs WHERE config_key = 'invalid_penalty_rate'"
         );
         const penaltyRate = parseFloat(penaltyConfig[0]?.config_value || '0.50');
-        
+
+        // 已发放分佣回扣（按订单实际分佣 × (1 + 惩罚比例) 从投稿人账户扣回）
+        const settlements = await conn.execute(
+          `SELECT SUM(cs.seller_income), SUM(cs.level_bonus)
+           FROM commission_settlements cs
+           JOIN orders o ON o.id = cs.order_id
+           WHERE o.opportunity_id = ? AND cs.status = 'paid'`,
+          [opportunityId]
+        );
+        const totalCommission = (settlements[0][0]?.['SUM(cs.seller_income)'] || 0) + (settlements[0][0]?.['SUM(cs.level_bonus)'] || 0);
+        const clawback = Math.round(totalCommission * (1 + penaltyRate));
+
+        if (clawback > 0) {
+          // 从投稿人积分扣除（可为负，代表积分债务）
+          await conn.execute(
+            'UPDATE points_accounts SET balance = GREATEST(-999999, balance - ?) WHERE user_id = ?',
+            [clawback, publisherId]
+          );
+          const [pubAccount] = await conn.execute(
+            'SELECT balance FROM points_accounts WHERE user_id = ?',
+            [publisherId]
+          );
+          await conn.execute(
+            `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
+             VALUES (?, ?, ?, 'penalty', '商机被判无效分佣回扣')`,
+            [publisherId, -clawback, pubAccount[0]?.balance || 0]
+          );
+        }
+        // 标记分佣结算失效
+        await conn.execute(
+          `UPDATE commission_settlements cs
+           JOIN orders o ON o.id = cs.order_id
+           SET cs.status = 'reversed'
+           WHERE o.opportunity_id = ? AND cs.status = 'paid'`,
+          [opportunityId]
+        );
+
         // 扣除信用分
         await conn.execute(
           'UPDATE users SET credit_score = GREATEST(0, credit_score - 10) WHERE id = ?',
@@ -455,6 +497,37 @@ router.post('/:id/invalid-mark', authRequired, async (req, res) => {
            SELECT ?, credit_score, -10, '商机被判无效', 'invalid_mark' FROM users WHERE id = ?`,
           [publisherId, publisherId]
         );
+
+        // 累计无效次数（此投稿人被判定无效的商机数）
+        const invalidOpps = await conn.execute(
+          `SELECT COUNT(*) AS cnt FROM opportunities WHERE user_id = ? AND status = 'invalid'`,
+          [publisherId]
+        );
+        const invalidCount = invalidOpps[0][0]?.cnt || 0;
+
+        const [banConfig] = await conn.execute(
+          "SELECT config_value FROM system_configs WHERE config_key = 'invalid_ban_threshold'"
+        );
+        const banThreshold = parseInt(banConfig[0]?.config_value || '3', 10);
+
+        const [creditBanConfig] = await conn.execute(
+          "SELECT config_value FROM system_configs WHERE config_key = 'credit_ban_threshold'"
+        );
+        const creditBanThreshold = parseInt(creditBanConfig[0]?.config_value || '40', 10);
+
+        // 信用分查询（扣减后）
+        const [publisherRow] = await conn.execute(
+          'SELECT credit_score FROM users WHERE id = ?', [publisherId]
+        );
+        const creditScore = publisherRow[0]?.credit_score ?? 0;
+
+        // 累计无效 >= 阈值 或 信用分 < 阈值 → 封禁（需求 5.5 / 5.7）
+        if (invalidCount >= banThreshold || creditScore < creditBanThreshold) {
+          await conn.execute(
+            'UPDATE users SET status = ? WHERE id = ?',
+            ['banned', publisherId]
+          );
+        }
       }
     });
 

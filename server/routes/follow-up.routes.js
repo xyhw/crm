@@ -212,6 +212,17 @@ router.post('/helpful', authRequired, async (req, res) => {
           [share.user_id, rewardPoints, account[0].balance]
         );
       }
+
+      // 信用分 +1（需求 5.7：共享摘要被标记有用）
+      await conn.execute(
+        'UPDATE users SET credit_score = LEAST(100, credit_score + 1) WHERE id = ?',
+        [share.user_id]
+      );
+      await conn.execute(
+        `INSERT INTO user_credits (user_id, credit_score, change_amount, change_reason, source_type)
+         SELECT ?, credit_score, 1, '共享摘要被标记有用', 'helpful_mark' FROM users WHERE id = ?`,
+        [share.user_id, share.user_id]
+      );
     });
 
     res.json({ code: 0, message: '标记成功' });
