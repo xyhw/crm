@@ -100,19 +100,22 @@ describe('首页 Home（开发需求 6.1.2 商机中心）', () => {
     expect(screen.getByText('立即发布')).toBeTruthy();
   });
 
-  it('有未读通知与今日待跟进时展示提醒条', async () => {
+  it('有未读通知时展示提醒条，待跟进展示在用户卡片', async () => {
     const { api } = await import('../src/api');
     api.opportunities.mockResolvedValue({ list: [], total: 0 });
-    api.myStats.mockResolvedValue({ published: 0, crm: 0 });
+    api.myStats.mockResolvedValue({ published: 0, crm: 5 });
     api.notifications.mockResolvedValue({ list: [], unreadCount: 3 });
-    api.reminders.mockResolvedValue({ list: [{ id: 1 }, { id: 2 }] });
+    api.reminders
+      .mockResolvedValueOnce({ list: [{ id: 1 }, { id: 2 }] })
+      .mockResolvedValueOnce({ list: [] });
     render(
       <MemoryRouter>
         <Home />
       </MemoryRouter>
     );
     await waitFor(() => expect(screen.getByText('3 条未读通知')).toBeTruthy());
-    expect(screen.getByText('2 条今日待跟进')).toBeTruthy();
+    expect(screen.getByText('条待跟进')).toBeTruthy();
+    expect(screen.getByText('2')).toBeTruthy();
   });
 
   it('存在公告时首页顶部展示公告栏', async () => {

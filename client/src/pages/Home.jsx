@@ -17,7 +17,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [todayReminders, setTodayReminders] = useState(0);
+  const [followCount, setFollowCount] = useState(0);
 
   useEffect(() => {
     Promise.all([
@@ -25,12 +25,13 @@ export default function Home() {
       api.myStats().catch(() => null),
       api.notifications({ pageSize: 1 }).catch(() => ({})),
       api.reminders({ type: 'today' }).catch(() => ({})),
+      api.reminders({ type: 'overdue' }).catch(() => ({})),
     ])
-      .then(([ordersRes, statsRes, notifRes, reminderRes]) => {
+      .then(([ordersRes, statsRes, notifRes, todayRes, overdueRes]) => {
         setOrders(ordersRes.list || []);
         setStats(statsRes);
         setUnreadCount(notifRes.unreadCount || 0);
-        setTodayReminders((reminderRes.list || []).length);
+        setFollowCount((todayRes.list || []).length + (overdueRes.list || []).length);
       })
       .catch((e) => Toast.fail(e.message))
       .finally(() => setLoading(false));
@@ -38,7 +39,7 @@ export default function Home() {
   }, []);
 
   const level = levelMeta(user?.level || 'normal');
-  const hasReminder = unreadCount > 0 || todayReminders > 0;
+  const hasUnread = unreadCount > 0;
 
   return (
     <div className="page">
@@ -52,18 +53,11 @@ export default function Home() {
         }
       />
 
-      {(hasReminder) && (
+      {hasUnread && (
         <div className="home-reminder-bar">
-          {todayReminders > 0 && (
-            <span className="home-reminder-bar__item" onClick={() => navigate('/reminders')}>
-              {todayReminders} 条今日待跟进
-            </span>
-          )}
-          {unreadCount > 0 && (
-            <span className="home-reminder-bar__item" onClick={() => navigate('/notifications')}>
-              {unreadCount} 条未读通知
-            </span>
-          )}
+          <span className="home-reminder-bar__item" onClick={() => navigate('/notifications')}>
+            {unreadCount} 条未读通知
+          </span>
         </div>
       )}
 
@@ -83,14 +77,23 @@ export default function Home() {
             <div className="home-user__points-label">我的积分</div>
           </div>
         </div>
+        <div className="home-user__focus">
+          <div
+            className="home-user__focus-item home-user__focus-item--reminder"
+            onClick={() => navigate('/reminders')}
+          >
+            <div className="home-user__focus-num">{followCount}</div>
+            <div className="home-user__focus-label">条待跟进</div>
+          </div>
+          <div className="home-user__focus-item" onClick={() => navigate('/crm')}>
+            <div className="home-user__focus-num">{stats?.crm ?? 0}</div>
+            <div className="home-user__focus-label">我的CRM</div>
+          </div>
+        </div>
         <div className="home-user__stats">
           <div className="home-user__stat" onClick={() => navigate('/my/orders')}>
             <div className="home-user__stat-num">{stats?.published ?? 0}</div>
             <div className="home-user__stat-label">我的投稿</div>
-          </div>
-          <div className="home-user__stat" onClick={() => navigate('/crm')}>
-            <div className="home-user__stat-num">{stats?.crm ?? 0}</div>
-            <div className="home-user__stat-label">我的CRM</div>
           </div>
           <div className="home-user__stat" onClick={() => navigate('/member-level')}>
             <div className="home-user__stat-num">{level.label}</div>
@@ -102,32 +105,17 @@ export default function Home() {
       {/* Banner轮播 */}
       <HomeBanner />
 
-      {/* 快捷入口 */}
-      <div className="home-entry">
-        <div className="home-entry__item home-entry__item--primary" onClick={() => navigate('/opportunities')}>
-          <Icon name="search" size={26} />
-          <span>商机大厅</span>
-        </div>
-        <div className="home-entry__item home-entry__item--accent" onClick={() => navigate('/publish')}>
-          <Icon name="edit" size={26} />
-          <span>发布商机</span>
-        </div>
-        <div className="home-entry__item home-entry__item--success" onClick={() => navigate('/crm')}>
-          <Icon name="contact" size={26} />
-          <span>我的CRM</span>
-        </div>
-        <div className="home-entry__item home-entry__item--warning" onClick={() => navigate('/ranking')}>
-          <Icon name="medal-o" size={26} />
-          <span>排行榜</span>
-        </div>
-      </div>
-
       {/* 最新商机 */}
       <div className="flex-between section-head">
         <span className="section-title">最新商机</span>
-        <span className="section-more" onClick={() => navigate('/opportunities')}>
-          查看全部 <Icon name="arrow" size={12} />
-        </span>
+        <div className="section-actions">
+          <span className="section-action" onClick={() => navigate('/ranking')}>
+            <Icon name="medal-o" size={12} /> 排行榜
+          </span>
+          <span className="section-action" onClick={() => navigate('/opportunities')}>
+            查看全部 <Icon name="arrow" size={12} />
+          </span>
+        </div>
       </div>
 
       {loading ? (
