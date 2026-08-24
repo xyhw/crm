@@ -14,6 +14,7 @@ export default function Points() {
   const [loading, setLoading] = useState(true);
   const [showRecharge, setShowRecharge] = useState(false);
   const [rechargeAmount, setRechargeAmount] = useState('');
+  const [rechargeEmail, setRechargeEmail] = useState('');
   const [recharging, setRecharging] = useState(false);
 
   useEffect(() => {
@@ -41,10 +42,13 @@ export default function Points() {
     const amount = Number(rechargeAmount);
     if (!amount || amount <= 0) return Toast.fail('请输入有效金额');
     if (amount > 10000) return Toast.fail('单次充值上限10000积分');
+    const email = rechargeEmail.trim();
+    if (!email) return Toast.fail('请输入邮箱地址');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return Toast.fail('邮箱格式不正确');
 
     setRecharging(true);
     try {
-      const order = await api.recharge({ amount });
+      const order = await api.recharge({ amount, email });
       const { orderNo, channel, payUrl, payMethod } = order;
 
       if (channel === 'mock' && payMethod !== 'auto') {
@@ -60,6 +64,7 @@ export default function Points() {
       navigate('/points/result?status=success');
       setShowRecharge(false);
       setRechargeAmount('');
+      setRechargeEmail('');
       const [balanceRes, logsRes] = await Promise.all([
         api.pointsBalance(),
         api.pointsLogs({ pageSize: 10 }),
@@ -171,6 +176,14 @@ export default function Points() {
         onCancel={() => setShowRecharge(false)}
       >
         <div className="dialog-body">
+          <Field
+            label="邮箱地址"
+            placeholder="输入接收账单的邮箱"
+            value={rechargeEmail}
+            onChange={setRechargeEmail}
+            type="email"
+            clearable
+          />
           <div className="dialog-body__label">选择充值金额：</div>
           <div className="recharge-chips">
             {rechargeOptions.map((amount) => (

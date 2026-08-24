@@ -57,7 +57,7 @@ export class WaffoAdapter extends BasePaymentAdapter {
     return product.id;
   }
 
-  async createPayment({ orderNo, price, subject, userId }) {
+  async createPayment({ orderNo, price, subject, userId, email }) {
     if (!this.isConfigured()) {
       throw new Error('Waffo 渠道未配置：请在后台填写 Merchant ID / Private Key / Store ID');
     }
@@ -68,7 +68,7 @@ export class WaffoAdapter extends BasePaymentAdapter {
       productType: 'onetime',
       currency: this.cfg.currency,
       buyerIdentity: String(userId),
-      buyerEmail: `user-${userId}@crm.xyhw.com`,
+      buyerEmail: email || `user-${userId}@crm.xyhw.com`,
       billingDetail: { country: 'CN', isBusiness: false },
       metadata: { orderNo, subject: subject || '积分充值' },
       successUrl: this.cfg.successUrl || undefined,

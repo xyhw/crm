@@ -81,11 +81,12 @@ router.get('/logs', authRequired, async (req, res) => {
 // 创建充值订单（发起支付）
 router.post('/recharge', authRequired, async (req, res) => {
   try {
-    const { amount, channel } = req.body || {};
+    const { amount, channel, email } = req.body || {};
     const result = await createRechargeOrder({
       userId: req.userId,
       amount: Number(amount),
       channel: channel || config.payment.defaultChannel,
+      email,
     });
     res.json({ code: 0, data: result, message: '订单已创建，请完成支付' });
   } catch (err) {
