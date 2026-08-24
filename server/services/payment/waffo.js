@@ -1,5 +1,6 @@
 import { WaffoPancake, verifyWebhook } from '@waffo/pancake-ts';
 import { config } from '../../config.js';
+import { query } from '../../db.js';
 import { BasePaymentAdapter } from './base.js';
 
 /**
@@ -40,7 +41,7 @@ export class WaffoAdapter extends BasePaymentAdapter {
     return this._client;
   }
 
-  /** 确保存在一次性商品（有配置 productId 直接用，否则自动创建并缓存） */
+  /** 确保存在一次性商品（有配置 productId 直接用，否则自动创建并持久化，避免重启重复建品） */
   async ensureProduct() {
     if (this.cfg.productId) return this.cfg.productId;
     if (this._productId) return this._productId;
@@ -54,6 +55,13 @@ export class WaffoAdapter extends BasePaymentAdapter {
       metadata: { source: 'hotel-order-follow' },
     });
     this._productId = product.id;
+    this.cfg.productId = product.id;
+    await query(
+      `INSERT INTO system_configs (config_key, config_value, config_type, description)
+       VALUES ('pay_waffo_product_id', ?, 'string', 'Waffo 商品ID(留空自动创建)')
+       ON DUPLICATE KEY UPDATE config_value = VALUES(config_value)`,
+      [product.id]
+    );
     return product.id;
   }
 
@@ -72,6 +80,7 @@ export class WaffoAdapter extends BasePaymentAdapter {
       billingDetail: { country: 'CN', isBusiness: false },
       metadata: { orderNo, subject: subject || '积分充值' },
       successUrl: this.cfg.successUrl || undefined,
+      language: 'zh-Hans',
       priceSnapshot: {
         amount: displayAmount,
         taxIncluded: true,
