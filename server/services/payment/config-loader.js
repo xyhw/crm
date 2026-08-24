@@ -27,6 +27,14 @@ const PAY_CONFIG_DEFS = [
   { key: 'pay_stripe_enabled', env: () => false, type: 'boolean', desc: 'Stripe开关' },
   { key: 'pay_stripe_secret_key', env: () => config.payment.stripe.secretKey, type: 'string', desc: 'Stripe密钥' },
   { key: 'pay_stripe_webhook_secret', env: () => config.payment.stripe.webhookSecret, type: 'string', desc: 'Stripe Webhook密钥' },
+  { key: 'pay_waffo_enabled', env: () => false, type: 'boolean', desc: 'Waffo支付开关' },
+  { key: 'pay_waffo_merchant_id', env: () => config.payment.waffo.merchantId, type: 'string', desc: 'Waffo Merchant ID' },
+  { key: 'pay_waffo_private_key', env: () => config.payment.waffo.privateKey, type: 'string', desc: 'Waffo RSA私钥' },
+  { key: 'pay_waffo_store_id', env: () => config.payment.waffo.storeId, type: 'string', desc: 'Waffo Store ID' },
+  { key: 'pay_waffo_product_id', env: () => config.payment.waffo.productId, type: 'string', desc: 'Waffo 商品ID(留空自动创建)' },
+  { key: 'pay_waffo_currency', env: () => config.payment.waffo.currency, type: 'string', desc: 'Waffo 结算币种' },
+  { key: 'pay_waffo_environment', env: () => config.payment.waffo.environment, type: 'string', desc: 'Waffo 环境(test/prod)' },
+  { key: 'pay_waffo_success_url', env: () => config.payment.waffo.successUrl, type: 'string', desc: 'Waffo 支付成功跳转URL' },
 ];
 
 function parseVal(raw, type, fallback) {
@@ -83,6 +91,14 @@ export async function ensureAndLoadPaymentConfig() {
   config.payment.stripe.secretKey = parseVal(map.pay_stripe_secret_key, 'string', '');
   config.payment.stripe.webhookSecret = parseVal(map.pay_stripe_webhook_secret, 'string', '');
 
+  config.payment.waffo.merchantId = parseVal(map.pay_waffo_merchant_id, 'string', '');
+  config.payment.waffo.privateKey = parseVal(map.pay_waffo_private_key, 'string', '');
+  config.payment.waffo.storeId = parseVal(map.pay_waffo_store_id, 'string', '');
+  config.payment.waffo.productId = parseVal(map.pay_waffo_product_id, 'string', '');
+  config.payment.waffo.currency = parseVal(map.pay_waffo_currency, 'string', 'USD');
+  config.payment.waffo.environment = parseVal(map.pay_waffo_environment, 'string', 'test');
+  config.payment.waffo.successUrl = parseVal(map.pay_waffo_success_url, 'string', '');
+
   // 渠道可用性：mock 永远可用；其余渠道由后台开关决定（开关关闭则视为不可用）
   // listAvailableChannels 已通过 isConfigured 判断，这里额外用 enabled 开关兜底
   config.payment._channelEnabled = {
@@ -90,6 +106,7 @@ export async function ensureAndLoadPaymentConfig() {
     wechat: parseVal(map.pay_wechat_enabled, 'boolean', false),
     alipay: parseVal(map.pay_alipay_enabled, 'boolean', false),
     stripe: parseVal(map.pay_stripe_enabled, 'boolean', false),
+    waffo: parseVal(map.pay_waffo_enabled, 'boolean', false),
   };
 }
 

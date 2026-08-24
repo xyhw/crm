@@ -69,15 +69,15 @@ body {
 .announcement-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin: 12px;
-  padding: 14px 16px;
+  gap: 10px;
+  margin: 8px 12px;
+  padding: 10px 14px;
   background:
     repeating-linear-gradient(0deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 32px),
     repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 32px),
     linear-gradient(135deg, var(--primary-color) 0%, var(--primary-deep) 100%);
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  border-radius: 10px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.08);
   cursor: pointer;
   color: var(--text-color-inverse);
 }
@@ -86,8 +86,8 @@ body {
 }
 .announcement-card__icon {
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: rgba(255,255,255,0.2);
   display: flex;
@@ -105,23 +105,23 @@ body {
 }
 .announcement-card__badge {
   flex-shrink: 0;
-  padding: 1px 6px;
+  padding: 0 5px;
   border-radius: 3px;
   background: #FFD700;
   color: var(--primary-deep);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  line-height: 16px;
+  line-height: 15px;
 }
 .announcement-card__title {
   flex: 1;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-color-inverse);
 }
 .announcement-card__time {
-  margin-top: 2px;
-  font-size: 12px;
+  margin-top: 1px;
+  font-size: 11px;
   opacity: 0.75;
 }
 .announcement-card__side {
@@ -129,18 +129,18 @@ body {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 6px;
+  gap: 4px;
 }
 .announcement-card__more {
-  font-size: 12px;
+  font-size: 11px;
   opacity: 0.85;
 }
 .announcement-card__count {
-  padding: 1px 8px;
+  padding: 0 7px;
   border-radius: 8px;
   background: rgba(255,255,255,0.22);
-  font-size: 11px;
-  line-height: 16px;
+  font-size: 10px;
+  line-height: 15px;
 }
 
 /* 公告详情 */
@@ -189,27 +189,27 @@ body {
     repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 34px),
     repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 34px),
     linear-gradient(135deg, var(--primary-color) 0%, var(--primary-deep) 100%);
-  padding: 20px 16px;
+  padding: 14px 16px;
   color: var(--text-color-inverse);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .home-user__top {
   display: flex;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .home-user__avatar {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: rgba(255,255,255,0.3);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  margin-right: 12px;
+  font-size: 17px;
+  margin-right: 10px;
 }
 
 .home-user__info {
@@ -217,9 +217,9 @@ body {
 }
 
 .home-user__name {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .home-user__level-tag {
@@ -233,22 +233,22 @@ body {
 }
 
 .home-user__points-num {
-  font-size: 24px;
+  font-size: 21px;
   font-weight: 700;
   letter-spacing: 1px;
   color: #FFD700;
 }
 
 .home-user__points-label {
-  font-size: 12px;
+  font-size: 11px;
   opacity: 0.8;
 }
 
 /* 卡片核心区：待跟进 | 我的CRM */
 .home-user__focus {
   display: flex;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
 .home-user__focus-item {
@@ -256,8 +256,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 10px;
+  gap: 5px;
+  padding: 8px;
   border-radius: 8px;
   background: rgba(255,255,255,0.2);
 }
@@ -267,7 +267,7 @@ body {
 }
 
 .home-user__focus-num {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1;
 }
@@ -281,7 +281,7 @@ body {
   display: flex;
   background: rgba(255,255,255,0.16);
   border-radius: 8px;
-  padding: 10px;
+  padding: 8px;
 }
 
 .home-user__stat {
@@ -290,12 +290,12 @@ body {
 }
 
 .home-user__stat-num {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 600;
 }
 
 .home-user__stat-label {
-  font-size: 12px;
+  font-size: 11px;
   opacity: 0.8;
 }
 

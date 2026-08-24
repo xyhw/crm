@@ -168,7 +168,7 @@ export default function Points() {
                     type={rechargeChannel === ch ? 'primary' : 'default'}
                     onClick={() => setRechargeChannel(ch)}
                   >
-                    {{ mock: '模拟支付', wechat: '微信支付', alipay: '支付宝', stripe: 'Stripe' }[ch] || ch}
+                    {{ mock: '模拟支付', wechat: '微信支付', alipay: '支付宝', stripe: 'Stripe', waffo: 'Waffo 支付' }[ch] || ch}
                   </Button>
                 ))}
               </div>

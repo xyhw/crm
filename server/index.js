@@ -38,6 +38,7 @@ import remindersRoutes from './routes/reminders.routes.js';
 import creditsRoutes from './routes/credits.routes.js';
 import agreementRoutes from './routes/agreement.routes.js';
 import announcementRoutes from './routes/announcements.routes.js';
+import waffoWebhookRoutes from './routes/waffo-webhook.routes.js';
 
 // 后台路由
 import adminAuthRoutes from './routes/admin/auth.routes.js';
@@ -64,6 +65,10 @@ import adminAnnouncementRoutes from './routes/admin/announcements.routes.js';
 const app = express();
 
 app.use(cors());
+
+// Waffo 回调必须使用原始 body 验签，须在全局 express.json() 之前挂载
+app.use('/api/points/recharge/notify/waffo', express.raw({ type: '*/*' }), waffoWebhookRoutes);
+
 app.use(express.json());
 
 // 全局接口限流

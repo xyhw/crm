@@ -162,6 +162,7 @@ export default function SystemConfig() {
                   { value: 'wechat', label: '微信支付' },
                   { value: 'alipay', label: '支付宝' },
                   { value: 'stripe', label: 'Stripe' },
+                  { value: 'waffo', label: 'Waffo Pancake' },
                 ]} />
               </Form.Item>
             </Col>
@@ -248,6 +249,45 @@ export default function SystemConfig() {
             </Col>
             <Col span={10}>
               <Form.Item name="pay_stripe_webhook_secret" label="Webhook Secret"><Input.Password /></Form.Item>
+            </Col>
+          </Row>
+
+          <Title level={5}>Waffo Pancake</Title>
+          <Row gutter={24}>
+            <Col span={4}>
+              <Form.Item name="pay_waffo_enabled" label="启用" valuePropName="checked">
+                <Switch />
+              </Form.Item>
+            </Col>
+            <Col span={10}>
+              <Form.Item name="pay_waffo_merchant_id" label="Merchant ID"><Input placeholder="MER_..." /></Form.Item>
+            </Col>
+            <Col span={10}>
+              <Form.Item name="pay_waffo_store_id" label="Store ID"><Input placeholder="STO_..." /></Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={24}>
+            <Col span={12}>
+              <Form.Item name="pay_waffo_private_key" label="RSA私钥(PEM/Base64)"><Input.TextArea rows={2} placeholder="-----BEGIN PRIVATE KEY-----" /></Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item name="pay_waffo_product_id" label="商品ID(留空自动创建)"><Input placeholder="PROD_..." /></Form.Item>
+            </Col>
+            <Col span={3}>
+              <Form.Item name="pay_waffo_currency" label="币种"><Input placeholder="USD" /></Form.Item>
+            </Col>
+            <Col span={3}>
+              <Form.Item name="pay_waffo_environment" label="环境">
+                <Select options={[
+                  { value: 'test', label: 'test' },
+                  { value: 'prod', label: 'prod' },
+                ]} />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={24}>
+            <Col span={24}>
+              <Form.Item name="pay_waffo_success_url" label="支付成功跳转URL"><Input /></Form.Item>
             </Col>
           </Row>
 

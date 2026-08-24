@@ -50,6 +50,15 @@ export const config = {
       secretKey: process.env.PAY_STRIPE_SECRET_KEY || '',
       webhookSecret: process.env.PAY_STRIPE_WEBHOOK_SECRET || '',
     },
+    waffo: {
+      merchantId: process.env.PAY_WAFFO_MERCHANT_ID || '',
+      privateKey: process.env.PAY_WAFFO_PRIVATE_KEY || '',
+      storeId: process.env.PAY_WAFFO_STORE_ID || '',
+      productId: process.env.PAY_WAFFO_PRODUCT_ID || '',
+      currency: process.env.PAY_WAFFO_CURRENCY || 'USD',
+      environment: process.env.PAY_WAFFO_ENVIRONMENT || 'test',
+      successUrl: process.env.PAY_WAFFO_SUCCESS_URL || '',
+    },
   },
   rateLimit: {
     api: parseInt(process.env.RATE_LIMIT_API_WINDOW_MS || '60000', 10),

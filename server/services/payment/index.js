@@ -5,12 +5,14 @@ import { MockAdapter } from './mock.js';
 import { WechatAdapter } from './wechat.js';
 import { AlipayAdapter } from './alipay.js';
 import { StripeAdapter } from './stripe.js';
+import { WaffoAdapter } from './waffo.js';
 
 const ADAPTERS = {
   mock: () => new MockAdapter(),
   wechat: () => new WechatAdapter(),
   alipay: () => new AlipayAdapter(),
   stripe: () => new StripeAdapter(),
+  waffo: () => new WaffoAdapter(),
 };
 
 /** 按渠道名获取适配器实例（单例缓存） */
