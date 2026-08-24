@@ -40,7 +40,7 @@ export { BasePaymentAdapter };
  * 创建充值订单并发起支付。
  * 返回订单与支付参数，前端据此拉起支付。
  */
-export async function createRechargeOrder({ userId, amount, channel, email }) {
+export async function createRechargeOrder({ userId, amount, channel }) {
   if (!amount || amount <= 0) {
     const err = new Error('请输入有效的充值金额');
     err.code = 400;
@@ -69,9 +69,12 @@ export async function createRechargeOrder({ userId, amount, channel, email }) {
     [orderNo, userId, amount, price, adapter.channel, expireAt]
   );
 
-  // 调用渠道下单
+  // 获取用户邮箱（用于 Waffo 等渠道预填 buyerEmail）
+  const [userRow] = await query('SELECT email FROM users WHERE id = ?', [userId]);
+  const userEmail = userRow?.email || null;
+
   const pay = await adapter.createPayment({
-    orderNo, amount, price, subject: '积分充值', userId, email,
+    orderNo, amount, price, subject: '积分充值', userId, email: userEmail,
   });
 
   // 记录渠道返回的支付参数
