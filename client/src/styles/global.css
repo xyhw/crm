@@ -725,6 +725,32 @@ body {
   margin-bottom: 12px;
 }
 
+/* 支付结果页 */
+.pay-result {
+  padding: 80px 32px 0;
+  text-align: center;
+}
+.pay-result__icon {
+  margin-bottom: 20px;
+}
+.pay-result__title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.pay-result__desc {
+  font-size: 14px;
+  color: var(--text-color-muted);
+  line-height: 1.6;
+  margin-bottom: 40px;
+}
+.pay-result__actions {
+  padding: 0 16px;
+}
+.pay-result__actions .rv-button {
+  max-width: 320px;
+}
+
 /* 积分流水 */
 .points-log {
   display: flex;

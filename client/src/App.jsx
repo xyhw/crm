@@ -14,6 +14,7 @@ const Profile = lazy(() => import('./pages/Profile'));
 const ProfileEdit = lazy(() => import('./pages/ProfileEdit'));
 const MyOrders = lazy(() => import('./pages/MyOrders'));
 const Points = lazy(() => import('./pages/Points'));
+const PayResult = lazy(() => import('./pages/PayResult'));
 const PointsFlow = lazy(() => import('./pages/PointsFlow'));
 const CRM = lazy(() => import('./pages/CRM'));
 const CRMDetail = lazy(() => import('./pages/CRMDetail'));
@@ -58,6 +59,7 @@ function AppRoutes() {
         <Route path="/profile/edit" element={<RequireAuth><Suspense fallback={<PageLoading />}><ProfileEdit /></Suspense></RequireAuth>} />
         <Route path="/my/orders" element={<RequireAuth><Suspense fallback={<PageLoading />}><MyOrders /></Suspense></RequireAuth>} />
         <Route path="/points" element={<RequireAuth><Suspense fallback={<PageLoading />}><Points /></Suspense></RequireAuth>} />
+        <Route path="/points/result" element={<RequireAuth><Suspense fallback={<PageLoading />}><PayResult /></Suspense></RequireAuth>} />
         <Route path="/points/flow" element={<RequireAuth><Suspense fallback={<PageLoading />}><PointsFlow /></Suspense></RequireAuth>} />
         <Route path="/member-level" element={<RequireAuth><Suspense fallback={<PageLoading />}><MemberLevel /></Suspense></RequireAuth>} />
         <Route path="/credit" element={<RequireAuth><Suspense fallback={<PageLoading />}><Credit /></Suspense></RequireAuth>} />

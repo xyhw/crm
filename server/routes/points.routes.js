@@ -98,8 +98,17 @@ router.post('/recharge', authRequired, async (req, res) => {
 // 查询充值订单状态（前端轮询支付结果）
 router.get('/recharge/order/:orderNo', authRequired, async (req, res) => {
   try {
-    const order = await getOrderForUser(req.params.orderNo, req.userId);
+    let order = await getOrderForUser(req.params.orderNo, req.userId);
     if (!order) return res.json({ code: 404, message: '订单不存在' });
+
+    // pending 且超过有效期 -> 标记过期（渠道侧不通知失败/取消时，前端据此感知超时）
+    if (order.status === 'pending' && order.expire_at && new Date(order.expire_at) < new Date()) {
+      await query(
+        `UPDATE payment_orders SET status = 'expired' WHERE order_no = ? AND status = 'pending'`,
+        [req.params.orderNo]
+      );
+      order = await getOrderForUser(req.params.orderNo, req.userId);
+    }
 
     // pending 状态尝试主动对账渠道侧
     if (order.status === 'pending') {

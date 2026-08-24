@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button, Toast, Dialog, Field, Grid, GridItem } from 'react-vant';
 import { api } from '../api';
 import { timeAgo } from '../constants';
@@ -8,6 +8,7 @@ import PageNavBar from '../components/PageNavBar';
 
 export default function Points() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [balance, setBalance] = useState(null);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,6 +17,14 @@ export default function Points() {
   const [rechargeChannel, setRechargeChannel] = useState('mock');
   const [recharging, setRecharging] = useState(false);
   const [channelsData, setChannelsData] = useState({ channels: ['mock'], defaultChannel: 'mock' });
+
+  useEffect(() => {
+    // 从支付结果页点“重新充值”返回时，自动弹起充值弹窗
+    if (location.state?.reopenRecharge) {
+      setShowRecharge(true);
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.state, location.pathname, navigate]);
 
   useEffect(() => {
     Promise.all([
@@ -55,8 +64,9 @@ export default function Points() {
         window.open(payUrl, '_blank');
       }
 
-      const finalOrder = await pollOrderStatus(orderNo);
+      const finalOrder = await pollOrderStatus(orderNo, channel);
       Toast.success(`充值成功，到账 ${finalOrder.amount} 积分`);
+      navigate('/points/result?status=success');
       setShowRecharge(false);
       setRechargeAmount('');
       setRechargeChannel(channelsData?.defaultChannel || 'mock');
@@ -67,31 +77,45 @@ export default function Points() {
       setBalance(balanceRes);
       setLogs(logsRes.list || []);
     } catch (e) {
-      Toast.fail(e.message);
+      // 渠道支付失败/超时 -> 跳转支付结果页
+      const reason = e.message || '';
+      if (reason.includes('失败')) {
+        navigate(`/points/result?status=failed&message=${encodeURIComponent(reason)}`);
+      } else if (reason.includes('超时') || reason.includes('未完成')) {
+        navigate(`/points/result?status=expired&message=${encodeURIComponent(reason)}`);
+      } else {
+        Toast.fail(reason);
+      }
     } finally {
       setRecharging(false);
     }
   };
 
-  const pollOrderStatus = (orderNo, times = 12, interval = 1000) =>
+  // 轮询订单状态：paid -> 成功；failed/expired -> 支付失败；超时未完成 -> 提示重新发起
+  const pollOrderStatus = (orderNo, channel, times = 90, interval = 2000) =>
     new Promise((resolve, reject) => {
       let count = 0;
+      let settled = false;
+      const finish = (resolveFn, rejectFn, val) => {
+        if (!settled) {
+          settled = true;
+          clearInterval(timer);
+          resolveFn(val);
+        }
+      };
       const timer = setInterval(async () => {
         count += 1;
         try {
           const order = await api.rechargeOrderStatus(orderNo);
           if (order.status === 'paid') {
-            clearInterval(timer);
-            resolve(order);
-          } else if (order.status !== 'pending' || count >= times) {
-            clearInterval(timer);
-            reject(new Error(order.status === 'paid' ? '充值成功' : '支付未完成，请稍后查看订单'));
+            finish(resolve, reject, order);
+          } else if (order.status === 'failed' || order.status === 'expired') {
+            finish(resolve, reject, new Error(order.status === 'failed' ? '支付失败，积分未到账' : '支付超时，订单已失效'));
+          } else if (count >= times) {
+            finish(resolve, reject, new Error('支付未完成，请重新发起充值'));
           }
         } catch (e) {
-          if (count >= times) {
-            clearInterval(timer);
-            reject(new Error('查询订单状态失败'));
-          }
+          if (count >= times) finish(resolve, reject, new Error('查询订单状态失败'));
         }
       }, interval);
     });
