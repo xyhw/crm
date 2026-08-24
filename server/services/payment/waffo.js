@@ -57,22 +57,23 @@ export class WaffoAdapter extends BasePaymentAdapter {
     return product.id;
   }
 
-  async createPayment({ orderNo, price, subject }) {
+  async createPayment({ orderNo, price, subject, userId }) {
     if (!this.isConfigured()) {
       throw new Error('Waffo 渠道未配置：请在后台填写 Merchant ID / Private Key / Store ID');
     }
     const productId = await this.ensureProduct();
-    // price 单位为分，Waffo 使用 display amount（如 29.00）
     const displayAmount = (price / 100).toFixed(2);
-    const session = await this.client.checkout.createSession({
+    const session = await this.client.checkout.authenticated.create({
       productId,
       productType: 'onetime',
       currency: this.cfg.currency,
-      buyerEmail: undefined,
+      buyerIdentity: String(userId),
+      buyerEmail: `user-${userId}@crm.xyhw.com`,
+      billingDetail: { country: 'CN', isBusiness: false },
       metadata: { orderNo, subject: subject || '积分充值' },
       successUrl: this.cfg.successUrl || undefined,
       priceSnapshot: {
-        amount: Number(displayAmount),
+        amount: displayAmount,
         taxIncluded: true,
         taxCategory: 'digital_goods',
       },

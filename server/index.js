@@ -13,6 +13,7 @@ import { migrateOpportunityAddressWechat } from './migrations/006_opportunity_ad
 import { migrateFollowUpHelpfulMarks } from './migrations/007_follow_up_helpful_marks.js';
 import { migrateFollowUpShareInvalidMarks } from './migrations/008_follow_up_share_invalid_marks.js';
 import { migratePaymentOrders } from './migrations/009_payment_orders.js';
+import { migrateWaffoChannel } from './migrations/010_waffo_channel.js';
 import { ensureAndLoadPaymentConfig } from './services/payment/config-loader.js';
 import { seedDatabase } from './seeds/seed.js';
 import { closePool } from './db.js';
@@ -197,6 +198,9 @@ async function start() {
     // 支付订单表 + points_logs.source_type 补 penalty（幂等）
     await migratePaymentOrders();
     console.log('[server] payment_orders table ready');
+
+    await migrateWaffoChannel();
+    console.log('[server] payment_orders.channel +waffo');
 
     // 种子数据
     await seedDatabase();
