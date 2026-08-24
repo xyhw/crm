@@ -14,9 +14,7 @@ export default function Points() {
   const [loading, setLoading] = useState(true);
   const [showRecharge, setShowRecharge] = useState(false);
   const [rechargeAmount, setRechargeAmount] = useState('');
-  const [rechargeChannel, setRechargeChannel] = useState('mock');
   const [recharging, setRecharging] = useState(false);
-  const [channelsData, setChannelsData] = useState({ channels: ['mock'], defaultChannel: 'mock' });
 
   useEffect(() => {
     // 从支付结果页点“重新充值”返回时，自动弹起充值弹窗
@@ -37,13 +35,6 @@ export default function Points() {
       })
       .catch((e) => Toast.fail(e.message))
       .finally(() => setLoading(false));
-
-    api.rechargeChannels()
-      .then((data) => {
-        setChannelsData(data);
-        setRechargeChannel(data.defaultChannel || 'mock');
-      })
-      .catch(() => {});
   }, []);
 
   const handleRecharge = async () => {
@@ -53,7 +44,7 @@ export default function Points() {
 
     setRecharging(true);
     try {
-      const order = await api.recharge({ amount, channel: rechargeChannel });
+      const order = await api.recharge({ amount });
       const { orderNo, channel, payUrl, payMethod } = order;
 
       if (channel === 'mock' && payMethod !== 'auto') {
@@ -64,12 +55,11 @@ export default function Points() {
         window.open(payUrl, '_blank');
       }
 
-      const finalOrder = await pollOrderStatus(orderNo, channel);
+      const finalOrder = await pollOrderStatus(orderNo);
       Toast.success(`充值成功，到账 ${finalOrder.amount} 积分`);
       navigate('/points/result?status=success');
       setShowRecharge(false);
       setRechargeAmount('');
-      setRechargeChannel(channelsData?.defaultChannel || 'mock');
       const [balanceRes, logsRes] = await Promise.all([
         api.pointsBalance(),
         api.pointsLogs({ pageSize: 10 }),
@@ -92,7 +82,7 @@ export default function Points() {
   };
 
   // 轮询订单状态：paid -> 成功；failed/expired -> 支付失败；超时未完成 -> 提示重新发起
-  const pollOrderStatus = (orderNo, channel, times = 90, interval = 2000) =>
+  const pollOrderStatus = (orderNo, times = 90, interval = 2000) =>
     new Promise((resolve, reject) => {
       let count = 0;
       let settled = false;
@@ -181,23 +171,6 @@ export default function Points() {
         onCancel={() => setShowRecharge(false)}
       >
         <div className="dialog-body">
-          {channelsData.channels.length > 1 && (
-            <>
-              <div className="dialog-body__label">支付方式：</div>
-              <div className="recharge-chips">
-                {channelsData.channels.map((ch) => (
-                  <Button
-                    key={ch}
-                    size="small"
-                    type={rechargeChannel === ch ? 'primary' : 'default'}
-                    onClick={() => setRechargeChannel(ch)}
-                  >
-                    {{ mock: '模拟支付', wechat: '微信支付', alipay: '支付宝', stripe: 'Stripe', waffo: 'Waffo 支付' }[ch] || ch}
-                  </Button>
-                ))}
-              </div>
-            </>
-          )}
           <div className="dialog-body__label">选择充值金额：</div>
           <div className="recharge-chips">
             {rechargeOptions.map((amount) => (

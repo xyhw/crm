@@ -81,7 +81,7 @@ describe('积分中心 Points（开发需求 5.2 积分体系）', () => {
     await waitFor(() => expect(screen.getByText('100 积分')).toBeTruthy());
     fireEvent.click(screen.getByText('100 积分'));
     fireEvent.click(screen.getAllByText('确认')[0]);
-    await waitFor(() => expect(api.recharge).toHaveBeenCalledWith({ amount: 100, channel: 'mock' }));
+    await waitFor(() => expect(api.recharge).toHaveBeenCalledWith({ amount: 100 }));
   });
 
   it('积分流水列表展示来源标题与增减金额', async () => {
