@@ -71,6 +71,8 @@ export class WaffoAdapter extends BasePaymentAdapter {
     }
     const productId = await this.ensureProduct();
     const displayAmount = (price / 100).toFixed(2);
+    // 支付成功跳转：优先显式配置的 success_url，否则用站点域名拼接
+    const successUrl = this.cfg.successUrl || (config.payment.siteBaseUrl ? `${config.payment.siteBaseUrl}/points` : undefined);
     const session = await this.client.checkout.authenticated.create({
       productId,
       productType: 'onetime',
@@ -79,7 +81,7 @@ export class WaffoAdapter extends BasePaymentAdapter {
       buyerEmail: email || `user-${userId}@crm.xyhw.com`,
       billingDetail: { country: 'CN', isBusiness: false },
       metadata: { orderNo, subject: subject || '积分充值' },
-      successUrl: this.cfg.successUrl || undefined,
+      successUrl,
       language: 'zh-Hans',
       priceSnapshot: {
         amount: displayAmount,

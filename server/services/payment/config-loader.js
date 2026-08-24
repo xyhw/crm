@@ -9,6 +9,7 @@ import { config } from '../../config.js';
  */
 const PAY_CONFIG_DEFS = [
   { key: 'pay_default_channel', env: () => config.payment.defaultChannel, type: 'string', desc: '默认支付渠道' },
+  { key: 'pay_site_base_url', env: () => config.payment.siteBaseUrl, type: 'string', desc: '站点对外域名(回调/跳转基础地址,如 https://example.com)' },
   { key: 'pay_mock_autopay', env: () => config.payment.mockAutoPay, type: 'boolean', desc: 'mock渠道自动完成支付' },
   { key: 'pay_points_to_yuan', env: () => config.payment.pointsToYuan, type: 'number', desc: '1积分兑换金额(元)' },
   { key: 'pay_order_ttl', env: () => config.payment.orderTtl, type: 'number', desc: '订单过期时间(秒)' },
@@ -72,6 +73,7 @@ export async function ensureAndLoadPaymentConfig() {
   // 逐属性更新，保持 config.payment.wechat/alipay/stripe 对象引用不变，
   // 使已缓存的适配器实例（this.cfg 持引用）能读到最新值。
   config.payment.defaultChannel = parseVal(map.pay_default_channel, 'string', config.payment.defaultChannel);
+  config.payment.siteBaseUrl = parseVal(map.pay_site_base_url, 'string', '').replace(/\/+$/, '');
   config.payment.mockAutoPay = parseVal(map.pay_mock_autopay, 'boolean', true);
   config.payment.pointsToYuan = parseVal(map.pay_points_to_yuan, 'number', config.payment.pointsToYuan);
   config.payment.orderTtl = parseVal(map.pay_order_ttl, 'number', config.payment.orderTtl);

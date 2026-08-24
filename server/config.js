@@ -30,6 +30,8 @@ export const config = {
     orderTtl: parseInt(process.env.PAY_ORDER_TTL || '1800', 10),
     // 默认渠道（开发用 mock）
     defaultChannel: process.env.PAY_DEFAULT_CHANNEL || 'mock',
+    // 站点对外域名（回调/支付跳转的基础地址，后台可配）
+    siteBaseUrl: process.env.PAY_SITE_BASE_URL || '',
     // mock 渠道是否自动完成支付（开发默认 true）
     mockAutoPay: process.env.PAY_MOCK_AUTOPAY !== 'false',
     wechat: {

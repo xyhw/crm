@@ -182,6 +182,13 @@ export default function SystemConfig() {
               </Form.Item>
             </Col>
           </Row>
+          <Row gutter={24}>
+            <Col span={12}>
+              <Form.Item name="pay_site_base_url" label="站点域名" tooltip="对外访问的基础地址(如 https://example.com)，支付成功跳转、回调通知均基于此域名">
+                <Input placeholder="https://example.com" allowClear />
+              </Form.Item>
+            </Col>
+          </Row>
 
           <Title level={5}>微信支付</Title>
           <Row gutter={24}>
