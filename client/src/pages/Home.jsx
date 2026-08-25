@@ -18,6 +18,9 @@ export default function Home() {
   const [stats, setStats] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [followCount, setFollowCount] = useState(0);
+  const [tab, setTab] = useState(user?.category ? 'recommend' : 'latest');
+  const [recommends, setRecommends] = useState(null);
+  const [recLoading, setRecLoading] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -37,6 +40,16 @@ export default function Home() {
       .finally(() => setLoading(false));
     refreshUser().catch(() => {});
   }, []);
+
+  // 首次切到推荐 Tab 时按用户供应商类型懒加载
+  useEffect(() => {
+    if (tab !== 'recommend' || recommends !== null || !user?.category) return;
+    setRecLoading(true);
+    api.opportunities({ status: 'active', pageSize: 5, category: user.category, sort: 'newest' })
+      .then((r) => setRecommends(r.list || []))
+      .catch(() => setRecommends([]))
+      .finally(() => setRecLoading(false));
+  }, [tab, recommends, user?.category]);
 
   const level = levelMeta(user?.level || 'normal');
   const hasUnread = unreadCount > 0;
@@ -105,9 +118,22 @@ export default function Home() {
       {/* Banner轮播 */}
       <HomeBanner />
 
-      {/* 最新商机 */}
+      {/* 商机区：推荐 / 最新 Tab */}
       <div className="flex-between section-head">
-        <span className="section-title">最新商机</span>
+        <div className="home-tabs">
+          <span
+            className={`home-tab ${tab === 'recommend' ? 'active' : ''}`}
+            onClick={() => setTab('recommend')}
+          >
+            推荐商机
+          </span>
+          <span
+            className={`home-tab ${tab === 'latest' ? 'active' : ''}`}
+            onClick={() => setTab('latest')}
+          >
+            最新商机
+          </span>
+        </div>
         <div className="section-actions">
           <span className="section-action" onClick={() => navigate('/ranking')}>
             <Icon name="medal-o" size={12} /> 排行榜
@@ -118,53 +144,74 @@ export default function Home() {
         </div>
       </div>
 
-      {loading ? (
-        <SkeletonList count={3} />
-      ) : orders.length === 0 ? (
+      {renderList()}
+    </div>
+  );
+
+  function renderList() {
+    if (tab === 'recommend' && !user?.category) {
+      return (
         <div className="home-empty">
-          <div className="home-empty__title">暂无商机</div>
+          <div className="home-empty__title">还没设置供应商类型</div>
+          <div className="home-empty__desc">设置后为你推荐同类商机</div>
+          <Button type="primary" size="small" round onClick={() => navigate('/profile/edit')}>
+            去设置
+          </Button>
+        </div>
+      );
+    }
+
+    const list = tab === 'recommend' ? recommends : orders;
+    const listLoading = tab === 'recommend' ? recLoading : loading;
+
+    if (listLoading) return <SkeletonList count={3} />;
+
+    if (!list || list.length === 0) {
+      return (
+        <div className="home-empty">
+          <div className="home-empty__title">暂无相关商机</div>
           <div className="home-empty__desc">发布你的第一条商机，互助从你开始</div>
           <Button type="primary" size="small" round onClick={() => navigate('/publish')}>
             立即发布
           </Button>
         </div>
-      ) : (
-        orders.map((o) => (
-          <div
-            className="home-order pressable"
-            key={o.id}
-            role="button"
-            tabIndex={0}
-            aria-label={`查看商机：${o.title}`}
-            onClick={() => navigate(`/opportunity/${o.id}`)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                navigate(`/opportunity/${o.id}`);
-              }
-            }}
-          >
-            <div className="home-order__icon">
-              <div className="cat-icon cat-icon--sm">
-                <Icon name={resolveCategoryIcon(o)} size={22} />
-              </div>
-            </div>
-            <div className="home-order__body">
-              <div className="home-order__title text-ellipsis">{o.title}</div>
-              <div className="home-order__meta">
-                {o.hotelName || '未知酒店'} · {o.categoryName || '未知分类'} · {o.city || '未知城市'}
-              </div>
-              <div className="home-order__meta">
-                <Tag size="mini" type="primary">{o.purchaseCount || 0}人已购买</Tag>
-              </div>
-            </div>
-            <div className="home-order__right">
-              <div className="points-text">{o.price} 积分</div>
-              <div className="home-order__time">{timeAgo(o.createdAt)}</div>
-            </div>
+      );
+    }
+
+    return list.map((o) => (
+      <div
+        className="home-order pressable"
+        key={o.id}
+        role="button"
+        tabIndex={0}
+        aria-label={`查看商机：${o.title}`}
+        onClick={() => navigate(`/opportunity/${o.id}`)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            navigate(`/opportunity/${o.id}`);
+          }
+        }}
+      >
+        <div className="home-order__icon">
+          <div className="cat-icon cat-icon--sm">
+            <Icon name={resolveCategoryIcon(o)} size={22} />
           </div>
-        ))
-      )}
-    </div>
-  );
+        </div>
+        <div className="home-order__body">
+          <div className="home-order__title text-ellipsis">{o.title}</div>
+          <div className="home-order__meta">
+            {o.hotelName || '未知酒店'} · {o.categoryName || '未知分类'} · {o.city || '未知城市'}
+          </div>
+          <div className="home-order__meta">
+            <Tag size="mini" type="primary">{o.purchaseCount || 0}人已购买</Tag>
+          </div>
+        </div>
+        <div className="home-order__right">
+          <div className="points-text">{o.price} 积分</div>
+          <div className="home-order__time">{timeAgo(o.createdAt)}</div>
+        </div>
+      </div>
+    ));
+  }
 }

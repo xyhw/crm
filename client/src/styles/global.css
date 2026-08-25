@@ -384,6 +384,23 @@ body {
   font-weight: 600;
 }
 
+/* 首页商机区 Tab */
+.home-tabs {
+  display: flex;
+  gap: 16px;
+}
+.home-tab {
+  font-size: 16px;
+  color: var(--text-color-3);
+  padding-bottom: 2px;
+  border-bottom: 2px solid transparent;
+}
+.home-tab.active {
+  color: var(--text-color);
+  font-weight: 600;
+  border-bottom-color: var(--primary-color);
+}
+
 .section-more {
   font-size: 12px;
   color: var(--text-color-2);

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, cleanup } from '@testing-library/react';
+import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import React from 'react';
 import Home from '../src/pages/Home';
@@ -18,13 +18,15 @@ vi.mock('../src/api', () => ({
   },
 }));
 
+const mockUser = { id: 1, nickname: '测试', phone: '13800000001', pointsBalance: 666, level: 'normal' };
+
 vi.mock('../src/context/AuthContext', async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...actual,
     AuthProvider: ({ children }) => <React.Fragment>{children}</React.Fragment>,
     useAuth: () => ({
-      user: { id: 1, nickname: '测试', phone: '13800000001', pointsBalance: 666, level: 'normal' },
+      user: mockUser,
       token: 'test-token',
       isAuthenticated: true,
       login: vi.fn(),
@@ -96,7 +98,7 @@ describe('首页 Home（开发需求 6.1.2 商机中心）', () => {
         <Home />
       </MemoryRouter>
     );
-    await waitFor(() => expect(screen.getByText('暂无商机')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('暂无相关商机')).toBeTruthy());
     expect(screen.getByText('立即发布')).toBeTruthy();
   });
 
@@ -144,8 +146,45 @@ describe('首页 Home（开发需求 6.1.2 商机中心）', () => {
         <Home />
       </MemoryRouter>
     );
-    await waitFor(() => expect(screen.getByText('暂无商机')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('暂无相关商机')).toBeTruthy());
     expect(screen.queryByText('公告')).toBeNull();
+  });
+
+  it('未设置供应商类型时，推荐 Tab 显示引导设置空态', async () => {
+    const { api } = await import('../src/api');
+    mockUser.category = undefined;
+    api.opportunities.mockResolvedValue({ list: [], total: 0 });
+    api.myStats.mockResolvedValue({ published: 0, crm: 0 });
+    render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(screen.getByText('最新商机')).toBeTruthy());
+    fireEvent.click(screen.getByText('推荐商机'));
+    await waitFor(() => expect(screen.getByText('还没设置供应商类型')).toBeTruthy());
+    expect(screen.getByText('去设置')).toBeTruthy();
+    expect(api.opportunities).toHaveBeenCalledTimes(1);
+  });
+
+  it('已设置供应商类型时，默认推荐 Tab 并按分类请求商机', async () => {
+    const { api } = await import('../src/api');
+    mockUser.category = 2;
+    api.myStats.mockResolvedValue({ published: 0, crm: 0 });
+    render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>
+    );
+    await waitFor(() =>
+      expect(api.opportunities).toHaveBeenCalledWith(
+        expect.objectContaining({ category: 2, status: 'active' })
+      )
+    );
+    // 最新 Tab 数据独立加载
+    fireEvent.click(screen.getByText('最新商机'));
+    await waitFor(() => expect(screen.getByText('暂无相关商机')).toBeTruthy());
+    mockUser.category = undefined;
   });
 });
 
