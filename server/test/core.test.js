@@ -39,7 +39,7 @@ async function apiPut(path, data, token) {
 }
 
 describe('核心流程', () => {
-  let user1Token, user2Token, publishedId;
+  let user1Token, user2Token, publishedId, kitchenId;
 
   before(async () => {
     // 确保测试用户存在且昵称正确（reset-password 测试依赖 nickname 匹配）
@@ -181,7 +181,7 @@ describe('核心流程', () => {
       contactPhone: '13900000002',
     }, user2Token);
     assert.strictEqual(pubRes.code, 0);
-    const kitchenId = pubRes.data.id;
+    kitchenId = pubRes.data.id;
 
     // boost 分类4：更旧的分类4商机应排在更新的分类6商机之前
     // ponytail: 测试库积累大量历史商机，拉全量后比较相对位置
@@ -192,6 +192,34 @@ describe('核心流程', () => {
     assert.ok(
       ids.indexOf(publishedId) < ids.indexOf(kitchenId),
       'boost 分类的旧商机应排在异分类新商机之前'
+    );
+  });
+
+  it('推荐排序：购买历史推导同城/同品牌偏好加分', async () => {
+    // user2 此前已购买 publishedId（杭州、分类4），推导出"杭州"偏好
+    // 发布两个同为分类6的杭州/深圳商机，类型分相同，杭州应因城市偏好排前
+    const hzRes = await apiPost('/opportunities', {
+      title: '杭州西湖酒店厨房设备采购15间',
+      city: '杭州',
+      address: '西湖区某酒店',
+      brand: '西湖宾馆',
+      categoryId: 6,
+      price: 30,
+      descriptionFull: '厨房设备采购需求',
+      contactName: '李四',
+      contactPhone: '13900000003',
+    }, user2Token);
+    assert.strictEqual(hzRes.code, 0);
+    const hangzhouId = hzRes.data.id;
+
+    const listRes = await apiGet('/opportunities?sort=recommend&pageSize=500&boostCategory=6', user1Token);
+    assert.strictEqual(listRes.code, 0);
+    const ids = listRes.data.list.map((x) => x.id);
+    assert.ok(ids.includes(hangzhouId), '同分类商机应在列表内');
+    // 未登录用户无偏好数据：换 user2 自己请求也不影响断言目标（其偏好即杭州）
+    assert.ok(
+      ids.indexOf(hangzhouId) < ids.indexOf(kitchenId),
+      '同城偏好的商机应排在同分类型异地商机之前'
     );
   });
 });

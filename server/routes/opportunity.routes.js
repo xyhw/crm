@@ -47,13 +47,31 @@ router.get('/', optionalAuth, async (req, res) => {
     } else if (sort === 'price_desc') {
       sql += ' ORDER BY o.price DESC';
     } else if (sort === 'recommend') {
-      // 软排序：候选为全部 active 商机，同类型加权置顶，其余类目仍可见
-      // ponytail: 评分仅含 类型/热度/新鲜度；users 表暂无城市字段，加入后可补同城加分
+      // 软排序：候选为全部 active 商机，同类型/同城/同品牌加权置顶，其余类目仍可见
+      // 城市与品牌偏好取自登录用户的购买历史（paid 订单），无需额外资料字段
       const boostCat = Number(req.query.boostCategory);
       let score = 'o.purchase_count * 3 + o.view_count + (o.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)) * 20';
       if (boostCat) {
         score = `(o.category_id = ?) * 100 + ${score}`;
         params.push(boostCat);
+      }
+      if (req.userId) {
+        const bought = await query(
+          `SELECT DISTINCT o2.city, o2.brand
+           FROM orders od JOIN opportunities o2 ON od.opportunity_id = o2.id
+           WHERE od.user_id = ? AND od.status = 'paid'`,
+          [req.userId]
+        );
+        const cities = [...new Set(bought.map((b) => b.city).filter(Boolean))];
+        const brands = [...new Set(bought.map((b) => b.brand).filter(Boolean))];
+        if (cities.length) {
+          score += ` + (o.city IN (${cities.map(() => '?').join(', ')})) * 30`;
+          params.push(...cities);
+        }
+        if (brands.length) {
+          score += ` + (o.brand IN (${brands.map(() => '?').join(', ')})) * 40`;
+          params.push(...brands);
+        }
       }
       sql += ` ORDER BY (${score}) DESC, o.created_at DESC`;
     } else {
