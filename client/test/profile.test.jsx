@@ -95,20 +95,6 @@ describe('个人中心 Profile（开发需求 6.1.1）', () => {
     expect(screen.getByText('某五星酒店弱电总包')).toBeTruthy();
   });
 
-  it('展示数据统计：投稿/CRM/被购买/总收入', async () => {
-    const { api } = await import('../src/api');
-    api.myStats.mockResolvedValue({ published: 3, crm: 5, totalPurchased: 12, totalIncome: 200 });
-    render(
-      <MemoryRouter>
-        <Profile />
-      </MemoryRouter>
-    );
-    await waitFor(() => expect(screen.getByText('3')).toBeTruthy());
-    expect(screen.getByText('5')).toBeTruthy();
-    expect(screen.getByText('12')).toBeTruthy();
-    expect(screen.getByText('200')).toBeTruthy();
-  });
-
   it('功能列表包含核心入口', async () => {
     const { api } = await import('../src/api');
     api.myStats.mockResolvedValue({});

@@ -1,21 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { NavBar, Cell, CellGroup, Tag, Grid, GridItem, ActionSheet, Dialog } from 'react-vant';
+import { NavBar, Cell, CellGroup, Tag, ActionSheet, Dialog } from 'react-vant';
 import Icon from '../components/Icon';
 import { useAuth } from '../context/AuthContext';
-import { api } from '../api';
 import { levelMeta, categoryLabel } from '../constants';
 
 export default function Profile() {
   const navigate = useNavigate();
   const { user, logout, refreshUser } = useAuth();
-  const [stats, setStats] = useState(null);
   const [showAgreements, setShowAgreements] = useState(false);
 
   useEffect(() => {
-    api.myStats()
-      .then(setStats)
-      .catch(() => {});
     refreshUser().catch(() => {});
   }, []);
 
@@ -97,22 +92,6 @@ export default function Profile() {
           </div>
         </div>
       )}
-
-      {/* 数据统计 */}
-      <Grid columnNum={4} className="profile-grid">
-        <GridItem text="我的投稿" onClick={() => navigate('/my/orders')}>
-          <div className="profile-stat-num">{stats?.published ?? 0}</div>
-        </GridItem>
-        <GridItem text="CRM商机" onClick={() => navigate('/crm')}>
-          <div className="profile-stat-num">{stats?.crm ?? 0}</div>
-        </GridItem>
-        <GridItem text="被购买" onClick={() => navigate('/my/orders')}>
-          <div className="profile-stat-num">{stats?.totalPurchased ?? 0}</div>
-        </GridItem>
-        <GridItem text="总收入" onClick={() => navigate('/points')}>
-          <div className="profile-stat-num">{stats?.totalIncome ?? 0}</div>
-        </GridItem>
-      </Grid>
 
       {/* 功能列表 */}
       <CellGroup inset>
