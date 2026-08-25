@@ -5,6 +5,9 @@ import { isFreeAudit } from '../services/level.service.js';
 
 const router = Router();
 
+// follow_ups.status 枚举白名单（与 DB 枚举一致）
+const FOLLOW_UP_STATUSES = ['call_no_answer', 'added_wechat', 'interested', 'quoting', 'negotiating', 'closed', 'abandoned'];
+
 // 新增跟进记录
 router.post('/', authRequired, async (req, res) => {
   try {
@@ -12,6 +15,9 @@ router.post('/', authRequired, async (req, res) => {
 
     if (!crmOpportunityId || !contentPrivate) {
       return res.json({ code: 400, message: '请填写跟进内容' });
+    }
+    if (status && !FOLLOW_UP_STATUSES.includes(status)) {
+      return res.json({ code: 400, message: '无效的跟进状态' });
     }
 
     // 验证CRM商机归属
