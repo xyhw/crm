@@ -14,6 +14,7 @@ import { migrateFollowUpHelpfulMarks } from './migrations/007_follow_up_helpful_
 import { migrateFollowUpShareInvalidMarks } from './migrations/008_follow_up_share_invalid_marks.js';
 import { migratePaymentOrders } from './migrations/009_payment_orders.js';
 import { migrateWaffoChannel } from './migrations/010_waffo_channel.js';
+import { migratePasswordReset } from './migrations/011_password_reset.js';
 import { ensureAndLoadPaymentConfig } from './services/payment/config-loader.js';
 import { seedDatabase } from './seeds/seed.js';
 import { closePool } from './db.js';
@@ -201,6 +202,9 @@ async function start() {
 
     await migrateWaffoChannel();
     console.log('[server] payment_orders.channel +waffo');
+
+    await migratePasswordReset();
+    console.log('[server] users.token_version + password_reset_codes ready');
 
     // 种子数据
     await seedDatabase();

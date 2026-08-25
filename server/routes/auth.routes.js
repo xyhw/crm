@@ -1,11 +1,15 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { nanoid } from 'nanoid';
 import { query, queryOne, insert, update, transaction } from '../db.js';
 import { signToken, signRefreshToken, verifyRefreshToken, authRequired } from '../auth.js';
 import { loginLimiter } from '../middleware/rate-limit.js';
+import { sendResetCodeEmail } from '../services/mail.service.js';
 
 const router = Router();
+
+const RESET_CODE_TTL = 5 * 60; // 验证码有效期 5 分钟
 
 // 注册
 router.post('/register', async (req, res) => {
@@ -315,35 +319,125 @@ router.put('/me', authRequired, async (req, res) => {
   }
 });
 
-// 忘记密码 - 通过手机号验证直接重置
-router.post('/reset-password', async (req, res) => {
+// 发送找回密码验证码（发到用户绑定邮箱）
+router.post('/send-reset-code', loginLimiter, async (req, res) => {
   try {
-    const { phone, nickname } = req.body || {};
+    const { phone } = req.body || {};
     if (!phone) {
       return res.json({ code: 400, message: '请输入手机号' });
     }
 
-    const user = await queryOne('SELECT id, nickname FROM users WHERE phone = ?', [phone]);
+    const user = await queryOne('SELECT id, email FROM users WHERE phone = ? AND deleted_at IS NULL', [phone]);
     if (!user) {
       return res.json({ code: 404, message: '该手机号未注册' });
     }
 
-    if (nickname && user.nickname !== nickname) {
-      return res.json({ code: 400, message: '昵称不匹配' });
+    // 作废该用户之前未使用的验证码，避免旧码残留
+    await update('password_reset_codes', { used_at: new Date() }, 'user_id = ? AND used_at IS NULL', [user.id]);
+
+    const code = String(crypto.randomInt(0, 1000000)).padStart(6, '0');
+    const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+    const expiresAt = new Date(Date.now() + RESET_CODE_TTL * 1000);
+
+    await insert('password_reset_codes', {
+      user_id: user.id,
+      code_hash: codeHash,
+      expires_at: expiresAt,
+    });
+
+    await sendResetCodeEmail(user.email, code);
+
+    res.json({ code: 0, message: '验证码已发送至绑定邮箱，5 分钟内有效' });
+  } catch (err) {
+    console.error('Send reset code error:', err);
+    if (err.message && err.message.includes('未绑定邮箱')) {
+      return res.status(400).json({ code: 400, message: err.message });
+    }
+    res.status(500).json({ code: 500, message: '发送验证码失败' });
+  }
+});
+
+// 忘记密码 - 手机号 + 邮箱验证码 + 用户自设新密码
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { phone, code, newPassword } = req.body || {};
+    if (!phone || !code) {
+      return res.json({ code: 400, message: '请输入手机号和验证码' });
+    }
+    if (!newPassword || newPassword.length < 6) {
+      return res.json({ code: 400, message: '新密码长度至少 6 位' });
     }
 
-    const newPassword = phone.slice(-6);
-    const passwordHash = await bcrypt.hash(newPassword, 10);
-    await update('users', { password_hash: passwordHash }, 'id = ?', [user.id]);
+    const user = await queryOne('SELECT id FROM users WHERE phone = ? AND deleted_at IS NULL', [phone]);
+    if (!user) {
+      return res.json({ code: 404, message: '该手机号未注册' });
+    }
 
-    res.json({
-      code: 0,
-      message: `密码已重置为手机号后6位`,
-      data: { newPassword },
+    // 校验验证码（未使用且未过期）
+    const record = await queryOne(
+      `SELECT * FROM password_reset_codes
+       WHERE user_id = ? AND used_at IS NULL AND expires_at > NOW()
+       ORDER BY id DESC LIMIT 1`,
+      [user.id]
+    );
+    if (!record) {
+      return res.json({ code: 400, message: '验证码无效或已过期' });
+    }
+
+    const codeHash = crypto.createHash('sha256').update(String(code)).digest('hex');
+    if (record.code_hash !== codeHash) {
+      return res.json({ code: 400, message: '验证码不正确' });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await transaction(async (conn) => {
+      await conn.execute(
+        'UPDATE users SET password_hash = ?, token_version = token_version + 1 WHERE id = ?',
+        [passwordHash, user.id]
+      );
+      await conn.execute(
+        'UPDATE password_reset_codes SET used_at = NOW() WHERE id = ?',
+        [record.id]
+      );
     });
+
+    res.json({ code: 0, message: '密码重置成功，请使用新密码登录' });
   } catch (err) {
     console.error('Reset password error:', err);
     res.status(500).json({ code: 500, message: '重置失败' });
+  }
+});
+
+// 修改密码（登录状态下，需校验旧密码）
+router.put('/change-password', authRequired, async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body || {};
+    if (!oldPassword || !newPassword) {
+      return res.json({ code: 400, message: '请输入旧密码和新密码' });
+    }
+    if (newPassword.length < 6) {
+      return res.json({ code: 400, message: '新密码长度至少 6 位' });
+    }
+
+    const user = await queryOne('SELECT password_hash FROM users WHERE id = ?', [req.userId]);
+    if (!user) {
+      return res.json({ code: 404, message: '用户不存在' });
+    }
+
+    const valid = await bcrypt.compare(oldPassword, user.password_hash);
+    if (!valid) {
+      return res.json({ code: 400, message: '旧密码不正确' });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await update('users', { password_hash: passwordHash }, 'id = ?', [req.userId]);
+    // 使所有已签发 Token 失效，需重新登录（或前端刷新 Token）
+    await query('UPDATE users SET token_version = token_version + 1 WHERE id = ?', [req.userId]);
+
+    res.json({ code: 0, message: '密码修改成功，请重新登录' });
+  } catch (err) {
+    console.error('Change password error:', err);
+    res.status(500).json({ code: 500, message: '修改失败' });
   }
 });
 

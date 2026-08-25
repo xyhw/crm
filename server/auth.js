@@ -7,7 +7,11 @@ const REFRESH_SECRET = config.refreshSecret;
 const ADMIN_SECRET = config.adminSecret;
 
 export function signToken(user) {
-  return jwt.sign({ id: user.id, type: 'user' }, SECRET, { expiresIn: '7d' });
+  return jwt.sign(
+    { id: user.id, type: 'user', tok_version: user.token_version || 0 },
+    SECRET,
+    { expiresIn: '7d' }
+  );
 }
 
 export function signRefreshToken(user) {
@@ -40,9 +44,14 @@ export async function authRequired(req, res, next) {
   }
   
   // 检查用户是否存在且状态正常
-  const user = await queryOne('SELECT id, status FROM users WHERE id = ? AND deleted_at IS NULL', [payload.id]);
+  const user = await queryOne('SELECT id, status, token_version FROM users WHERE id = ? AND deleted_at IS NULL', [payload.id]);
   if (!user || user.status === 'banned') {
     return res.status(401).json({ code: 401, message: '账号已被禁用' });
+  }
+
+  // token 版本不匹配（密码重置/封禁后已作废），拒绝
+  if (payload.tok_version !== user.token_version) {
+    return res.status(401).json({ code: 401, message: '登录已过期，请重新登录' });
   }
   
   req.userId = payload.id;
@@ -55,8 +64,8 @@ export async function optionalAuth(req, res, next) {
   const payload = token ? verifyToken(token) : null;
   
   if (payload && payload.type === 'user') {
-    const user = await queryOne('SELECT id, status FROM users WHERE id = ? AND deleted_at IS NULL', [payload.id]);
-    if (user && user.status === 'active') {
+    const user = await queryOne('SELECT id, status, token_version FROM users WHERE id = ? AND deleted_at IS NULL', [payload.id]);
+    if (user && user.status === 'active' && payload.tok_version === user.token_version) {
       req.userId = payload.id;
     }
   }

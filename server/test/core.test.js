@@ -80,6 +80,20 @@ describe('核心流程', () => {
       password: 'hof_pass_2026',
       database: 'hotel_order_follow',
     });
+    // 重置用户1状态与积分（前次运行"无效标记录"测试会扣分/封禁，需归位）
+    await pool2.query(
+      "UPDATE users SET status = 'active', credit_score = 100 WHERE phone = '13800000001'"
+    );
+    await pool2.query(
+      `INSERT INTO points_accounts (user_id, balance)
+       SELECT id, 10000 FROM users WHERE phone = '13800000001'
+       ON DUPLICATE KEY UPDATE balance = 10000`
+    );
+    // 清零用户1历史无效商机（跨运行累计会触发 invalid_ban_threshold 封禁）
+    await pool2.query(
+      `UPDATE opportunities SET status = 'active', invalid_mark_count = 0
+       WHERE user_id = (SELECT id FROM users WHERE phone = '13800000001')`
+    );
     await pool2.query(
       `INSERT INTO points_logs (user_id, delta, balance_after, source_type, created_at)
        VALUES (2, 10000, 10000, 'recharge', NOW())`
@@ -201,26 +215,127 @@ describe('Banner 接口', () => {
     assert.ok(Array.isArray(json.data?.list));
   });
 
-  it('忘记密码接口', async () => {
-    const resp = await fetch(`${BASE}/auth/reset-password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: '13800000001', nickname: '测试用户1' }),
-    });
-    const json = await resp.json();
-    assert.strictEqual(json.code, 0);
+  it('忘记密码：发送验证码后凭验证码重置，旧 Token 立即失效', async () => {
+    const resetBefore = await login('13800000001');
+    assert.strictEqual(resetBefore.code, 0);
+    const tokenBefore = resetBefore.data.token;
 
-    // 恢复密码为123456
-    const { default: bcrypt } = await import('bcryptjs');
-    const hash = await bcrypt.hash('123456', 10);
+    // 0. 测试用户补绑定邮箱并确保 active（前序无效判定测试可能已置为 banned）
     const { default: pkg } = await import('mysql2/promise');
-    const pool2 = pkg.createPool({
+    const pool = pkg.createPool({
       host: '127.0.0.1',
       user: 'hof_user',
       password: 'hof_pass_2026',
       database: 'hotel_order_follow',
     });
-    await pool2.query('UPDATE users SET password_hash = ? WHERE phone = ?', [hash, '13800000001']);
-    await pool2.end();
+    await pool.query(
+      "UPDATE users SET status = 'active', email = 'test1@example.com' WHERE phone = '13800000001'"
+    );
+
+    // 1. 发送验证码（发往绑定邮箱，开发模式打印到日志）
+    const sendResp = await fetch(`${BASE}/auth/send-reset-code`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: '13800000001' }),
+    });
+    const sendJson = await sendResp.json();
+    assert.strictEqual(sendJson.code, 0);
+
+    // 2. 模拟用户从邮箱拿到验证码：把 DB 中的验证码哈希改写为已知值
+    const { createHash } = await import('crypto');
+    const codeHash = createHash('sha256').update('654321').digest('hex');
+    await pool.query(
+      'UPDATE password_reset_codes SET code_hash = ? WHERE user_id = (SELECT id FROM users WHERE phone = ?) AND used_at IS NULL',
+      [codeHash, '13800000001']
+    );
+
+    // 3. 错误验证码重置被拒绝
+    const badResp = await fetch(`${BASE}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: '13800000001', code: '000000', newPassword: 'newpass123' }),
+    });
+    assert.strictEqual((await badResp.json()).code, 400);
+
+    // 4. 正确验证码重置成功
+    const resetResp = await fetch(`${BASE}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: '13800000001', code: '654321', newPassword: 'newpass123' }),
+    });
+    assert.strictEqual((await resetResp.json()).code, 0);
+
+    // 5. 旧密码失效，新密码可登录
+    const oldLogin = await login('13800000001', '123456');
+    assert.strictEqual(oldLogin.code, 400);
+    const newLogin = await login('13800000001', 'newpass123');
+    assert.strictEqual(newLogin.code, 0);
+
+    // 6. 重置前签发的 Token 已被 token_version 作废
+    const oldTokenResp = await fetch(`${BASE}/auth/me`, {
+      headers: { Authorization: `Bearer ${tokenBefore}` },
+    });
+    assert.strictEqual((await oldTokenResp.json()).code, 401);
+
+    // 7. 恢复密码为 123456，保证后续回归不受影响
+    const bcrypt = (await import('bcryptjs')).default;
+    const hash = await bcrypt.hash('123456', 10);
+    await pool.query('UPDATE users SET password_hash = ? WHERE phone = ?', [hash, '13800000001']);
+    await pool.end();
+  });
+
+  it('修改密码：旧密码必须匹配，成功后可登录新密码', async () => {
+    const { default: pkg } = await import('mysql2/promise');
+    const pool = pkg.createPool({
+      host: '127.0.0.1',
+      user: 'hof_user',
+      password: 'hof_pass_2026',
+      database: 'hotel_order_follow',
+    });
+    // 确保用户2 状态与密码正常（bcrypt 重置为 123456，防前序残留破坏）
+    const bcrypt2 = (await import('bcryptjs')).default;
+    const hash2 = await bcrypt2.hash('123456', 10);
+    await pool.query(
+      "UPDATE users SET status = 'active', password_hash = ?, token_version = 0 WHERE phone = '13800000002'",
+      [hash2]
+    );
+
+    const login2 = await login('13800000002');
+    assert.strictEqual(login2.code, 0);
+    const token2 = login2.data.token;
+
+    // 旧密码错误被拒
+    const badResp = await fetch(`${BASE}/auth/change-password`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token2}` },
+      body: JSON.stringify({ oldPassword: 'wrongpass', newPassword: 'newpass456' }),
+    });
+    assert.strictEqual((await badResp.json()).code, 400);
+
+    // 正确修改密码
+    const okResp = await fetch(`${BASE}/auth/change-password`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token2}` },
+      body: JSON.stringify({ oldPassword: '123456', newPassword: 'newpass456' }),
+    });
+    assert.strictEqual((await okResp.json()).code, 0);
+
+    // 旧密码失效，新密码可登录
+    const oldLogin2 = await login('13800000002', '123456');
+    assert.strictEqual(oldLogin2.code, 400);
+    const newLogin2 = await login('13800000002', 'newpass456');
+    assert.strictEqual(newLogin2.code, 0);
+
+    // 修改前的旧 Token 已失效（token_version +1）
+    const oldTokenResp2 = await fetch(`${BASE}/auth/me`, {
+      headers: { Authorization: `Bearer ${token2}` },
+    });
+    assert.strictEqual((await oldTokenResp2.json()).code, 401);
+
+    // 恢复密码为 123456
+    const bcrypt = (await import('bcryptjs')).default;
+    const hash = await bcrypt.hash('123456', 10);
+    await pool.query('UPDATE users SET password_hash = ? WHERE phone = ?', [hash, '13800000002']);
+    await pool.end();
   });
 });

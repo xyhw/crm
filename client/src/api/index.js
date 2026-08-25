@@ -146,8 +146,10 @@ export const api = {
   login: (data) => request('/auth/login', { method: 'POST', body: data, auth: false }),
   register: (data) => request('/auth/register', { method: 'POST', body: data, auth: false }),
   resetPassword: (data) => request('/auth/reset-password', { method: 'POST', body: data, auth: false }),
+  sendResetCode: (data) => request('/auth/send-reset-code', { method: 'POST', body: data, auth: false }),
   me: () => request('/auth/me'),
   updateMe: (data) => request('/auth/me', { method: 'PUT', body: data }),
+  changePassword: (data) => request('/auth/change-password', { method: 'PUT', body: data }),
 
   // 商机
   opportunities: (params) => request('/opportunities' + qs(params)),

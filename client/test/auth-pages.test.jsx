@@ -11,6 +11,7 @@ vi.mock('../src/api', () => ({
   api: {
     register: vi.fn(),
     resetPassword: vi.fn(),
+    sendResetCode: vi.fn(),
     me: vi.fn().mockResolvedValue({ id: 1, nickname: '测试', phone: '13800000001' }),
   },
 }));
@@ -104,7 +105,7 @@ describe('认证页面（开发需求 6.1.1）', () => {
     expect(submitted.company).toBe('测试装修公司');
   });
 
-  it('找回密码页渲染手机号/昵称并提交 resetPassword', async () => {
+  it('找回密码页渲染手机号/验证码/新密码并提交 resetPassword', async () => {
     const { api } = await import('../src/api');
     api.resetPassword.mockResolvedValue({ code: 0 });
     render(
@@ -114,27 +115,26 @@ describe('认证页面（开发需求 6.1.1）', () => {
     );
     expect(screen.getByText('找回密码')).toBeTruthy();
     fireEvent.change(screen.getByPlaceholderText('请输入注册手机号'), { target: { value: '13800000001' } });
-    fireEvent.change(screen.getByPlaceholderText('请输入注册时的昵称'), { target: { value: '测试' } });
+    fireEvent.change(screen.getByPlaceholderText('请输入邮箱收到的验证码'), { target: { value: '123456' } });
+    fireEvent.change(screen.getByPlaceholderText('请输入新密码（至少6位）'), { target: { value: 'newpass123' } });
     fireEvent.click(screen.getByText('重置密码'));
     await waitFor(() => expect(api.resetPassword).toHaveBeenCalledWith({
       phone: '13800000001',
-      nickname: '测试',
+      code: '123456',
+      newPassword: 'newpass123',
     }));
   });
 
-  it('找回密码成功后展示重置成功引导', async () => {
+  it('获取验证码按钮触发 sendResetCode', async () => {
     const { api } = await import('../src/api');
-    api.resetPassword.mockResolvedValue({ code: 0 });
+    api.sendResetCode.mockResolvedValue({ code: 0 });
     render(
       <MemoryRouter>
         <ForgotPassword />
       </MemoryRouter>
     );
     fireEvent.change(screen.getByPlaceholderText('请输入注册手机号'), { target: { value: '13800000001' } });
-    fireEvent.change(screen.getByPlaceholderText('请输入注册时的昵称'), { target: { value: '测试' } });
-    fireEvent.click(screen.getByText('重置密码'));
-    await waitFor(() => {
-      expect(screen.getByText('重置成功')).toBeTruthy();
-    });
+    fireEvent.click(screen.getByText('获取验证码'));
+    await waitFor(() => expect(api.sendResetCode).toHaveBeenCalledWith({ phone: '13800000001' }));
   });
 });

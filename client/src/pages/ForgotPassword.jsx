@@ -1,19 +1,61 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Form, Input, Button, Toast } from 'react-vant';
+import { Form, Field, Button, Toast } from 'react-vant';
 import { api } from '../api';
+
+const COUNTDOWN = 60;
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
+  const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState(null);
+  const [sending, setSending] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
+  const startCountdown = () => {
+    setCountdown(COUNTDOWN);
+    timerRef.current = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) {
+          clearInterval(timerRef.current);
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+  };
+
+  const onSendCode = async () => {
+    const phone = form.getFieldValue('phone');
+    if (!/^1\d{10}$/.test(phone || '')) {
+      Toast.fail('请输入正确的手机号');
+      return;
+    }
+    setSending(true);
+    try {
+      await api.sendResetCode({ phone });
+      Toast.success('验证码已发送至绑定邮箱');
+      startCountdown();
+    } catch (e) {
+      Toast.fail(e.message || '发送失败');
+    } finally {
+      setSending(false);
+    }
+  };
 
   const onFinish = async (values) => {
     setSubmitting(true);
     try {
-      const res = await api.resetPassword(values);
-      setResult(res);
-      Toast.success('密码已重置');
+      await api.resetPassword({ phone: values.phone, code: values.code, newPassword: values.newPassword });
+      Toast.success('密码重置成功');
+      navigate('/login');
     } catch (e) {
       Toast.fail(e.message || '重置失败');
     } finally {
@@ -21,31 +63,16 @@ export default function ForgotPassword() {
     }
   };
 
-  if (result) {
-    return (
-      <div className="auth-page">
-        <div className="auth-hero auth-hero--sm">
-          <div className="auth-logo">重置成功</div>
-          <p className="auth-slogan">新密码为注册手机号后6位，请登录后及时修改</p>
-        </div>
-        <div className="auth-form auth-form--center">
-          <Button type="primary" block round onClick={() => navigate('/login')}>
-            前往登录
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="auth-page">
       <div className="auth-hero auth-hero--sm">
         <div className="auth-logo">找回密码</div>
-        <p className="auth-slogan">输入注册时的手机号和昵称</p>
+        <p className="auth-slogan">输入手机号，验证码将发送至绑定邮箱</p>
       </div>
 
       <div className="auth-form">
         <Form
+          form={form}
           onFinish={onFinish}
           footer={
             <Button type="primary" block round nativeType="submit" loading={submitting}>
@@ -61,10 +88,40 @@ export default function ForgotPassword() {
               { pattern: /^1\d{10}$/, message: '手机号格式不正确' },
             ]}
           >
-            <Input type="tel" placeholder="请输入注册手机号" maxLength={11} />
+            <Field type="tel" placeholder="请输入注册手机号" maxLength={11} />
           </Form.Item>
-          <Form.Item name="nickname" label="昵称" rules={[{ required: true, message: '请输入昵称' }]}>
-            <Input placeholder="请输入注册时的昵称" />
+          <Form.Item
+            name="code"
+            label="验证码"
+            rules={[{ required: true, message: '请输入验证码' }]}
+          >
+            <Field
+              type="tel"
+              placeholder="请输入邮箱收到的验证码"
+              maxLength={6}
+              button={
+                <Button
+                  size="small"
+                  type="primary"
+                  plain
+                  disabled={countdown > 0 || sending}
+                  loading={sending}
+                  onClick={onSendCode}
+                >
+                  {countdown > 0 ? `${countdown}s 后重发` : '获取验证码'}
+                </Button>
+              }
+            />
+          </Form.Item>
+          <Form.Item
+            name="newPassword"
+            label="新密码"
+            rules={[
+              { required: true, message: '请输入新密码' },
+              { pattern: /^.{6,}$/, message: '新密码长度至少 6 位' },
+            ]}
+          >
+            <Field type="password" placeholder="请输入新密码（至少6位）" />
           </Form.Item>
         </Form>
         <div className="auth-link">

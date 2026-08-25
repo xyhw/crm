@@ -10,6 +10,7 @@ vi.mock('../src/api', () => ({
   api: {
     myStats: vi.fn(),
     updateMe: vi.fn(),
+    changePassword: vi.fn(),
     me: vi.fn().mockResolvedValue({ nickname: '测试' }),
     myOrders: vi.fn().mockResolvedValue({ list: [], total: 0 }),
   },
@@ -172,5 +173,39 @@ describe('编辑资料 ProfileEdit', () => {
     fireEvent.click(screen.getByText('保存'));
     await waitFor(() => expect(api.updateMe).toHaveBeenCalled());
     expect(refreshUserMock).toHaveBeenCalled();
+  });
+
+  it('修改密码：密码不一致被拒', async () => {
+    const { api } = await import('../src/api');
+    render(
+      <MemoryRouter>
+        <ProfileEdit />
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(screen.getByText('修改密码')).toBeTruthy());
+    fireEvent.change(screen.getByPlaceholderText('请输入当前密码'), { target: { value: 'oldpass123' } });
+    fireEvent.change(screen.getByPlaceholderText('请输入新密码（至少6位）'), { target: { value: 'newpass123' } });
+    fireEvent.change(screen.getByPlaceholderText('请再次输入新密码'), { target: { value: 'different' } });
+    fireEvent.click(screen.getByText('确认修改'));
+    await waitFor(() => expect(api.changePassword).not.toHaveBeenCalled());
+  });
+
+  it('修改密码：提交 changePassword 并登出', async () => {
+    const { api } = await import('../src/api');
+    api.changePassword.mockResolvedValue({});
+    render(
+      <MemoryRouter>
+        <ProfileEdit />
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(screen.getByText('修改密码')).toBeTruthy());
+    fireEvent.change(screen.getByPlaceholderText('请输入当前密码'), { target: { value: 'oldpass123' } });
+    fireEvent.change(screen.getByPlaceholderText('请输入新密码（至少6位）'), { target: { value: 'newpass123' } });
+    fireEvent.change(screen.getByPlaceholderText('请再次输入新密码'), { target: { value: 'newpass123' } });
+    fireEvent.click(screen.getByText('确认修改'));
+    await waitFor(() => expect(api.changePassword).toHaveBeenCalledWith({
+      oldPassword: 'oldpass123',
+      newPassword: 'newpass123',
+    }));
   });
 });

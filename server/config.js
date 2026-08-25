@@ -68,4 +68,16 @@ export const config = {
     loginWindowMs: parseInt(process.env.RATE_LIMIT_LOGIN_WINDOW_MS || '60000', 10),
     loginMax: parseInt(process.env.RATE_LIMIT_LOGIN_MAX || '10', 10),
   },
+  mail: {
+    // log: 开发环境打印到日志；smtp: 真实发送
+    provider: process.env.MAIL_PROVIDER || 'log',
+    from: process.env.MAIL_FROM || 'noreply@localhost',
+    smtp: {
+      host: process.env.MAIL_SMTP_HOST || '',
+      port: parseInt(process.env.MAIL_SMTP_PORT || '465', 10),
+      secure: process.env.MAIL_SMTP_SECURE !== 'false',
+      user: process.env.MAIL_SMTP_USER || '',
+      pass: process.env.MAIL_SMTP_PASS || '',
+    },
+  },
 };
