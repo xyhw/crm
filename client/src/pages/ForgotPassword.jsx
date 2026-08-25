@@ -33,15 +33,15 @@ export default function ForgotPassword() {
   };
 
   const onSendCode = async () => {
-    const phone = form.getFieldValue('phone');
-    if (!/^1\d{10}$/.test(phone || '')) {
-      Toast.fail('请输入正确的手机号');
+    const email = form.getFieldValue('email');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email || '')) {
+      Toast.fail('请输入正确的邮箱');
       return;
     }
     setSending(true);
     try {
-      await api.sendResetCode({ phone });
-      Toast.success('验证码已发送至绑定邮箱');
+      await api.sendResetCode({ email });
+      Toast.success('验证码已发送至该邮箱');
       startCountdown();
     } catch (e) {
       Toast.fail(e.message || '发送失败');
@@ -53,7 +53,7 @@ export default function ForgotPassword() {
   const onFinish = async (values) => {
     setSubmitting(true);
     try {
-      await api.resetPassword({ phone: values.phone, code: values.code, newPassword: values.newPassword });
+      await api.resetPassword({ email: values.email, code: values.code, newPassword: values.newPassword });
       Toast.success('密码重置成功');
       navigate('/login');
     } catch (e) {
@@ -67,7 +67,7 @@ export default function ForgotPassword() {
     <div className="auth-page">
       <div className="auth-hero auth-hero--sm">
         <div className="auth-logo">找回密码</div>
-        <p className="auth-slogan">输入手机号，验证码将发送至绑定邮箱</p>
+        <p className="auth-slogan">输入注册邮箱，验证码将发送至该邮箱</p>
       </div>
 
       <div className="auth-form">
@@ -81,14 +81,14 @@ export default function ForgotPassword() {
           }
         >
           <Form.Item
-            name="phone"
-            label="手机号"
+            name="email"
+            label="邮箱"
             rules={[
-              { required: true, message: '请输入手机号' },
-              { pattern: /^1\d{10}$/, message: '手机号格式不正确' },
+              { required: true, message: '请输入邮箱' },
+              { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: '邮箱格式不正确' },
             ]}
           >
-            <Field type="tel" placeholder="请输入注册手机号" maxLength={11} />
+            <Field placeholder="请输入注册邮箱" />
           </Form.Item>
           <Form.Item
             name="code"

@@ -105,7 +105,7 @@ describe('认证页面（开发需求 6.1.1）', () => {
     expect(submitted.company).toBe('测试装修公司');
   });
 
-  it('找回密码页渲染手机号/验证码/新密码并提交 resetPassword', async () => {
+  it('找回密码页渲染邮箱/验证码/新密码并提交 resetPassword', async () => {
     const { api } = await import('../src/api');
     api.resetPassword.mockResolvedValue({ code: 0 });
     render(
@@ -114,12 +114,12 @@ describe('认证页面（开发需求 6.1.1）', () => {
       </MemoryRouter>
     );
     expect(screen.getByText('找回密码')).toBeTruthy();
-    fireEvent.change(screen.getByPlaceholderText('请输入注册手机号'), { target: { value: '13800000001' } });
+    fireEvent.change(screen.getByPlaceholderText('请输入注册邮箱'), { target: { value: 'test1@example.com' } });
     fireEvent.change(screen.getByPlaceholderText('请输入邮箱收到的验证码'), { target: { value: '123456' } });
     fireEvent.change(screen.getByPlaceholderText('请输入新密码（至少6位）'), { target: { value: 'newpass123' } });
     fireEvent.click(screen.getByText('重置密码'));
     await waitFor(() => expect(api.resetPassword).toHaveBeenCalledWith({
-      phone: '13800000001',
+      email: 'test1@example.com',
       code: '123456',
       newPassword: 'newpass123',
     }));
@@ -133,8 +133,8 @@ describe('认证页面（开发需求 6.1.1）', () => {
         <ForgotPassword />
       </MemoryRouter>
     );
-    fireEvent.change(screen.getByPlaceholderText('请输入注册手机号'), { target: { value: '13800000001' } });
+    fireEvent.change(screen.getByPlaceholderText('请输入注册邮箱'), { target: { value: 'test1@example.com' } });
     fireEvent.click(screen.getByText('获取验证码'));
-    await waitFor(() => expect(api.sendResetCode).toHaveBeenCalledWith({ phone: '13800000001' }));
+    await waitFor(() => expect(api.sendResetCode).toHaveBeenCalledWith({ email: 'test1@example.com' }));
   });
 });

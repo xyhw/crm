@@ -232,11 +232,11 @@ describe('Banner 接口', () => {
       "UPDATE users SET status = 'active', email = 'test1@example.com' WHERE phone = '13800000001'"
     );
 
-    // 1. 发送验证码（发往绑定邮箱，开发模式打印到日志）
+    // 1. 发送验证码（发往该邮箱，开发模式打印到日志）
     const sendResp = await fetch(`${BASE}/auth/send-reset-code`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: '13800000001' }),
+      body: JSON.stringify({ email: 'test1@example.com' }),
     });
     const sendJson = await sendResp.json();
     assert.strictEqual(sendJson.code, 0);
@@ -253,7 +253,7 @@ describe('Banner 接口', () => {
     const badResp = await fetch(`${BASE}/auth/reset-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: '13800000001', code: '000000', newPassword: 'newpass123' }),
+      body: JSON.stringify({ email: 'test1@example.com', code: '000000', newPassword: 'newpass123' }),
     });
     assert.strictEqual((await badResp.json()).code, 400);
 
@@ -261,7 +261,7 @@ describe('Banner 接口', () => {
     const resetResp = await fetch(`${BASE}/auth/reset-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: '13800000001', code: '654321', newPassword: 'newpass123' }),
+      body: JSON.stringify({ email: 'test1@example.com', code: '654321', newPassword: 'newpass123' }),
     });
     assert.strictEqual((await resetResp.json()).code, 0);
 

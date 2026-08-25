@@ -319,17 +319,17 @@ router.put('/me', authRequired, async (req, res) => {
   }
 });
 
-// 发送找回密码验证码（发到用户绑定邮箱）
+// 发送找回密码验证码（按邮箱查询，发到该邮箱）
 router.post('/send-reset-code', loginLimiter, async (req, res) => {
   try {
-    const { phone } = req.body || {};
-    if (!phone) {
-      return res.json({ code: 400, message: '请输入手机号' });
+    const { email } = req.body || {};
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.json({ code: 400, message: '请输入正确的邮箱' });
     }
 
-    const user = await queryOne('SELECT id, email FROM users WHERE phone = ? AND deleted_at IS NULL', [phone]);
+    const user = await queryOne('SELECT id, email FROM users WHERE email = ? AND deleted_at IS NULL', [email]);
     if (!user) {
-      return res.json({ code: 404, message: '该手机号未注册' });
+      return res.json({ code: 404, message: '该邮箱未注册' });
     }
 
     // 作废该用户之前未使用的验证码，避免旧码残留
@@ -357,20 +357,20 @@ router.post('/send-reset-code', loginLimiter, async (req, res) => {
   }
 });
 
-// 忘记密码 - 手机号 + 邮箱验证码 + 用户自设新密码
+// 忘记密码 - 邮箱 + 验证码 + 用户自设新密码
 router.post('/reset-password', async (req, res) => {
   try {
-    const { phone, code, newPassword } = req.body || {};
-    if (!phone || !code) {
-      return res.json({ code: 400, message: '请输入手机号和验证码' });
+    const { email, code, newPassword } = req.body || {};
+    if (!email || !code) {
+      return res.json({ code: 400, message: '请输入邮箱和验证码' });
     }
     if (!newPassword || newPassword.length < 6) {
       return res.json({ code: 400, message: '新密码长度至少 6 位' });
     }
 
-    const user = await queryOne('SELECT id FROM users WHERE phone = ? AND deleted_at IS NULL', [phone]);
+    const user = await queryOne('SELECT id FROM users WHERE email = ? AND deleted_at IS NULL', [email]);
     if (!user) {
-      return res.json({ code: 404, message: '该手机号未注册' });
+      return res.json({ code: 404, message: '该邮箱未注册' });
     }
 
     // 校验验证码（未使用且未过期）
