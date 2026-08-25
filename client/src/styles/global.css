@@ -836,19 +836,19 @@ body {
   color: #FFD700;
 }
 
-.profile-points {
-  background: var(--text-color-inverse);
-  padding: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
 .profile-points__num {
-  font-size: 20px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--accent-color);
+}
+
+.profile-meta__item--link {
+  border-top: 1px solid var(--border-color, #f0f0f0);
+  margin-top: 4px;
+  padding: 10px 0 2px;
 }
 
 .profile-stat-num {

@@ -45,7 +45,7 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* 联系/身份信息 */}
+      {/* 联系/身份信息 + 积分入口 */}
       <div className="profile-meta profile-meta--gap">
         {user?.company && (
           <div className="profile-meta__item"><span>公司</span>{user.company}</div>
@@ -56,12 +56,13 @@ export default function Profile() {
         {user?.email && (
           <div className="profile-meta__item"><span>邮箱</span>{user.email}</div>
         )}
-      </div>
-
-      {/* 积分快捷入口 */}
-      <div className="profile-points pressable" onClick={() => navigate('/points')}>
-        <span>我的积分</span>
-        <span className="profile-points__num">{user?.pointsBalance ?? 0}</span>
+        <div className="profile-meta__item profile-meta__item--link pressable" onClick={() => navigate('/points')}>
+          <span>我的积分</span>
+          <span className="profile-points__num">
+            {user?.pointsBalance ?? 0}
+            <Icon name="arrow" size={12} color="var(--text-color-3)" />
+          </span>
+        </div>
       </div>
 
       {/* 资质展示 */}
