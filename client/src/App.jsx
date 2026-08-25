@@ -12,6 +12,7 @@ const OpportunityDetail = lazy(() => import('./pages/OpportunityDetail'));
 const Publish = lazy(() => import('./pages/Publish'));
 const Profile = lazy(() => import('./pages/Profile'));
 const ProfileEdit = lazy(() => import('./pages/ProfileEdit'));
+const ChangePassword = lazy(() => import('./pages/ChangePassword'));
 const MyOrders = lazy(() => import('./pages/MyOrders'));
 const Points = lazy(() => import('./pages/Points'));
 const PayResult = lazy(() => import('./pages/PayResult'));
@@ -57,6 +58,7 @@ function AppRoutes() {
         <Route path="/crm/:id" element={<RequireAuth><Suspense fallback={<PageLoading />}><CRMDetail /></Suspense></RequireAuth>} />
         <Route path="/profile" element={<RequireAuth><Suspense fallback={<PageLoading />}><Profile /></Suspense></RequireAuth>} />
         <Route path="/profile/edit" element={<RequireAuth><Suspense fallback={<PageLoading />}><ProfileEdit /></Suspense></RequireAuth>} />
+        <Route path="/profile/change-password" element={<RequireAuth><Suspense fallback={<PageLoading />}><ChangePassword /></Suspense></RequireAuth>} />
         <Route path="/my/orders" element={<RequireAuth><Suspense fallback={<PageLoading />}><MyOrders /></Suspense></RequireAuth>} />
         <Route path="/points" element={<RequireAuth><Suspense fallback={<PageLoading />}><Points /></Suspense></RequireAuth>} />
         <Route path="/points/result" element={<RequireAuth><Suspense fallback={<PageLoading />}><PayResult /></Suspense></RequireAuth>} />

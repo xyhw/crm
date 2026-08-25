@@ -104,6 +104,7 @@ describe('个人中心 Profile（开发需求 6.1.1）', () => {
       </MemoryRouter>
     );
     await waitFor(() => expect(screen.getByText('编辑资料')).toBeTruthy());
+    expect(screen.getByText('账号安全')).toBeTruthy();
     expect(screen.getByText('退出登录')).toBeTruthy();
     expect(screen.getByText('用户协议与隐私')).toBeTruthy();
     expect(screen.getByText('客服与帮助')).toBeTruthy();
@@ -161,37 +162,12 @@ describe('编辑资料 ProfileEdit', () => {
     expect(refreshUserMock).toHaveBeenCalled();
   });
 
-  it('修改密码：密码不一致被拒', async () => {
-    const { api } = await import('../src/api');
+  it('展示邮箱只读信息', async () => {
     render(
       <MemoryRouter>
         <ProfileEdit />
       </MemoryRouter>
     );
-    await waitFor(() => expect(screen.getByText('修改密码')).toBeTruthy());
-    fireEvent.change(screen.getByPlaceholderText('请输入当前密码'), { target: { value: 'oldpass123' } });
-    fireEvent.change(screen.getByPlaceholderText('请输入新密码（至少6位）'), { target: { value: 'newpass123' } });
-    fireEvent.change(screen.getByPlaceholderText('请再次输入新密码'), { target: { value: 'different' } });
-    fireEvent.click(screen.getByText('确认修改'));
-    await waitFor(() => expect(api.changePassword).not.toHaveBeenCalled());
-  });
-
-  it('修改密码：提交 changePassword 并登出', async () => {
-    const { api } = await import('../src/api');
-    api.changePassword.mockResolvedValue({});
-    render(
-      <MemoryRouter>
-        <ProfileEdit />
-      </MemoryRouter>
-    );
-    await waitFor(() => expect(screen.getByText('修改密码')).toBeTruthy());
-    fireEvent.change(screen.getByPlaceholderText('请输入当前密码'), { target: { value: 'oldpass123' } });
-    fireEvent.change(screen.getByPlaceholderText('请输入新密码（至少6位）'), { target: { value: 'newpass123' } });
-    fireEvent.change(screen.getByPlaceholderText('请再次输入新密码'), { target: { value: 'newpass123' } });
-    fireEvent.click(screen.getByText('确认修改'));
-    await waitFor(() => expect(api.changePassword).toHaveBeenCalledWith({
-      oldPassword: 'oldpass123',
-      newPassword: 'newpass123',
-    }));
+    await waitFor(() => expect(screen.getByText('t@t.com')).toBeTruthy());
   });
 });

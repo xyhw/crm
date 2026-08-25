@@ -107,6 +107,7 @@ export default function Profile() {
       {/* 设置 */}
       <CellGroup inset className="profile-section--gap">
         <Cell title="编辑资料" isLink onClick={() => navigate('/profile/edit')} icon={<Icon name="edit" size={18} />} />
+        <Cell title="账号安全" isLink onClick={() => navigate('/profile/change-password')} icon={<Icon name="lock" size={18} />} />
         <Cell title="客服与帮助" isLink onClick={() => navigate('/support')} icon={<Icon name="service-o" size={18} />} />
         <Cell title="用户协议与隐私" isLink onClick={() => setShowAgreements(true)} icon={<Icon name="notes-o" size={18} />} />
         <Cell title="退出登录" onClick={handleLogout} icon={<Icon name="close" size={18} />} />
