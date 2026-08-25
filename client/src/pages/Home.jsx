@@ -18,7 +18,7 @@ export default function Home() {
   const [stats, setStats] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [followCount, setFollowCount] = useState(0);
-  const [tab, setTab] = useState(user?.category ? 'recommend' : 'latest');
+  const [tab, setTab] = useState('latest');
   const [recommends, setRecommends] = useState(null);
   const [recLoading, setRecLoading] = useState(false);
 
@@ -45,7 +45,12 @@ export default function Home() {
   useEffect(() => {
     if (tab !== 'recommend' || recommends !== null || !user?.category) return;
     setRecLoading(true);
-    api.opportunities({ status: 'active', pageSize: 5, category: user.category, sort: 'newest' })
+    api.opportunities({
+      status: 'active',
+      pageSize: 5,
+      sort: 'recommend',
+      boostCategory: Number(user.category),
+    })
       .then((r) => setRecommends(r.list || []))
       .catch(() => setRecommends([]))
       .finally(() => setRecLoading(false));
@@ -122,16 +127,16 @@ export default function Home() {
       <div className="flex-between section-head">
         <div className="home-tabs">
           <span
-            className={`home-tab ${tab === 'recommend' ? 'active' : ''}`}
-            onClick={() => setTab('recommend')}
-          >
-            推荐商机
-          </span>
-          <span
             className={`home-tab ${tab === 'latest' ? 'active' : ''}`}
             onClick={() => setTab('latest')}
           >
             最新商机
+          </span>
+          <span
+            className={`home-tab ${tab === 'recommend' ? 'active' : ''}`}
+            onClick={() => setTab('recommend')}
+          >
+            推荐商机
           </span>
         </div>
         <div className="section-actions">

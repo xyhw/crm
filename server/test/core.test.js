@@ -166,6 +166,34 @@ describe('核心流程', () => {
     const res = await apiPost('/orders', { opportunityId: publishedId }, user2Token);
     assert.ok(res.code !== 0);
   });
+
+  it('推荐排序：同分类加权置顶，异分类新商机让位', async () => {
+    // user2 发布一个分类6的商机（发布时间晚于 user1 的分类4商机）
+    const pubRes = await apiPost('/opportunities', {
+      title: '深圳湾酒店厨房设备采购20间',
+      city: '深圳',
+      address: '南山区深圳湾某酒店',
+      brand: '深圳湾',
+      categoryId: 6,
+      price: 30,
+      descriptionFull: '厨房设备采购需求',
+      contactName: '张三',
+      contactPhone: '13900000002',
+    }, user2Token);
+    assert.strictEqual(pubRes.code, 0);
+    const kitchenId = pubRes.data.id;
+
+    // boost 分类4：更旧的分类4商机应排在更新的分类6商机之前
+    // ponytail: 测试库积累大量历史商机，拉全量后比较相对位置
+    const listRes = await apiGet('/opportunities?sort=recommend&pageSize=500&boostCategory=4', user1Token);
+    assert.strictEqual(listRes.code, 0);
+    const ids = listRes.data.list.map((x) => x.id);
+    assert.ok(ids.includes(kitchenId), '软排序下异分类商机仍应可见');
+    assert.ok(
+      ids.indexOf(publishedId) < ids.indexOf(kitchenId),
+      'boost 分类的旧商机应排在异分类新商机之前'
+    );
+  });
 });
 
 describe('Banner 与通知', () => {

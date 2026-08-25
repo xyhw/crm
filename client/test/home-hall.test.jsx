@@ -167,23 +167,23 @@ describe('首页 Home（开发需求 6.1.2 商机中心）', () => {
     expect(api.opportunities).toHaveBeenCalledTimes(1);
   });
 
-  it('已设置供应商类型时，默认推荐 Tab 并按分类请求商机', async () => {
+  it('已设置供应商类型时，切推荐 Tab 按加权排序请求商机', async () => {
     const { api } = await import('../src/api');
-    mockUser.category = 2;
+    mockUser.category = '2';
     api.myStats.mockResolvedValue({ published: 0, crm: 0 });
     render(
       <MemoryRouter>
         <Home />
       </MemoryRouter>
     );
+    // 默认展示最新 Tab
+    expect(screen.getByText('最新商机')).toBeTruthy();
+    fireEvent.click(screen.getByText('推荐商机'));
     await waitFor(() =>
       expect(api.opportunities).toHaveBeenCalledWith(
-        expect.objectContaining({ category: 2, status: 'active' })
+        expect.objectContaining({ sort: 'recommend', boostCategory: 2, status: 'active' })
       )
     );
-    // 最新 Tab 数据独立加载
-    fireEvent.click(screen.getByText('最新商机'));
-    await waitFor(() => expect(screen.getByText('暂无相关商机')).toBeTruthy());
     mockUser.category = undefined;
   });
 });

@@ -46,6 +46,16 @@ router.get('/', optionalAuth, async (req, res) => {
       sql += ' ORDER BY o.price ASC';
     } else if (sort === 'price_desc') {
       sql += ' ORDER BY o.price DESC';
+    } else if (sort === 'recommend') {
+      // 软排序：候选为全部 active 商机，同类型加权置顶，其余类目仍可见
+      // ponytail: 评分仅含 类型/热度/新鲜度；users 表暂无城市字段，加入后可补同城加分
+      const boostCat = Number(req.query.boostCategory);
+      let score = 'o.purchase_count * 3 + o.view_count + (o.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)) * 20';
+      if (boostCat) {
+        score = `(o.category_id = ?) * 100 + ${score}`;
+        params.push(boostCat);
+      }
+      sql += ` ORDER BY (${score}) DESC, o.created_at DESC`;
     } else {
       sql += ' ORDER BY o.created_at DESC';
     }
