@@ -1,0 +1,195 @@
+{
+	"pages": [
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationBarTitleText": "商机互助",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/hall/hall",
+			"style": {
+				"navigationBarTitleText": "互助大厅",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/opportunity/detail",
+			"style": {
+				"navigationBarTitleText": "商机详情"
+			}
+		},
+		{
+			"path": "pages/opportunity/publish",
+			"style": {
+				"navigationBarTitleText": "发布跟单"
+			}
+		},
+		{
+			"path": "pages/crm/index",
+			"style": {
+				"navigationBarTitleText": "我的CRM",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/crm/add",
+			"style": {
+				"navigationBarTitleText": "新增客户"
+			}
+		},
+		{
+			"path": "pages/crm/detail",
+			"style": {
+				"navigationBarTitleText": "客户详情"
+			}
+		},
+		{
+			"path": "pages/followup/share",
+			"style": {
+				"navigationBarTitleText": "跟进分享"
+			}
+		},
+		{
+			"path": "pages/profile/index",
+			"style": {
+				"navigationBarTitleText": "我的"
+			}
+		},
+		{
+			"path": "pages/profile/edit",
+			"style": {
+				"navigationBarTitleText": "编辑资料"
+			}
+		},
+		{
+			"path": "pages/order/list",
+			"style": {
+				"navigationBarTitleText": "我的订单",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/points/index",
+			"style": {
+				"navigationBarTitleText": "积分中心",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/points/recharge",
+			"style": {
+				"navigationBarTitleText": "积分充值"
+			}
+		},
+		{
+			"path": "pages/points/result",
+			"style": {
+				"navigationBarTitleText": "充值结果"
+			}
+		},
+		{
+			"path": "pages/community/level",
+			"style": {
+				"navigationBarTitleText": "会员等级"
+			}
+		},
+		{
+			"path": "pages/community/credit",
+			"style": {
+				"navigationBarTitleText": "信用分"
+			}
+		},
+		{
+			"path": "pages/community/invite",
+			"style": {
+				"navigationBarTitleText": "邀请好友"
+			}
+		},
+		{
+			"path": "pages/community/ranking",
+			"style": {
+				"navigationBarTitleText": "排行榜",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/community/notify",
+			"style": {
+				"navigationBarTitleText": "通知中心"
+			}
+		},
+		{
+			"path": "pages/community/reminder",
+			"style": {
+				"navigationBarTitleText": "提醒中心"
+			}
+		},
+		{
+			"path": "pages/common/agreement",
+			"style": {
+				"navigationBarTitleText": "用户协议"
+			}
+		},
+		{
+			"path": "pages/common/announcement",
+			"style": {
+				"navigationBarTitleText": "公告详情"
+			}
+		},
+		{
+			"path": "pages/login/index",
+			"style": {
+				"navigationBarTitleText": "登录",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/login/bind",
+			"style": {
+				"navigationBarTitleText": "绑定手机号"
+			}
+		},
+		{
+			"path": "pages/login/forgot",
+			"style": {
+				"navigationBarTitleText": "找回密码"
+			}
+		}
+	],
+	"tabBar": {
+		"color": "#7A7A7A",
+		"selectedColor": "#048C47",
+		"backgroundColor": "#ffffff",
+		"borderStyle": "black",
+		"list": [
+			{
+				"pagePath": "pages/index/index",
+				"text": "首页"
+			},
+			{
+				"pagePath": "pages/hall/hall",
+				"text": "大厅"
+			},
+			{
+				"pagePath": "pages/opportunity/publish",
+				"text": "发布"
+			},
+			{
+				"pagePath": "pages/crm/index",
+				"text": "CRM"
+			},
+			{
+				"pagePath": "pages/profile/index",
+				"text": "我的"
+			}
+		]
+	},
+	"globalStyle": {
+		"navigationBarTextStyle": "white",
+		"navigationBarTitleText": "商机互助",
+		"navigationBarBackgroundColor": "#048C47",
+		"backgroundColor": "#F2F4F5"
+	}
+}
