@@ -177,7 +177,7 @@ async function handleRecharge() {
   if (recharging.value) return;
   recharging.value = true;
   try {
-    const order = await api.recharge({ amount, channel: 'wechat' });
+    const order = await api.recharge({ amount });
 
     // 渠道判断：jsapi -> 微信支付收银台；mock -> 模拟支付
     if (order.payMethod === 'jsapi' && order.payload) {
