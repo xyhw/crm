@@ -59,19 +59,32 @@ ADMIN_SECRET=<后台令牌密钥>
 docker compose up -d --build
 ```
 
-首次启动会自动完成：建库建表（migration 001-010）、种子数据灌入。无需手工初始化数据库。
+首次启动会自动完成：建库建表（migration 001-011）、种子数据灌入。无需手工初始化数据库。
 
 ### 4. 验证
 
 ```bash
-# 三服务应为 running / healthy
+# 三服务应为 running 且 api/web/mysql 均为 (healthy)（崩溃时 unless-stopped 会自动重启，持续不健康说明配置有误）
 docker compose ps
 
 # 观察 api 日志出现 "listening on http://localhost:3001" 且无报错
 docker compose logs -f api
 ```
 
+`/api/health` 会真实探测数据库连接，返回 `code: 0` 才视为健康；数据库故障时 compose 会标记为 unhealthy。
+
 浏览器访问 `http://<VPS公网IP>` 确认页面正常、能注册登录。
+
+## 上线前检查清单
+
+上线前逐项确认，避免正式对客时才暴露问题：
+
+1. **域名与 HTTPS**：支付回调要求 HTTPS，正式域名解析到服务器后配置 TLS（见下方 HTTPS 一节）
+2. **强随机密钥**：`.env` 五个密钥全部用 `openssl rand -hex 32` 生成，且 `.env` 不提交到 git
+3. **邮件 SMTP**：`.env` 中 `MAIL_PROVIDER=smtp` 并填 `MAIL_SMTP_HOST/USER/PASS`；保持 `log` 时验证码只会打印到 api 日志，用户收不到找回密码邮件——**务必实测找回密码全链路**
+4. **支付配置**：在管理后台完成下面的「上线后必做的配置切换」（站点域名、Waffo 生产渠道、webhook）
+5. **恢复演练**：执行一次备份并尝试恢复到临时库，确认备份脚本可用（备份命令见下文）
+6. **冷启动巡检**：清空 volume 后 `docker compose up -d --build` 完整跑一遍，核对 migration 日志无报错、种子数据就绪、三个服务都 healthy
 
 ## 上线后必做的配置切换
 
