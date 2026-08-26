@@ -13,6 +13,25 @@ const router = Router();
 const RESET_CODE_TTL = 5 * 60; // 验证码有效期 5 分钟
 const RESET_CODE_MAX_ATTEMPTS = 5; // 验证码最多尝试 5 次，超限作废需重新获取
 
+// 以下三个微信小程序接口为「预留占位」：数据库字段已就绪（migration 014），
+// 真实 code2session / getPhoneNumber + openid 绑定逻辑待接入后启用。
+// 返回统一「暂未开放」提示，避免前端误以为已可用。
+
+// 微信登录：wx.login code -> openid（预留）
+router.post('/wechat-login', async (req, res) => {
+  return res.json({ code: 400, message: '微信登录暂未开放，请使用手机号登录' });
+});
+
+// 绑定微信：openid + 手机号（预留）
+router.post('/bind-wechat', async (req, res) => {
+  return res.json({ code: 400, message: '微信绑定暂未开放，请使用手机号登录' });
+});
+
+// 微信手机号解密：getPhoneNumber code -> phone（预留）
+router.post('/phone', async (req, res) => {
+  return res.json({ code: 400, message: '微信手机号获取暂未开放，请手动输入手机号' });
+});
+
 // 注册
 router.post('/register', async (req, res) => {
   try {

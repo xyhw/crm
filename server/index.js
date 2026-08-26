@@ -17,6 +17,7 @@ import { migrateWaffoChannel } from './migrations/010_waffo_channel.js';
 import { migratePasswordReset } from './migrations/011_password_reset.js';
 import { migratePasswordResetAttempts } from './migrations/012_password_reset_attempts.js';
 import { migrateSecurityGuards } from './migrations/013_security_guards.js';
+import { migrateWechatBinding } from './migrations/014_wechat_binding.js';
 import { ensureAndLoadPaymentConfig } from './services/payment/config-loader.js';
 import { seedDatabase } from './seeds/seed.js';
 import { closePool } from './db.js';
@@ -224,6 +225,9 @@ async function start() {
 
     await migrateSecurityGuards();
     console.log('[server] login_failures + roles + admin binding ready');
+
+    await migrateWechatBinding();
+    console.log('[server] users.wechat_openid/unionid ready (预留)');
 
     // 种子数据
     await seedDatabase();
