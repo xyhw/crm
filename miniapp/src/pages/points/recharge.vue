@@ -13,8 +13,7 @@
           @click="channel = c"
         >
           <text class="channel-name">{{ channelLabel(c) }}</text>
-          <text v-if="c === 'mock'" class="channel-desc">开发环境模拟支付</text>
-          <text v-else-if="c === 'wechat'" class="channel-desc">微信支付</text>
+          <text class="channel-desc">{{ channelDesc(c) }}</text>
         </view>
         <view v-if="!availableChannels.length" class="empty-tip">暂无可用的支付方式</view>
       </view>
@@ -44,7 +43,7 @@
         {{ submitting ? '处理中...' : `确认充值 ${amount || 0} 积分` }}
       </view>
 
-      <!-- JSAPI 支付弹窗（调试用示意，真实支付由 wx.requestPayment 拉起） -->
+      <!-- JSAPI 支付确认（wechat 渠道 wx.requestPayment 拉起） -->
       <view v-if="showPayDetail" class="modal-mask" @click.self="showPayDetail = false">
         <view class="modal">
           <view class="modal-title">支付订单</view>
@@ -52,7 +51,7 @@
           <view class="pay-order-row"><text>金额</text><text>{{ amount }} 积分</text></view>
           <view class="pay-order-row"><text>渠道</text><text>{{ channelLabel(channel) }}</text></view>
           <view class="dialog-tip">
-            {{ channel === 'mock' ? '开发环境模拟支付，点击确认模拟完成支付' : '微信支付JSAPI渠道，拉起微信支付收银台' }}
+            {{ channel === 'mock' ? '开发环境模拟支付，点击确认模拟完成支付' : '即将拉起微信支付收银台' }}
           </view>
           <view class="modal-actions">
             <view class="modal-btn" @click="showPayDetail = false">取消</view>
@@ -70,6 +69,7 @@
 import { ref } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { api } from '@/api/index';
+import { resolveMiniappChannels, channelLabel } from '@/common/payment';
 
 const options = [50, 100, 200, 500, 1000];
 const MAX_AMOUNT = 10000;
@@ -82,23 +82,19 @@ const submitting = ref(false);
 const showPayDetail = ref(false);
 const orderNo = ref('');
 
-function channelLabel(c) {
-  const map = { wechat: '微信支付', alipay: '支付宝', mock: '模拟支付' };
-  return map[c] || c;
+function channelDesc(c) {
+  const desc = {
+    mock: '开发环境模拟支付',
+    wechat: '微信支付',
+  };
+  return desc[c] || '';
 }
 
 onLoad(async () => {
-  try {
-    const res = await api.rechargeChannels();
-    const list = res?.channels || ['mock'];
-    availableChannels.value = list;
-    channel.value = res?.defaultChannel || list[0] || 'mock';
-  } catch (e) {
-    availableChannels.value = ['mock'];
-    channel.value = 'mock';
-  } finally {
-    loading.value = false;
-  }
+  const info = await resolveMiniappChannels();
+  availableChannels.value = info.channels;
+  channel.value = availableChannels.value[0] || 'mock';
+  loading.value = false;
 });
 
 async function handleRecharge() {
@@ -139,7 +135,7 @@ async function handleRecharge() {
         return;
       }
     } else {
-      // mock/manual：展示确认弹窗
+      // mock 或 autopay：展示确认并模拟完成
       showPayDetail.value = true;
     }
   } catch (e) {
@@ -156,7 +152,6 @@ async function confirmPay() {
     if (channel.value === 'mock') {
       await api.rechargeMockPay(orderNo.value);
     }
-    // 轮询支付结果
     const order = await pollOrderStatus(orderNo.value);
     uni.showToast({ title: `充值成功，到账 ${order.amount} 积分`, icon: 'none' });
     uni.redirectTo({ url: '/pages/points/result?status=success' });

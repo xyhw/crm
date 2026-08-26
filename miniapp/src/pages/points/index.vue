@@ -94,6 +94,7 @@ import { ref } from 'vue';
 import { onLoad, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app';
 import { api } from '@/api/index';
 import { timeAgo } from '@/common/constants';
+import { resolveMiniappChannels } from '@/common/payment';
 
 const balance = ref(null);
 const logs = ref([]);
@@ -105,6 +106,7 @@ const hasMore = ref(true);
 const showRecharge = ref(false);
 const rechargeAmount = ref('');
 const recharging = ref(false);
+const payChannel = ref('');
 
 const logTabs = [
   { title: '全部', name: '' },
@@ -154,6 +156,12 @@ async function loadMore() {
 function openRecharge() {
   rechargeAmount.value = '';
   showRecharge.value = true;
+  // 预取小程序可用渠道（wechat/mock），避免创建 waffo 等 redirect 订单在小程序内无意义
+  if (!payChannel.value) {
+    resolveMiniappChannels().then((info) => {
+      payChannel.value = info.channel;
+    });
+  }
 }
 
 function goOrders() {
@@ -177,7 +185,7 @@ async function handleRecharge() {
   if (recharging.value) return;
   recharging.value = true;
   try {
-    const order = await api.recharge({ amount });
+    const order = await api.recharge({ amount, channel: payChannel.value });
 
     // 渠道判断：jsapi -> 微信支付收银台；mock -> 模拟支付
     if (order.payMethod === 'jsapi' && order.payload) {
