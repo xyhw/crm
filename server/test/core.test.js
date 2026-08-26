@@ -340,6 +340,59 @@ describe('Banner 接口', () => {
     await pool.end();
   });
 
+  it('忘记密码：验证码错误 5 次后作废，正确验证码也无法通过', async () => {
+    const { default: pkg } = await import('mysql2/promise');
+    const pool = pkg.createPool({
+      host: '127.0.0.1',
+      user: 'hof_user',
+      password: 'hof_pass_2026',
+      database: 'hotel_order_follow',
+    });
+    await pool.query(
+      "UPDATE users SET status = 'active', email = 'test1@example.com' WHERE phone = '13800000001'"
+    );
+
+    // 1. 发送验证码
+    const sendResp = await fetch(`${BASE}/auth/send-reset-code`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'test1@example.com' }),
+    });
+    assert.strictEqual((await sendResp.json()).code, 0);
+
+    // 2. 改写验证码哈希为已知值
+    const { createHash } = await import('crypto');
+    const codeHash = createHash('sha256').update('654321').digest('hex');
+    await pool.query(
+      'UPDATE password_reset_codes SET code_hash = ?, attempts = 0 WHERE user_id = (SELECT id FROM users WHERE phone = ?) AND used_at IS NULL',
+      [codeHash, '13800000001']
+    );
+
+    // 3. 连续 5 次错误验证码被拒
+    for (let i = 0; i < 5; i += 1) {
+      const bad = await fetch(`${BASE}/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'test1@example.com', code: '000000', newPassword: 'newpass123' }),
+      });
+      assert.strictEqual((await bad.json()).code, 400);
+    }
+
+    // 4. 第 6 次即使用正确验证码也因尝试次数超限被作废
+    const locked = await fetch(`${BASE}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'test1@example.com', code: '654321', newPassword: 'newpass123' }),
+    });
+    assert.strictEqual((await locked.json()).code, 400);
+
+    // 5. 密码未被改动，原密码仍可登录
+    const stillLogin = await login('13800000001', '123456');
+    assert.strictEqual(stillLogin.code, 0);
+
+    await pool.end();
+  });
+
   it('修改密码：旧密码必须匹配，成功后可登录新密码', async () => {
     const { default: pkg } = await import('mysql2/promise');
     const pool = pkg.createPool({
@@ -359,6 +412,7 @@ describe('Banner 接口', () => {
     const login2 = await login('13800000002');
     assert.strictEqual(login2.code, 0);
     const token2 = login2.data.token;
+    const refreshToken2 = login2.data.refreshToken;
 
     // 旧密码错误被拒
     const badResp = await fetch(`${BASE}/auth/change-password`, {
@@ -387,6 +441,14 @@ describe('Banner 接口', () => {
       headers: { Authorization: `Bearer ${token2}` },
     });
     assert.strictEqual((await oldTokenResp2.json()).code, 401);
+
+    // 修改前的旧 refreshToken 也已作废（refresh 接口校验 token_version），不能续期
+    const staleRefresh = await fetch(`${BASE}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: refreshToken2 }),
+    });
+    assert.strictEqual((await staleRefresh.json()).code, 401);
 
     // 恢复密码为 123456
     const bcrypt = (await import('bcryptjs')).default;

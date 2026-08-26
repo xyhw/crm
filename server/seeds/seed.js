@@ -71,7 +71,9 @@ export async function seedDatabase() {
   console.log('[seed] System configs seeded');
 
   // 创建默认管理员
-  const adminHash = await bcrypt.hash('admin123', 10);
+  // 生产环境必须通过 ADMIN_INIT_PASSWORD 设置强密码，否则使用默认密码并输出强制改密警告
+  const initPassword = process.env.ADMIN_INIT_PASSWORD || 'admin123';
+  const adminHash = await bcrypt.hash(initPassword, 10);
   await insert('admin_users', {
     username: 'admin',
     password_hash: adminHash,
@@ -79,7 +81,11 @@ export async function seedDatabase() {
     phone: '13800000000',
     status: 'active',
   });
-  console.log('[seed] Default admin created (admin/admin123)');
+  if (process.env.ADMIN_INIT_PASSWORD) {
+    console.log('[seed] Default admin created (password from ADMIN_INIT_PASSWORD)');
+  } else {
+    console.warn('[seed][SECURITY] Default admin created with DEFAULT password admin/admin123 — 请登录后台立即修改密码，或部署前设置 ADMIN_INIT_PASSWORD');
+  }
 
   // 创建默认角色
   await insert('roles', { name: 'super_admin', description: '超级管理员' });

@@ -10,6 +10,7 @@ import { sendResetCodeEmail } from '../services/mail.service.js';
 const router = Router();
 
 const RESET_CODE_TTL = 5 * 60; // 验证码有效期 5 分钟
+const RESET_CODE_MAX_ATTEMPTS = 5; // 验证码最多尝试 5 次，超限作废需重新获取
 
 // 注册
 router.post('/register', async (req, res) => {
@@ -221,6 +222,11 @@ router.post('/refresh', async (req, res) => {
       return res.status(401).json({ code: 401, message: '用户不存在或已禁用' });
     }
 
+    // token_version 不匹配（改密码/重置密码后已作废），拒绝续期
+    if (payload.tok_version !== user.token_version) {
+      return res.status(401).json({ code: 401, message: '登录已失效，请重新登录' });
+    }
+
     const newToken = signToken(user);
     const newRefreshToken = signRefreshToken(user);
 
@@ -358,7 +364,8 @@ router.post('/send-reset-code', loginLimiter, async (req, res) => {
 });
 
 // 忘记密码 - 邮箱 + 验证码 + 用户自设新密码
-router.post('/reset-password', async (req, res) => {
+// 限流 + 验证码尝试次数上限，防止 6 位数字验证码被暴力枚举
+router.post('/reset-password', loginLimiter, async (req, res) => {
   try {
     const { email, code, newPassword } = req.body || {};
     if (!email || !code) {
@@ -384,8 +391,15 @@ router.post('/reset-password', async (req, res) => {
       return res.json({ code: 400, message: '验证码无效或已过期' });
     }
 
+    // 尝试次数超限，作废验证码，要求重新获取
+    if (record.attempts >= RESET_CODE_MAX_ATTEMPTS) {
+      await query('UPDATE password_reset_codes SET used_at = NOW() WHERE id = ?', [record.id]);
+      return res.json({ code: 400, message: '验证码尝试次数过多，请重新获取' });
+    }
+
     const codeHash = crypto.createHash('sha256').update(String(code)).digest('hex');
     if (record.code_hash !== codeHash) {
+      await query('UPDATE password_reset_codes SET attempts = attempts + 1 WHERE id = ?', [record.id]);
       return res.json({ code: 400, message: '验证码不正确' });
     }
 

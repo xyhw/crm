@@ -26,6 +26,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       REFRESH_SECRET: ${REFRESH_SECRET}
       ADMIN_SECRET: ${ADMIN_SECRET}
+      ADMIN_INIT_PASSWORD: ${ADMIN_INIT_PASSWORD:-}
       UPLOAD_DIR: /app/uploads
       MAIL_PROVIDER: ${MAIL_PROVIDER:-log}
       MAIL_FROM: ${MAIL_FROM:-noreply@localhost}

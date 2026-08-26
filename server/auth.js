@@ -15,7 +15,11 @@ export function signToken(user) {
 }
 
 export function signRefreshToken(user) {
-  return jwt.sign({ id: user.id, type: 'user' }, REFRESH_SECRET, { expiresIn: '30d' });
+  return jwt.sign(
+    { id: user.id, type: 'user', tok_version: user.token_version || 0 },
+    REFRESH_SECRET,
+    { expiresIn: '30d' }
+  );
 }
 
 export function verifyToken(token) {
@@ -84,6 +88,11 @@ export async function adminAuthRequired(req, res, next) {
     const payload = jwt.verify(token, ADMIN_SECRET);
     if (payload.type !== 'admin') {
       return res.status(401).json({ code: 401, message: '权限不足' });
+    }
+    // 校验管理员账号存在且未被禁用（防止禁用后 token 在有效期内继续使用）
+    const admin = await queryOne('SELECT id FROM admin_users WHERE id = ? AND status = "active"', [payload.id]);
+    if (!admin) {
+      return res.status(401).json({ code: 401, message: '账号已被禁用或不存在' });
     }
     req.adminId = payload.id;
     req.adminRoles = payload.roles || [];

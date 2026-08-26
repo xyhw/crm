@@ -81,6 +81,7 @@ docker compose logs -f api
 
 1. **域名与 HTTPS**：支付回调要求 HTTPS，正式域名解析到服务器后配置 TLS（见下方 HTTPS 一节）
 2. **强随机密钥**：`.env` 五个密钥全部用 `openssl rand -hex 32` 生成，且 `.env` 不提交到 git
+3. **默认管理员密码**：部署前在 `.env` 设置 `ADMIN_INIT_PASSWORD`（首启创建 `admin` 账号的初始密码）；否则会使用默认密码 `admin123` 并在日志输出安全警告，**务必上线后第一时间在后台修改**
 3. **邮件 SMTP**：`.env` 中 `MAIL_PROVIDER=smtp` 并填 `MAIL_SMTP_HOST/USER/PASS`；保持 `log` 时验证码只会打印到 api 日志，用户收不到找回密码邮件——**务必实测找回密码全链路**
 4. **支付配置**：在管理后台完成下面的「上线后必做的配置切换」（站点域名、Waffo 生产渠道、webhook）
 5. **恢复演练**：执行一次备份并尝试恢复到临时库，确认备份脚本可用（备份命令见下文）

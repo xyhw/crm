@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import multer from 'multer';
+import os from 'os';
 import { adminAuthRequired } from '../../auth.js';
 import { insert, query } from '../../db.js';
 import { recordLog } from '../../services/audit-log.service.js';
 import crypto from 'crypto';
 
-const upload = multer({ dest: '/tmp/opencode', limits: { fileSize: 5 * 1024 * 1024 } });
+const upload = multer({ dest: os.tmpdir(), limits: { fileSize: 5 * 1024 * 1024 } });
 const router = Router();
 
 router.post('/', adminAuthRequired, upload.single('file'), async (req, res) => {

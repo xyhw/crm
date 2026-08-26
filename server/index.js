@@ -15,6 +15,7 @@ import { migrateFollowUpShareInvalidMarks } from './migrations/008_follow_up_sha
 import { migratePaymentOrders } from './migrations/009_payment_orders.js';
 import { migrateWaffoChannel } from './migrations/010_waffo_channel.js';
 import { migratePasswordReset } from './migrations/011_password_reset.js';
+import { migratePasswordResetAttempts } from './migrations/012_password_reset_attempts.js';
 import { ensureAndLoadPaymentConfig } from './services/payment/config-loader.js';
 import { seedDatabase } from './seeds/seed.js';
 import { closePool } from './db.js';
@@ -65,6 +66,9 @@ import adminBannerRoutes from './routes/admin/banner.routes.js';
 import adminAnnouncementRoutes from './routes/admin/announcements.routes.js';
 
 const app = express();
+
+// 反代（nginx/CLB）后按真实客户端 IP 限流，避免所有请求共用一个限流桶
+app.set('trust proxy', 1);
 
 app.use(cors());
 
@@ -205,6 +209,9 @@ async function start() {
 
     await migratePasswordReset();
     console.log('[server] users.token_version + password_reset_codes ready');
+
+    await migratePasswordResetAttempts();
+    console.log('[server] password_reset_codes.attempts ready');
 
     // 种子数据
     await seedDatabase();
