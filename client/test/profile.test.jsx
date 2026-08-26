@@ -170,4 +170,19 @@ describe('编辑资料 ProfileEdit', () => {
     );
     await waitFor(() => expect(screen.getByText('t@t.com')).toBeTruthy());
   });
+
+  it('供应商类型通过 ActionSheet 轻量选择', async () => {
+    render(
+      <MemoryRouter>
+        <ProfileEdit />
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(screen.getByText('供应商类型')).toBeTruthy());
+    fireEvent.click(screen.getByText('供应商类型'));
+    await waitFor(() => expect(screen.getByText('弱电总包')).toBeTruthy());
+    fireEvent.click(screen.getByText('弱电总包'));
+    // 选中后回显到 Cell（mock 用户类型不在字典内，初始为「未知」）
+    await waitFor(() => expect(screen.getAllByText('弱电总包').length).toBeGreaterThan(0));
+    expect(screen.queryByText('还没设置供应商类型')).toBeNull();
+  });
 });

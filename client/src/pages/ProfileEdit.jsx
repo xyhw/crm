@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Form, Input, Button, Field, Picker, Cell, CellGroup, Toast } from 'react-vant';
+import { Form, Input, Button, Field, ActionSheet, Cell, CellGroup, Toast } from 'react-vant';
 
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { SUPPLIER_CATEGORIES } from '../constants';
-import { categoryPickerColumns, findCategoryLabel } from '../utils/category';
+import { findCategoryLabel } from '../utils/category';
 import PageNavBar from '../components/PageNavBar';
 
 function CategoryPickerField({ value, onChange }) {
@@ -18,13 +18,12 @@ function CategoryPickerField({ value, onChange }) {
         isLink
         onClick={() => setShow(true)}
       />
-      <Picker
+      <ActionSheet
         visible={show}
-        columns={categoryPickerColumns()}
-        onConfirm={(v) => {
-          if (v) onChange(v);
-          setShow(false);
-        }}
+        actions={SUPPLIER_CATEGORIES.map((c) => ({ name: c.label, key: c.value }))}
+        cancelText="取消"
+        closeOnClickAction
+        onSelect={(action) => onChange(action.key)}
         onCancel={() => setShow(false)}
       />
     </>

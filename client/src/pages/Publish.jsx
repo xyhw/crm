@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Field, CellGroup, Button, Toast, Picker, Popup, Tag, Steps } from 'react-vant';
 import { api } from '../api';
+import { useAuth } from '../context/AuthContext';
 import PageNavBar from '../components/PageNavBar';
 import { SUPPLIER_CATEGORIES } from '../constants';
 import { categoryPickerColumns, findCategoryLabel } from '../utils/category';
@@ -9,10 +10,13 @@ import Uploader from '../components/Uploader';
 
 export default function Publish() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  // 按用户供应商类型预选分类，减少一次手动选择
+  const defaultCategory = Number(user?.category) || null;
   const [form, setForm] = useState({
     title: '',
-    categoryId: null,
-    categoryName: '',
+    categoryId: defaultCategory,
+    categoryName: defaultCategory ? findCategoryLabel(defaultCategory) : '',
     brand: '',
     city: '',
     address: '',
