@@ -1,9 +1,11 @@
 import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 import crypto from 'crypto';
 import { authRequired } from '../auth.js';
 import { insert } from '../db.js';
+import { validateFileMagic } from '../services/file-magic.js';
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR || '/workspace/uploads';
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -44,7 +46,17 @@ router.post('/', authRequired, upload.single('file'), async (req, res) => {
     if (!req.file) return res.json({ code: 400, message: '请选择文件' });
 
     const ext = path.extname(req.file.originalname).toLowerCase();
-    if (!ALLOWED_TYPES.includes(ext)) return res.json({ code: 400, message: '不支持的文件类型' });
+    if (!ALLOWED_TYPES.includes(ext)) {
+      fs.unlink(req.file.path, () => {});
+      return res.json({ code: 400, message: '不支持的文件类型' });
+    }
+
+    // 魔数校验：真实内容与扩展名一致，防止伪造文件
+    const head = fs.readFileSync(req.file.path);
+    if (!validateFileMagic(head, ext)) {
+      fs.unlink(req.file.path, () => {});
+      return res.json({ code: 400, message: '文件内容与格式不符' });
+    }
 
     const fileRecord = await insert('upload_files', {
       original_name: req.file.originalname,
@@ -84,7 +96,17 @@ router.post('/multiple', authRequired, upload.array('files', 9), async (req, res
     const results = [];
     for (const file of req.files) {
       const ext = path.extname(file.originalname).toLowerCase();
-      if (!ALLOWED_TYPES.includes(ext)) continue;
+      if (!ALLOWED_TYPES.includes(ext)) {
+        fs.unlink(file.path, () => {});
+        continue;
+      }
+
+      // 魔数校验：内容与扩展名一致才入库，否则删除
+      const head = fs.readFileSync(file.path);
+      if (!validateFileMagic(head, ext)) {
+        fs.unlink(file.path, () => {});
+        continue;
+      }
 
       const fileRecord = await insert('upload_files', {
         original_name: file.originalname,

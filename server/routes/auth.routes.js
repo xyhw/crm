@@ -6,6 +6,7 @@ import { query, queryOne, insert, update, transaction } from '../db.js';
 import { signToken, signRefreshToken, verifyRefreshToken, authRequired } from '../auth.js';
 import { loginLimiter } from '../middleware/rate-limit.js';
 import { sendResetCodeEmail } from '../services/mail.service.js';
+import { isAccountLocked, recordLoginFailure, clearLoginFailures } from '../services/account-lock.service.js';
 
 const router = Router();
 
@@ -19,6 +20,10 @@ router.post('/register', async (req, res) => {
     
     if (!phone || !password || !nickname) {
       return res.json({ code: 400, message: '请完善必填信息' });
+    }
+
+    if (!/^.{8,}$/.test(password) || !/[a-zA-Z]/.test(password) || !/\d/.test(password)) {
+      return res.json({ code: 400, message: '密码至少 8 位，且必须包含字母和数字' });
     }
 
     if (email !== undefined && email !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -175,10 +180,17 @@ router.post('/login', loginLimiter, async (req, res) => {
       return res.json({ code: 400, message: '账号已被禁用' });
     }
 
+    // 账号级连续失败锁定（防分布式 IP 暴力破解）
+    if (await isAccountLocked(user.id)) {
+      return res.json({ code: 429, message: '尝试次数过多，请 15 分钟后再试' });
+    }
+
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
+      await recordLoginFailure(user.id);
       return res.json({ code: 400, message: '密码错误' });
     }
+    await clearLoginFailures(user.id);
 
     const token = signToken(user);
     const refreshToken = signRefreshToken(user);
@@ -325,7 +337,7 @@ router.put('/me', authRequired, async (req, res) => {
   }
 });
 
-// 发送找回密码验证码（按邮箱查询，发到该邮箱）
+// 发送找回密码验证码（按邮箱查询，防账号枚举：未注册也返回统一成功文案）
 router.post('/send-reset-code', loginLimiter, async (req, res) => {
   try {
     const { email } = req.body || {};
@@ -334,8 +346,9 @@ router.post('/send-reset-code', loginLimiter, async (req, res) => {
     }
 
     const user = await queryOne('SELECT id, email FROM users WHERE email = ? AND deleted_at IS NULL', [email]);
+    // 未注册邮箱不返回区分提示，统一成功，防止枚举
     if (!user) {
-      return res.json({ code: 404, message: '该邮箱未注册' });
+      return res.json({ code: 0, message: '验证码已发送至绑定邮箱，5 分钟内有效' });
     }
 
     // 作废该用户之前未使用的验证码，避免旧码残留
@@ -371,13 +384,13 @@ router.post('/reset-password', loginLimiter, async (req, res) => {
     if (!email || !code) {
       return res.json({ code: 400, message: '请输入邮箱和验证码' });
     }
-    if (!newPassword || newPassword.length < 6) {
-      return res.json({ code: 400, message: '新密码长度至少 6 位' });
+    if (!/^.{8,}$/.test(newPassword) || !/[a-zA-Z]/.test(newPassword) || !/\d/.test(newPassword)) {
+      return res.json({ code: 400, message: '新密码至少 8 位，且必须包含字母和数字' });
     }
 
     const user = await queryOne('SELECT id FROM users WHERE email = ? AND deleted_at IS NULL', [email]);
     if (!user) {
-      return res.json({ code: 404, message: '该邮箱未注册' });
+      return res.json({ code: 400, message: '验证码无效或已过期' });
     }
 
     // 校验验证码（未使用且未过期）
@@ -429,8 +442,8 @@ router.put('/change-password', authRequired, async (req, res) => {
     if (!oldPassword || !newPassword) {
       return res.json({ code: 400, message: '请输入旧密码和新密码' });
     }
-    if (newPassword.length < 6) {
-      return res.json({ code: 400, message: '新密码长度至少 6 位' });
+    if (!/^.{8,}$/.test(newPassword) || !/[a-zA-Z]/.test(newPassword) || !/\d/.test(newPassword)) {
+      return res.json({ code: 400, message: '新密码至少 8 位，且必须包含字母和数字' });
     }
 
     const user = await queryOne('SELECT password_hash FROM users WHERE id = ?', [req.userId]);

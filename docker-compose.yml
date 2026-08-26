@@ -27,6 +27,7 @@ services:
       REFRESH_SECRET: ${REFRESH_SECRET}
       ADMIN_SECRET: ${ADMIN_SECRET}
       ADMIN_INIT_PASSWORD: ${ADMIN_INIT_PASSWORD:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
       UPLOAD_DIR: /app/uploads
       MAIL_PROVIDER: ${MAIL_PROVIDER:-log}
       MAIL_FROM: ${MAIL_FROM:-noreply@localhost}

@@ -118,10 +118,10 @@ export default function ForgotPassword() {
             label="新密码"
             rules={[
               { required: true, message: '请输入新密码' },
-              { pattern: /^.{6,}$/, message: '新密码长度至少 6 位' },
+              { pattern: /^(?=.*[a-zA-Z])(?=.*\d).{8,}$/, message: '密码至少 8 位，且必须包含字母和数字' },
             ]}
           >
-            <Field type="password" placeholder="请输入新密码（至少6位）" />
+            <Field type="password" placeholder="8 位以上，含字母和数字" />
           </Form.Item>
         </Form>
         <div className="auth-link">

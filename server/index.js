@@ -16,6 +16,7 @@ import { migratePaymentOrders } from './migrations/009_payment_orders.js';
 import { migrateWaffoChannel } from './migrations/010_waffo_channel.js';
 import { migratePasswordReset } from './migrations/011_password_reset.js';
 import { migratePasswordResetAttempts } from './migrations/012_password_reset_attempts.js';
+import { migrateSecurityGuards } from './migrations/013_security_guards.js';
 import { ensureAndLoadPaymentConfig } from './services/payment/config-loader.js';
 import { seedDatabase } from './seeds/seed.js';
 import { closePool } from './db.js';
@@ -23,6 +24,7 @@ import { adminAuthRequired } from './auth.js';
 import scheduler from './scheduler.js';
 import { config } from './config.js';
 import { apiLimiter } from './middleware/rate-limit.js';
+import { requireRole } from './middleware/require-role.js';
 
 // 路由导入
 import authRoutes from './routes/auth.routes.js';
@@ -70,7 +72,9 @@ const app = express();
 // 反代（nginx/CLB）后按真实客户端 IP 限流，避免所有请求共用一个限流桶
 app.set('trust proxy', 1);
 
-app.use(cors());
+// CORS：配置了白名单则仅放行白名单来源，否则开发环境允许任意来源
+const corsOptions = config.corsOrigins.length ? { origin: config.corsOrigins } : {};
+app.use(cors(corsOptions));
 
 // Waffo 回调必须使用原始 body 验签，须在全局 express.json() 之前挂载
 app.use('/api/points/recharge/notify/waffo', express.raw({ type: '*/*' }), waffoWebhookRoutes);
@@ -129,27 +133,32 @@ app.use('/api/banners', bannerRoutes);
 app.use('/api/agreement', agreementRoutes);
 app.use('/api/announcements', announcementRoutes);
 
-// 管理后台路由
+// 管理后台路由（adminAuthRequired 鉴权 + requireRole 角色授权）
+const OP = ['operation', 'super_admin'];
+const FIN = ['finance', 'super_admin'];
+const SUPER = ['super_admin'];
+
 app.use('/api/v1/admin/auth', adminAuthRoutes);
-app.use('/api/v1/admin/opportunities', adminAuthRequired, adminOpportunityRoutes);
-app.use('/api/v1/admin/users', adminAuthRequired, adminUserRoutes);
-app.use('/api/v1/admin/orders', adminAuthRequired, adminOrderRoutes);
-app.use('/api/v1/admin/points', adminAuthRequired, adminPointsRoutes);
-app.use('/api/v1/admin/levels', adminAuthRequired, adminLevelRoutes);
-app.use('/api/v1/admin/configs', adminAuthRequired, adminConfigRoutes);
-app.use('/api/v1/admin/audit', adminAuthRequired, adminAuditRoutes);
-app.use('/api/v1/admin/stats', adminAuthRequired, adminStatsRoutes);
-app.use('/api/v1/admin/audit-logs', adminAuthRequired, adminAuditLogRoutes);
-app.use('/api/v1/admin/roles', adminAuthRequired, adminRoleRoutes);
-app.use('/api/v1/admin/admins', adminAuthRequired, adminAdminsRoutes);
-app.use('/api/v1/admin/finance', adminAuthRequired, adminFinanceRoutes);
-app.use('/api/v1/admin/categories', adminAuthRequired, adminCategoryRoutes);
-app.use('/api/v1/admin/tags', adminAuthRequired, adminTagRoutes);
-app.use('/api/v1/admin/notifications', adminAuthRequired, adminNotificationRoutes);
-app.use('/api/v1/admin/upload', adminAuthRequired, adminUploadRoutes);
-app.use('/api/v1/admin/import', adminAuthRequired, adminImportRoutes);
-app.use('/api/v1/admin/banners', adminAuthRequired, adminBannerRoutes);
-app.use('/api/v1/admin/announcements', adminAuthRequired, adminAnnouncementRoutes);
+app.use('/api/v1/admin/audit-logs', adminAuthRequired, requireRole(...SUPER), adminAuditLogRoutes);
+app.use('/api/v1/admin/roles', adminAuthRequired, requireRole(...SUPER), adminRoleRoutes);
+app.use('/api/v1/admin/admins', adminAuthRequired, requireRole(...SUPER), adminAdminsRoutes);
+app.use('/api/v1/admin/configs', adminAuthRequired, requireRole(...SUPER), adminConfigRoutes);
+app.use('/api/v1/admin/levels', adminAuthRequired, requireRole(...SUPER), adminLevelRoutes);
+app.use('/api/v1/admin/opportunities', adminAuthRequired, requireRole(...OP), adminOpportunityRoutes);
+app.use('/api/v1/admin/users', adminAuthRequired, requireRole(...OP), adminUserRoutes);
+app.use('/api/v1/admin/audit', adminAuthRequired, requireRole(...OP), adminAuditRoutes);
+app.use('/api/v1/admin/categories', adminAuthRequired, requireRole(...OP), adminCategoryRoutes);
+app.use('/api/v1/admin/tags', adminAuthRequired, requireRole(...OP), adminTagRoutes);
+app.use('/api/v1/admin/notifications', adminAuthRequired, requireRole(...OP), adminNotificationRoutes);
+app.use('/api/v1/admin/upload', adminAuthRequired, requireRole(...OP), adminUploadRoutes);
+app.use('/api/v1/admin/import', adminAuthRequired, requireRole(...OP), adminImportRoutes);
+app.use('/api/v1/admin/banners', adminAuthRequired, requireRole(...OP), adminBannerRoutes);
+app.use('/api/v1/admin/announcements', adminAuthRequired, requireRole(...OP), adminAnnouncementRoutes);
+app.use('/api/v1/admin/orders', adminAuthRequired, requireRole(...FIN), adminOrderRoutes);
+app.use('/api/v1/admin/points', adminAuthRequired, requireRole(...FIN), adminPointsRoutes);
+app.use('/api/v1/admin/finance', adminAuthRequired, requireRole(...FIN), adminFinanceRoutes);
+// 统计：运营、财务、超管均可查看
+app.use('/api/v1/admin/stats', adminAuthRequired, requireRole('operation', 'finance', 'super_admin'), adminStatsRoutes);
 
 // 静态文件服务
 app.use('/uploads', express.static(config.uploadDir));
@@ -212,6 +221,9 @@ async function start() {
 
     await migratePasswordResetAttempts();
     console.log('[server] password_reset_codes.attempts ready');
+
+    await migrateSecurityGuards();
+    console.log('[server] login_failures + roles + admin binding ready');
 
     // 种子数据
     await seedDatabase();

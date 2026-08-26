@@ -42,7 +42,7 @@ describe('账号安全 修改密码 ChangePassword', () => {
     );
     expect(screen.getByText('账号安全')).toBeTruthy();
     expect(screen.getByPlaceholderText('请输入当前密码')).toBeTruthy();
-    expect(screen.getByPlaceholderText('请输入新密码（至少6位）')).toBeTruthy();
+    expect(screen.getByPlaceholderText('8 位以上，含字母和数字')).toBeTruthy();
     expect(screen.getByPlaceholderText('请再次输入新密码')).toBeTruthy();
     expect(screen.getByText('确认修改')).toBeTruthy();
   });
@@ -55,7 +55,7 @@ describe('账号安全 修改密码 ChangePassword', () => {
       </MemoryRouter>
     );
     fireEvent.change(screen.getByPlaceholderText('请输入当前密码'), { target: { value: 'oldpass123' } });
-    fireEvent.change(screen.getByPlaceholderText('请输入新密码（至少6位）'), { target: { value: 'newpass123' } });
+    fireEvent.change(screen.getByPlaceholderText('8 位以上，含字母和数字'), { target: { value: 'newpass123' } });
     fireEvent.change(screen.getByPlaceholderText('请再次输入新密码'), { target: { value: 'different' } });
     fireEvent.click(screen.getByText('确认修改'));
     await waitFor(() => expect(api.changePassword).not.toHaveBeenCalled());
@@ -70,7 +70,7 @@ describe('账号安全 修改密码 ChangePassword', () => {
       </MemoryRouter>
     );
     fireEvent.change(screen.getByPlaceholderText('请输入当前密码'), { target: { value: 'oldpass123' } });
-    fireEvent.change(screen.getByPlaceholderText('请输入新密码（至少6位）'), { target: { value: 'newpass123' } });
+    fireEvent.change(screen.getByPlaceholderText('8 位以上，含字母和数字'), { target: { value: 'newpass123' } });
     fireEvent.change(screen.getByPlaceholderText('请再次输入新密码'), { target: { value: 'newpass123' } });
     fireEvent.click(screen.getByText('确认修改'));
     await waitFor(() => expect(api.changePassword).toHaveBeenCalledWith({

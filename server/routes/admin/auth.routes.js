@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { query, queryOne } from '../../db.js';
 import { config } from '../../config.js';
 import { loginLimiter } from '../../middleware/rate-limit.js';
+import { isAccountLocked, recordLoginFailure, clearLoginFailures } from '../../services/account-lock.service.js';
 
 const router = Router();
 const ADMIN_SECRET = config.adminSecret;
@@ -44,10 +45,17 @@ router.post('/login', loginLimiter, async (req, res) => {
       return res.json({ code: 400, message: '用户名或密码错误' });
     }
 
+    // 账号级连续失败锁定（防分布式 IP 暴力破解）
+    if (await isAccountLocked(admin.id)) {
+      return res.json({ code: 429, message: '尝试次数过多，请 15 分钟后再试' });
+    }
+
     const valid = await bcrypt.compare(password, admin.password_hash);
     if (!valid) {
+      await recordLoginFailure(admin.id);
       return res.json({ code: 400, message: '用户名或密码错误' });
     }
+    await clearLoginFailures(admin.id);
 
     // 获取角色
     const roles = await query(

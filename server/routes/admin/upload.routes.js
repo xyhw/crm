@@ -1,9 +1,11 @@
 import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 import { adminAuthRequired } from '../../auth.js';
 import { query, queryOne, insert, transaction } from '../../db.js';
 import { recordLog } from '../../services/audit-log.service.js';
+import { validateFileMagic } from '../../services/file-magic.js';
 import crypto from 'crypto';
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR || '/workspace/uploads';
@@ -45,7 +47,17 @@ router.post('/', adminAuthRequired, upload.single('file'), async (req, res) => {
     if (!req.file) return res.json({ code: 400, message: '请选择文件' });
     
     const ext = path.extname(req.file.originalname).toLowerCase();
-    if (!ALLOWED_EXTENSIONS.includes(ext)) return res.json({ code: 400, message: '不支持的文件类型' });
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      fs.unlink(req.file.path, () => {});
+      return res.json({ code: 400, message: '不支持的文件类型' });
+    }
+
+    // 魔数校验：真实内容与扩展名一致
+    const head = fs.readFileSync(req.file.path);
+    if (!validateFileMagic(head, ext)) {
+      fs.unlink(req.file.path, () => {});
+      return res.json({ code: 400, message: '文件内容与格式不符' });
+    }
 
     const fileRecord = await insert('upload_files', {
       original_name: req.file.originalname,

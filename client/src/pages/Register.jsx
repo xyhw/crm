@@ -84,10 +84,10 @@ export default function Register() {
             label="密码"
             rules={[
               { required: true, message: '请输入密码' },
-              { min: 6, message: '密码至少 6 位' },
+              { pattern: /^(?=.*[a-zA-Z])(?=.*\d).{8,}$/, message: '密码至少 8 位，且必须包含字母和数字' },
             ]}
           >
-            <Input type="password" placeholder="至少 6 位密码" />
+            <Input type="password" placeholder="8 位以上，含字母和数字" />
           </Form.Item>
         </Form>
         <div className="auth-link">

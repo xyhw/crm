@@ -94,6 +94,17 @@ export async function seedDatabase() {
   await insert('roles', { name: 'support', description: '客服/助理' });
   console.log('[seed] Default roles created');
 
+  // 绑定默认管理员到 super_admin 角色（角色体系防空转）
+  const [adminRow] = await pool.execute("SELECT id FROM admin_users WHERE username = 'admin' LIMIT 1");
+  const [superRole] = await pool.execute("SELECT id FROM roles WHERE name = 'super_admin' LIMIT 1");
+  if (adminRow[0] && superRole[0]) {
+    await pool.execute('INSERT IGNORE INTO admin_role_relations (admin_id, role_id) VALUES (?, ?)', [
+      adminRow[0].id,
+      superRole[0].id,
+    ]);
+    console.log('[seed] Default admin bound to super_admin role');
+  }
+
   console.log('[seed] Database seeding completed');
 }
 

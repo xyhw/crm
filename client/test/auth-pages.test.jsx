@@ -83,7 +83,7 @@ describe('认证页面（开发需求 6.1.1）', () => {
     expect(screen.getByPlaceholderText('如：装修张工')).toBeTruthy();
     expect(screen.getByPlaceholderText('用于找回密码')).toBeTruthy();
     expect(screen.getByPlaceholderText('公司名称（选填）')).toBeTruthy();
-    expect(screen.getByPlaceholderText('至少 6 位密码')).toBeTruthy();
+    expect(screen.getByPlaceholderText('8 位以上，含字母和数字')).toBeTruthy();
   });
 
   it('注册提交调用 register 且 content 含公司信息', async () => {
@@ -96,7 +96,7 @@ describe('认证页面（开发需求 6.1.1）', () => {
     fireEvent.change(screen.getByPlaceholderText('如：装修张工'), { target: { value: '测试供应商' } });
     fireEvent.change(screen.getByPlaceholderText('用于找回密码'), { target: { value: 't@t.com' } });
     fireEvent.change(screen.getByPlaceholderText('公司名称（选填）'), { target: { value: '测试装修公司' } });
-    fireEvent.change(screen.getByPlaceholderText('至少 6 位密码'), { target: { value: '123456' } });
+    fireEvent.change(screen.getByPlaceholderText('8 位以上，含字母和数字'), { target: { value: 'abc12345' } });
     fireEvent.click(screen.getByText('注册'));
     await waitFor(() => expect(registerAuthMock).toHaveBeenCalled());
     const submitted = registerAuthMock.mock.calls[0][0];
@@ -116,7 +116,7 @@ describe('认证页面（开发需求 6.1.1）', () => {
     expect(screen.getByText('找回密码')).toBeTruthy();
     fireEvent.change(screen.getByPlaceholderText('请输入注册邮箱'), { target: { value: 'test1@example.com' } });
     fireEvent.change(screen.getByPlaceholderText('请输入邮箱收到的验证码'), { target: { value: '123456' } });
-    fireEvent.change(screen.getByPlaceholderText('请输入新密码（至少6位）'), { target: { value: 'newpass123' } });
+    fireEvent.change(screen.getByPlaceholderText('8 位以上，含字母和数字'), { target: { value: 'newpass123' } });
     fireEvent.click(screen.getByText('重置密码'));
     await waitFor(() => expect(api.resetPassword).toHaveBeenCalledWith({
       email: 'test1@example.com',

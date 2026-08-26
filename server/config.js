@@ -67,7 +67,15 @@ export const config = {
     apiMax: parseInt(process.env.RATE_LIMIT_API_MAX || '300', 10),
     loginWindowMs: parseInt(process.env.RATE_LIMIT_LOGIN_WINDOW_MS || '60000', 10),
     loginMax: parseInt(process.env.RATE_LIMIT_LOGIN_MAX || '10', 10),
+    // 账号级锁定时长（秒）与阈值（连续失败次数）
+    accountLockWindowSec: parseInt(process.env.ACCOUNT_LOCK_WINDOW_SEC || '900', 10),
+    accountLockThreshold: parseInt(process.env.ACCOUNT_LOCK_THRESHOLD || '5', 10),
   },
+  // 允许跨域的来源白名单（逗号分隔）；为空则允许任意来源（开发环境）
+  corsOrigins: (process.env.CORS_ORIGINS || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean),
   mail: {
     // log: 开发环境打印到日志；smtp: 真实发送
     provider: process.env.MAIL_PROVIDER || 'log',
