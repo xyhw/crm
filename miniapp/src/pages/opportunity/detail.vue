@@ -240,6 +240,14 @@ import { UPLOAD_BASE } from '@/common/config';
 import { INVALID_REASONS, OPPORTUNITY_STATUS_META, LEVEL_META, stageLabel, maskName, formatDate } from '@/common/constants';
 import MarketIntelligence from '@/components/MarketIntelligence.vue';
 
+onShareAppMessage(() => {
+  const title = detail.value?.title || '商机互助：解锁酒店商机';
+  return {
+    title,
+    path: `/pages/opportunity/detail?id=${id.value}`,
+  };
+});
+
 const userStore = useUserStore();
 const id = ref('');
 const detail = ref(null);

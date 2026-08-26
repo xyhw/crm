@@ -37,7 +37,7 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { onLoad } from '@dcloudio/uni-app';
+import { onLoad, onShareAppMessage } from '@dcloudio/uni-app';
 import { api } from '@/api/index';
 
 const tabs = [
@@ -53,6 +53,14 @@ const pageSize = 6;
 
 onLoad(() => {
   fetchRank();
+});
+
+onShareAppMessage(() => {
+  const typeName = type.value === 'publisher' ? '商机达人榜' : '贡献榜';
+  return {
+    title: `商机互助 ${typeName}`,
+    path: '/pages/community/ranking',
+  };
 });
 
 function switchType(name) {
