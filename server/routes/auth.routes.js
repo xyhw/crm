@@ -7,29 +7,238 @@ import { signToken, signRefreshToken, verifyRefreshToken, authRequired } from '.
 import { loginLimiter } from '../middleware/rate-limit.js';
 import { sendResetCodeEmail } from '../services/mail.service.js';
 import { isAccountLocked, recordLoginFailure, clearLoginFailures } from '../services/account-lock.service.js';
+import { isWechatConfigured, code2Session, getPhoneByCode } from '../services/wechat.service.js';
 
 const router = Router();
 
 const RESET_CODE_TTL = 5 * 60; // 验证码有效期 5 分钟
 const RESET_CODE_MAX_ATTEMPTS = 5; // 验证码最多尝试 5 次，超限作废需重新获取
 
-// 以下三个微信小程序接口为「预留占位」：数据库字段已就绪（migration 014），
-// 真实 code2session / getPhoneNumber + openid 绑定逻辑待接入后启用。
-// 返回统一「暂未开放」提示，避免前端误以为已可用。
+// 微信小程序登录链路真实实现（凭据 WX_MINIAPP_APPID / WX_MINIAPP_SECRET 未配置时优雅降级为提示）。
+// 数据库字段已就绪：users.wechat_openid / wechat_unionid（migration 014，openid 唯一索引）。
 
-// 微信登录：wx.login code -> openid（预留）
+/**
+ * 登录态响应的统一 user 结构（与 login/register 保持一致）
+ */
+function buildUserPayload(user) {
+  return {
+    id: user.id,
+    phone: user.phone,
+    nickname: user.nickname,
+    avatar: user.avatar,
+    email: user.email,
+    company: user.company,
+    category: user.category,
+    inviteCode: user.invite_code,
+    wechatBound: Boolean(user.wechat_openid),
+  };
+}
+
+function issueSession(user) {
+  return {
+    token: signToken(user),
+    refreshToken: signRefreshToken(user),
+    user: buildUserPayload(user),
+  };
+}
+
+/**
+ * 在事务中创建新用户并发放注册赠送积分、邀请奖励。
+ * 被 register 与 bind-wechat（新用户路径）共用，保证行为一致。
+ * @returns {number} 新用户 id
+ */
+async function createUserWithGifts(conn, { phone, passwordHash, nickname, email, company, category, invitedBy, inviteCode }) {
+  const userInviteCode = nanoid(8).toUpperCase();
+  const [userResult] = await conn.execute(
+    `INSERT INTO users (phone, password_hash, nickname, email, company, category, invite_code, invited_by)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [phone, passwordHash, nickname, email || null, company || null, category || null, userInviteCode, invitedBy]
+  );
+  const userId = userResult.insertId;
+
+  await conn.execute('INSERT INTO points_accounts (user_id, balance) VALUES (?, 0)', [userId]);
+  await conn.execute("INSERT INTO user_level_stats (user_id, level) VALUES (?, 'normal')", [userId]);
+
+  // 注册赠送积分
+  const [configRow] = await conn.execute(
+    "SELECT config_value FROM system_configs WHERE config_key = 'register_gift_points'"
+  );
+  const giftPoints = parseInt(configRow[0]?.config_value || '10');
+
+  if (giftPoints > 0) {
+    await conn.execute('UPDATE points_accounts SET balance = balance + ? WHERE user_id = ?', [
+      giftPoints,
+      userId,
+    ]);
+    await conn.execute(
+      `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
+       VALUES (?, ?, ?, 'register_gift', '注册赠送')`,
+      [userId, giftPoints, giftPoints]
+    );
+  }
+
+  // 邀请奖励
+  if (invitedBy) {
+    const [inviteConfig] = await conn.execute(
+      "SELECT config_value FROM system_configs WHERE config_key = 'invite_reward_points'"
+    );
+    const rewardPoints = parseInt(inviteConfig[0]?.config_value || '5');
+
+    if (rewardPoints > 0) {
+      await conn.execute('UPDATE points_accounts SET balance = balance + ? WHERE user_id = ?', [
+        rewardPoints,
+        invitedBy,
+      ]);
+      const [inviterAccount] = await conn.execute(
+        'SELECT balance FROM points_accounts WHERE user_id = ?',
+        [invitedBy]
+      );
+      await conn.execute(
+        `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
+         VALUES (?, ?, ?, 'invite_gift', ?)`,
+        [invitedBy, rewardPoints, inviterAccount[0].balance, `邀请 ${nickname} 注册`]
+      );
+
+      await conn.execute('UPDATE points_accounts SET balance = balance + ? WHERE user_id = ?', [
+        rewardPoints,
+        userId,
+      ]);
+      await conn.execute(
+        `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
+         VALUES (?, ?, ?, 'invite_gift', '邀请注册奖励')`,
+        [userId, rewardPoints, giftPoints + rewardPoints]
+      );
+
+      await conn.execute(
+        `INSERT INTO invitations (inviter_id, invitee_id, invite_code, status, inviter_reward, invitee_reward, completed_at)
+         VALUES (?, ?, ?, 'completed', ?, ?, NOW())`,
+        [invitedBy, userId, inviteCode || null, rewardPoints, rewardPoints]
+      );
+    }
+  }
+
+  return userId;
+}
+
+// 微信登录：wx.login code -> openid -> 已绑定直接登录 / 未绑定返回待绑定标识
 router.post('/wechat-login', async (req, res) => {
-  return res.json({ code: 400, message: '微信登录暂未开放，请使用手机号登录' });
+  try {
+    if (!isWechatConfigured()) {
+      return res.json({ code: 40401, message: '微信登录暂未配置，请使用手机号登录' });
+    }
+    const { code } = req.body || {};
+    if (!code) {
+      return res.json({ code: 400, message: '缺少微信登录凭证' });
+    }
+
+    const session = await code2Session(code);
+    const user = await queryOne('SELECT * FROM users WHERE wechat_openid = ?', [session.openid]);
+
+    if (!user) {
+      // 未绑定任何账号，交给前端引导手机号验证绑定
+      return res.json({ code: 0, data: { bound: false, openid: session.openid, unionid: session.unionid || null } });
+    }
+    if (user.status === 'banned' || user.deleted_at) {
+      return res.json({ code: 400, message: '账号已被禁用' });
+    }
+    if (session.unionid && !user.wechat_unionid) {
+      await update('users', { wechat_unionid: session.unionid }, 'id = ?', [user.id]);
+    }
+    return res.json({ code: 0, data: { bound: true, ...issueSession(user) } });
+  } catch (err) {
+    console.error('Wechat login error:', err);
+    return res.json({ code: 500, message: err.message || '微信登录失败' });
+  }
 });
 
-// 绑定微信：openid + 手机号（预留）
+// 绑定微信：openid + 手机号（存在则绑定已有账号，不存在则自动注册）
 router.post('/bind-wechat', async (req, res) => {
-  return res.json({ code: 400, message: '微信绑定暂未开放，请使用手机号登录' });
+  try {
+    if (!isWechatConfigured()) {
+      return res.json({ code: 40401, message: '微信登录暂未配置，请使用手机号登录' });
+    }
+    const { openid, unionid, phone, nickname, inviteCode } = req.body || {};
+    if (!openid || !/^1\d{10}$/.test(phone || '')) {
+      return res.json({ code: 400, message: '缺少微信标识或手机号无效' });
+    }
+
+    // openid 已被其他账号占用（理论上前端不会走到这里，防御性校验）
+    const conflict = await queryOne('SELECT id FROM users WHERE wechat_openid = ?', [openid]);
+    if (conflict) {
+      return res.json({ code: 400, message: '该微信已绑定其他账号，请直接用微信登录' });
+    }
+
+    // 解析邀请码
+    let invitedBy = null;
+    if (inviteCode) {
+      const inviter = await queryOne('SELECT id FROM users WHERE invite_code = ?', [inviteCode]);
+      if (!inviter) {
+        return res.json({ code: 400, message: '邀请码无效' });
+      }
+      invitedBy = inviter.id;
+    }
+
+    const existingUser = await queryOne('SELECT * FROM users WHERE phone = ?', [phone]);
+    let user;
+
+    if (existingUser) {
+      // 已有账号：绑定微信后直接登录
+      if (existingUser.status === 'banned' || existingUser.deleted_at) {
+        return res.json({ code: 400, message: '账号已被禁用' });
+      }
+      await update('users', {
+        wechat_openid: openid,
+        ...(unionid && !existingUser.wechat_unionid ? { wechat_unionid: unionid } : {}),
+      }, 'id = ?', [existingUser.id]);
+      user = await queryOne('SELECT * FROM users WHERE id = ?', [existingUser.id]);
+    } else {
+      // 新用户：随机强密码占位（用户可后续通过找回密码重置），昵称默认「微信用户」截尾
+      const randomPassword = nanoid(24);
+      const passwordHash = await bcrypt.hash(randomPassword, 10);
+      const defaultNickname =
+        (nickname || `微信用户${phone.slice(-4)}`).trim().slice(0, 50) || `微信用户${phone.slice(-4)}`;
+
+      await transaction(async (conn) => {
+        const userId = await createUserWithGifts(conn, {
+          phone,
+          passwordHash,
+          nickname: defaultNickname,
+          invitedBy,
+          inviteCode,
+        });
+        // 补充微信绑定信息
+        await conn.execute('UPDATE users SET wechat_openid = ?, wechat_unionid = ? WHERE id = ?', [
+          openid,
+          unionid || null,
+          userId,
+        ]);
+      });
+      user = await queryOne('SELECT * FROM users WHERE wechat_openid = ?', [openid]);
+    }
+
+    return res.json({ code: 0, data: issueSession(user), message: existingUser ? '绑定成功' : '注册成功' });
+  } catch (err) {
+    console.error('Bind wechat error:', err);
+    return res.json({ code: 500, message: err.message || '微信绑定失败' });
+  }
 });
 
-// 微信手机号解密：getPhoneNumber code -> phone（预留）
+// 微信手机号解密：button open-type="getPhoneNumber" 的动态 code -> 手机号
 router.post('/phone', async (req, res) => {
-  return res.json({ code: 400, message: '微信手机号获取暂未开放，请手动输入手机号' });
+  try {
+    if (!isWechatConfigured()) {
+      return res.json({ code: 40401, message: '微信能力暂未配置，请手动输入手机号' });
+    }
+    const { code } = req.body || {};
+    if (!code) {
+      return res.json({ code: 400, message: '缺少手机号获取凭证' });
+    }
+    const phone = await getPhoneByCode(code);
+    return res.json({ code: 0, data: { phone } });
+  } catch (err) {
+    console.error('Wechat phone error:', err);
+    return res.json({ code: 500, message: err.message || '手机号获取失败' });
+  }
 });
 
 // 注册
@@ -65,116 +274,25 @@ router.post('/register', async (req, res) => {
       invitedBy = inviter.id;
     }
 
-    // 生成唯一邀请码
-    const userInviteCode = nanoid(8).toUpperCase();
+    // 生成唯一邀请码由 helper 内部处理
     const passwordHash = await bcrypt.hash(password, 10);
 
     await transaction(async (conn) => {
-      // 创建用户
-      const [userResult] = await conn.execute(
-        `INSERT INTO users (phone, password_hash, nickname, email, company, category, invite_code, invited_by)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [phone, passwordHash, nickname, email || null, company || null, category || null, userInviteCode, invitedBy]
-      );
-      const userId = userResult.insertId;
-
-      // 创建积分账户
-      await conn.execute(
-        'INSERT INTO points_accounts (user_id, balance) VALUES (?, 0)',
-        [userId]
-      );
-
-      // 创建等级统计
-      await conn.execute(
-        'INSERT INTO user_level_stats (user_id, level) VALUES (?, ?)',
-        [userId, 'normal']
-      );
-
-      // 注册赠送积分
-      const [configRow] = await conn.execute(
-        "SELECT config_value FROM system_configs WHERE config_key = 'register_gift_points'"
-      );
-      const giftPoints = parseInt(configRow[0]?.config_value || '10');
-      
-      if (giftPoints > 0) {
-        await conn.execute(
-          'UPDATE points_accounts SET balance = balance + ? WHERE user_id = ?',
-          [giftPoints, userId]
-        );
-        await conn.execute(
-          `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-           VALUES (?, ?, ?, 'register_gift', '注册赠送')`,
-          [userId, giftPoints, giftPoints]
-        );
-      }
-
-      // 处理邀请奖励
-      if (invitedBy) {
-        const [inviteConfig] = await conn.execute(
-          "SELECT config_value FROM system_configs WHERE config_key = 'invite_reward_points'"
-        );
-        const rewardPoints = parseInt(inviteConfig[0]?.config_value || '5');
-        
-        if (rewardPoints > 0) {
-          // 给邀请人加积分
-          await conn.execute(
-            'UPDATE points_accounts SET balance = balance + ? WHERE user_id = ?',
-            [rewardPoints, invitedBy]
-          );
-          const [inviterAccount] = await conn.execute(
-            'SELECT balance FROM points_accounts WHERE user_id = ?',
-            [invitedBy]
-          );
-          await conn.execute(
-            `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-             VALUES (?, ?, ?, 'invite_gift', ?)`,
-            [invitedBy, rewardPoints, inviterAccount[0].balance, `邀请 ${nickname} 注册`]
-          );
-
-          // 给被邀请人加积分
-          await conn.execute(
-            'UPDATE points_accounts SET balance = balance + ? WHERE user_id = ?',
-            [rewardPoints, userId]
-          );
-          await conn.execute(
-            `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-             VALUES (?, ?, ?, 'invite_gift', '邀请注册奖励')`,
-            [userId, rewardPoints, giftPoints + rewardPoints]
-          );
-
-          // 记录邀请
-          await conn.execute(
-            `INSERT INTO invitations (inviter_id, invitee_id, invite_code, status, inviter_reward, invitee_reward, completed_at)
-             VALUES (?, ?, ?, 'completed', ?, ?, NOW())`,
-            [invitedBy, userId, inviteCode, rewardPoints, rewardPoints]
-          );
-        }
-      }
+      await createUserWithGifts(conn, {
+        phone,
+        passwordHash,
+        nickname,
+        email,
+        company,
+        category,
+        invitedBy,
+        inviteCode,
+      });
     });
 
     // 查询用户信息返回
     const user = await queryOne('SELECT * FROM users WHERE phone = ?', [phone]);
-    const token = signToken(user);
-    const refreshToken = signRefreshToken(user);
-
-    res.json({
-      code: 0,
-      data: {
-        token,
-        refreshToken,
-        user: {
-          id: user.id,
-          phone: user.phone,
-          nickname: user.nickname,
-          avatar: user.avatar,
-          email: user.email,
-          company: user.company,
-          category: user.category,
-          inviteCode: user.invite_code,
-        },
-      },
-      message: '注册成功',
-    });
+    res.json({ code: 0, data: issueSession(user), message: '注册成功' });
   } catch (err) {
     console.error('Register error:', err);
     res.status(500).json({ code: 500, message: '注册失败' });

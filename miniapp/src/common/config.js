@@ -3,6 +3,7 @@
  * 生产环境通过 #ifdef MP-WEIXIN 编译注入或直接修改此文件
  */
 // 后端 API 基址：微信小程序合法域名下使用 HTTPS 正式域名；本地联调可指向局域网 IP
+// TODO 上线前替换为正式域名（需同时在小程序后台配置 request 合法域名），见 miniapp/DEPLOY-CHECKLIST.md
 const PROD_API_BASE = 'https://api.example.com/api';
 const DEV_API_BASE = 'http://127.0.0.1:3001/api';
 
