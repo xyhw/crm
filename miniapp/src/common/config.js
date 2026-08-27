@@ -6,11 +6,12 @@
 const PROD_API_BASE = 'https://api.example.com/api';
 const DEV_API_BASE = 'http://127.0.0.1:3001/api';
 
-// #ifdef MP-WEIXIN
-export const API_BASE = DEV_API_BASE;
+// #ifdef H5
+// 浏览器端走同源相对路径，由 vite devServer 代理转发到后端，避免跨域与 mixed content
+export const API_BASE = '/api';
 // #endif
 
-// #ifndef MP-WEIXIN
+// #ifndef H5
 export const API_BASE = DEV_API_BASE;
 // #endif
 
