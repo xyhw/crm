@@ -53,6 +53,7 @@
         登录
       </button>
       <button class="login-link-btn" @click="goForgot">忘记密码</button>
+      <button class="login-link-btn" @click="goRegister">没有账号？立即注册</button>
 
       <view class="login-agreement">
         登录即代表您已阅读并同意
@@ -130,6 +131,10 @@ async function handlePhoneLogin() {
 
 function goForgot() {
   uni.navigateTo({ url: '/pages/login/forgot' });
+}
+
+function goRegister() {
+  uni.navigateTo({ url: '/pages/login/register' });
 }
 
 function goAgreement(type) {

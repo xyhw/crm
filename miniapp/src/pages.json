@@ -152,6 +152,12 @@
 			}
 		},
 		{
+			"path": "pages/login/register",
+			"style": {
+				"navigationBarTitleText": "注册"
+			}
+		},
+		{
 			"path": "pages/login/forgot",
 			"style": {
 				"navigationBarTitleText": "找回密码"
