@@ -18,6 +18,7 @@ import { migratePasswordReset } from './migrations/011_password_reset.js';
 import { migratePasswordResetAttempts } from './migrations/012_password_reset_attempts.js';
 import { migrateSecurityGuards } from './migrations/013_security_guards.js';
 import { migrateWechatBinding } from './migrations/014_wechat_binding.js';
+import { migrateOpportunityTagsSortOrder } from './migrations/015_opportunity_tags_sort_order.js';
 import { ensureAndLoadPaymentConfig } from './services/payment/config-loader.js';
 import { seedDatabase } from './seeds/seed.js';
 import { closePool } from './db.js';
@@ -228,6 +229,9 @@ async function start() {
 
     await migrateWechatBinding();
     console.log('[server] users.wechat_openid/unionid ready (预留)');
+
+    await migrateOpportunityTagsSortOrder();
+    console.log('[server] opportunity_tags.sort_order ready');
 
     // 种子数据
     await seedDatabase();
