@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { queryOne } from './db.js';
+import { queryOne, query } from './db.js';
 import { config } from './config.js';
 
 const SECRET = config.jwtSecret;
@@ -95,7 +95,14 @@ export async function adminAuthRequired(req, res, next) {
       return res.status(401).json({ code: 401, message: '账号已被禁用或不存在' });
     }
     req.adminId = payload.id;
-    req.adminRoles = payload.roles || [];
+    // 角色以数据库实时查询为准（兼容旧 token 无 roles 字段，且角色变更即时生效）
+    const roleRows = await query(
+      `SELECT r.name FROM roles r
+       JOIN admin_role_relations arr ON r.id = arr.role_id
+       WHERE arr.admin_id = ?`,
+      [payload.id]
+    );
+    req.adminRoles = roleRows.map(r => r.name);
     next();
   } catch {
     return res.status(401).json({ code: 401, message: '登录已过期' });
