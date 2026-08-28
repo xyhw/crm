@@ -51,7 +51,9 @@ onLoad(() => {
     .then((res) => {
       stats.value = res || null;
     })
-    .catch(() => {})
+    .catch((e) => {
+      uni.showToast({ title: e.message || '获取等级信息失败', icon: 'none' });
+    })
     .finally(() => {
       loading.value = false;
     });
@@ -59,7 +61,7 @@ onLoad(() => {
 
 const level = computed(() => stats.value?.level || {});
 const currentLevel = computed(() => LEVEL_META[level.value.level] || LEVEL_META.normal);
-const currentIndex = computed(() => levels.findIndex((l) => l.key === level.level));
+const currentIndex = computed(() => levels.findIndex((l) => l.key === level.value.level));
 
 const levels = [
   { key: 'normal', ...LEVEL_META.normal, threshold: '注册即获得' },

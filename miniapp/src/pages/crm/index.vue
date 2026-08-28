@@ -7,6 +7,7 @@
         class="search-input"
         placeholder="搜索商机"
         confirm-type="search"
+        @input="onKeywordInput"
         @confirm="onSearch"
       />
     </view>
@@ -68,9 +69,11 @@
 
 <script setup>
 import { ref } from 'vue';
-import { onLoad, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app';
+import { onLoad, onUnload, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app';
 import { api } from '@/api/index';
 import { CRM_STATUS_META, crmStatusLabel, formatDate } from '@/common/constants';
+
+let debounceTimer = null;
 
 const list = ref([]);
 const loading = ref(false);
@@ -126,22 +129,19 @@ function onSearch() {
   reload();
 }
 
-async function loadMore() {
-  if (!loading.value && hasMore.value) {
-    await fetchList(page.value + 1);
-  }
-}
-
-function goDetail(id) {
-  uni.navigateTo({ url: `/pages/crm/detail?id=${id}` });
-}
-
-function goAdd() {
-  uni.navigateTo({ url: '/pages/crm/add' });
+function onKeywordInput() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    reload();
+  }, keyword.value ? 350 : 0);
 }
 
 onLoad(() => {
   reload();
+});
+
+onUnload(() => {
+  clearTimeout(debounceTimer);
 });
 
 onPullDownRefresh(async () => {

@@ -59,7 +59,7 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { onLoad } from '@dcloudio/uni-app';
+import { onLoad, onPullDownRefresh } from '@dcloudio/uni-app';
 import { api } from '@/api/index';
 import { timeAgo } from '@/common/constants';
 
@@ -80,14 +80,25 @@ const page = ref(1);
 const pageSize = 6;
 
 onLoad(() => {
-  Promise.all([api.me(), fetchLogs()])
-    .then(([me]) => {
-      score.value = me?.creditScore ?? 100;
-    })
-    .catch(() => {})
-    .finally(() => {
-      loading.value = false;
-    });
+  loadCredit();
+});
+
+async function loadCredit() {
+  loading.value = true;
+  try {
+    const me = await api.me();
+    score.value = me?.creditScore ?? 100;
+    await fetchLogs();
+  } catch (e) {
+    uni.showToast({ title: e.message || '获取信用分失败', icon: 'none' });
+  } finally {
+    loading.value = false;
+    uni.stopPullDownRefresh();
+  }
+}
+
+onPullDownRefresh(() => {
+  loadCredit();
 });
 
 async function fetchLogs() {

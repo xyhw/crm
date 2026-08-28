@@ -78,6 +78,10 @@
           <text class="dialog-label">自定义金额</text>
           <input v-model="rechargeAmount" class="custom-input" type="digit" placeholder="输入积分数量" :maxlength="6" />
         </view>
+        <view v-if="payChannel" class="pay-channel-row">
+          <text class="dialog-label">支付方式</text>
+          <text class="pay-channel-name">{{ channelLabel(payChannel) }}</text>
+        </view>
         <view class="modal-actions">
           <view class="modal-btn" @click="showRecharge = false">取消</view>
           <view class="modal-btn modal-btn--primary" :class="{ disabled: recharging }" @click="handleRecharge">
@@ -94,7 +98,7 @@ import { ref } from 'vue';
 import { onLoad, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app';
 import { api } from '@/api/index';
 import { timeAgo } from '@/common/constants';
-import { resolveMiniappChannels } from '@/common/payment';
+import { resolveMiniappChannels, channelLabel } from '@/common/payment';
 
 const balance = ref(null);
 const logs = ref([]);
@@ -214,8 +218,10 @@ async function handleRecharge() {
 
     // 轮询订单状态
     const finalOrder = await pollOrderStatus(order.orderNo);
-    uni.showToast({ title: `充值成功，到账 ${finalOrder.amount} 积分`, icon: 'none' });
     showRecharge.value = false;
+    uni.redirectTo({
+      url: `/pages/points/result?status=success&amount=${finalOrder.amount}`,
+    });
     loadAll();
   } catch (e) {
     const reason = e.message || '';
@@ -502,6 +508,22 @@ onReachBottom(() => {
   padding: 0 20rpx;
   font-size: 26rpx;
   margin-left: 16rpx;
+}
+
+.pay-channel-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 24rpx;
+  padding: 20rpx;
+  background: #F7FBF8;
+  border-radius: 12rpx;
+}
+
+.pay-channel-name {
+  font-size: 26rpx;
+  color: #048C47;
+  font-weight: 500;
 }
 
 .modal-actions {

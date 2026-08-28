@@ -2,27 +2,50 @@
   <view class="invite-page">
     <view v-if="loading" class="empty">加载中...</view>
     <template v-else>
-      <!-- 邀请码卡片 -->
-      <view class="invite-card">
-        <view class="invite-card__label">我的邀请码</view>
-        <view class="invite-card__code">{{ data?.inviteCode || '暂无' }}</view>
-        <button class="invite-btn" size="small" round @click="handleCopy">复制邀请码</button>
+      <!-- 页签切换 -->
+      <view class="invite-tabs">
+        <view class="invite-tab" :class="{ active: activeTab === 'code' }" @click="switchTab('code')">邀请码</view>
+        <view class="invite-tab" :class="{ active: activeTab === 'poster' }" @click="switchTab('poster')">邀请海报</view>
       </view>
 
-      <!-- 邀请奖励说明 -->
-      <view class="section-card">
-        <view class="reward-row"><text class="reward-text">邀请奖励</text><text class="reward-desc">邀请人和被邀请人各得 5 积分</text></view>
-        <view class="reward-row"><text class="reward-text">已邀请人数</text><text class="reward-num">{{ data?.stats?.totalInvited || 0 }}</text></view>
-        <view class="reward-row"><text class="reward-text">累计奖励</text><text class="reward-num">{{ data?.stats?.totalReward || 0 }} 积分</text></view>
-      </view>
+      <!-- 邀请码 -->
+      <block v-if="activeTab === 'code'">
+        <view class="invite-card">
+          <view class="invite-card__label">我的邀请码</view>
+          <view class="invite-card__code">{{ data?.inviteCode || '暂无' }}</view>
+          <button class="invite-btn" size="small" round @click="handleCopy">复制邀请码</button>
+        </view>
 
-      <!-- 分享小程序给好友 -->
-      <view class="section-card share-card">
-        <view class="share-tip">邀请好友注册，双方各得 5 积分</view>
-        <button class="invite-btn invite-btn--primary" size="small" round open-type="share">
-          分享给微信好友
-        </button>
-      </view>
+        <!-- 邀请奖励说明 -->
+        <view class="section-card">
+          <view class="reward-row"><text class="reward-text">邀请奖励</text><text class="reward-desc">邀请人和被邀请人各得 5 积分</text></view>
+          <view class="reward-row"><text class="reward-text">已邀请人数</text><text class="reward-num">{{ data?.stats?.totalInvited || 0 }}</text></view>
+          <view class="reward-row"><text class="reward-text">累计奖励</text><text class="reward-num">{{ data?.stats?.totalReward || 0 }} 积分</text></view>
+        </view>
+
+        <!-- 分享小程序给好友 -->
+        <view class="section-card share-card">
+          <view class="share-tip">邀请好友注册，双方各得 5 积分</view>
+          <button class="invite-btn invite-btn--primary" size="small" round open-type="share">
+            分享给微信好友
+          </button>
+        </view>
+      </block>
+
+      <!-- 邀请海报 -->
+      <!-- #ifdef MP-WEIXIN -->
+      <block v-else>
+        <view class="section-card poster-card">
+          <canvas canvas-id="posterCanvas" id="posterCanvas" class="poster-canvas"></canvas>
+          <image v-if="posterImg" :src="posterImg" class="poster-preview" mode="widthFix" />
+          <view v-if="!posterImg" class="poster-loading">海报生成中...</view>
+          <button class="invite-btn invite-btn--primary" size="small" round :disabled="!posterImg" @click="savePoster">
+            保存到相册
+          </button>
+          <view class="poster-tip">长按保存图片分享给好友，扫码即可注册</view>
+        </view>
+      </block>
+      <!-- #endif -->
 
       <!-- 邀请记录 -->
       <view class="section-title">邀请记录</view>
@@ -52,18 +75,26 @@ import { ref, computed } from 'vue';
 import { onLoad, onShareAppMessage } from '@dcloudio/uni-app';
 import { api } from '@/api/index';
 import { timeAgo } from '@/common/constants';
+import { useUserStore } from '@/store/user';
+
+const userStore = useUserStore();
 
 const loading = ref(true);
 const data = ref(null);
 const page = ref(1);
 const pageSize = 6;
+const activeTab = ref('code');
+const posterImg = ref('');
+const posterDrawing = ref(false);
 
 onLoad(() => {
   api.invitationMe()
     .then((res) => {
       data.value = res || null;
     })
-    .catch(() => {})
+    .catch((e) => {
+      uni.showToast({ title: e.message || '获取邀请信息失败', icon: 'none' });
+    })
     .finally(() => {
       loading.value = false;
     });
@@ -76,6 +107,114 @@ onShareAppMessage(() => {
     path: `/pages/login/index?inviteCode=${code}`,
   };
 });
+
+function switchTab(tab) {
+  if (activeTab.value === tab) return;
+  activeTab.value = tab;
+  if (tab === 'poster') {
+    uni.nextTick(() => drawPoster());
+  }
+}
+
+// #ifdef MP-WEIXIN
+function drawPoster() {
+  const code = data.value?.inviteCode;
+  if (!code || posterDrawing.value) return;
+  const nickname = userStore.user?.nickname || '酒店商机伙伴';
+  posterDrawing.value = true;
+  posterImg.value = '';
+
+  const W = 375;
+  const H = 600;
+  const ctx = uni.createCanvasContext('posterCanvas');
+
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, '#048C47');
+  bg.addColorStop(1, '#036B38');
+  ctx.setFillStyle(bg);
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.setFillStyle('rgba(255,255,255,0.12)');
+  ctx.beginPath();
+  ctx.arc(310, 100, 110, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(40, 490, 80, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.setTextAlign('center');
+  ctx.setFillStyle('#ffffff');
+  ctx.setFontSize(36);
+  ctx.fillText('酒店商机互助平台', W / 2, 130);
+  ctx.setFontSize(16);
+  ctx.fillText('真实商机信息 · 分享赚积分', W / 2, 165);
+  ctx.setFontSize(20);
+  ctx.fillText(`邀请人：${nickname}`, W / 2, 240);
+  ctx.setFontSize(14);
+  ctx.setFillStyle('rgba(255,255,255,0.85)');
+  ctx.fillText('扫码或复制邀请码，一起加入', W / 2, 270);
+
+  ctx.setFillStyle('#ffffff');
+  ctx.fillRect(97.5, 300, 180, 180);
+
+  const drawQrcode = require('weapp-qrcode');
+  drawQrcode({
+    ctx,
+    x: 97.5,
+    y: 300,
+    width: 180,
+    height: 180,
+    text: code,
+    background: '#ffffff',
+    foreground: '#000000',
+  });
+
+  ctx.setFillStyle('#ffffff');
+  ctx.setFontSize(22);
+  ctx.fillText(code, W / 2, 545);
+  ctx.setFontSize(13);
+  ctx.setFillStyle('rgba(255,255,255,0.8)');
+  ctx.fillText('长按保存图片分享给好友', W / 2, 572);
+
+  ctx.draw(false, () => {
+    setTimeout(() => {
+      uni.canvasToTempFilePath({
+        canvasId: 'posterCanvas',
+        success: (res) => {
+          posterImg.value = res.tempFilePath;
+          posterDrawing.value = false;
+        },
+        fail: () => {
+          posterDrawing.value = false;
+          uni.showToast({ title: '海报生成失败', icon: 'none' });
+        },
+      });
+    }, 300);
+  });
+}
+
+function savePoster() {
+  if (!posterImg.value) return;
+  uni.saveImageToPhotosAlbum({
+    filePath: posterImg.value,
+    success: () => {
+      uni.showToast({ title: '已保存到相册', icon: 'success' });
+    },
+    fail: (err) => {
+      const msg = err?.errMsg || '';
+      if (msg.includes('auth')) {
+        uni.showModal({
+          title: '提示',
+          content: '需要相册权限才能保存海报，请在设置中开启',
+          showCancel: false,
+        });
+      } else {
+        uni.showToast({ title: '保存失败', icon: 'none' });
+      }
+    },
+  });
+}
+// #endif
 
 const totalPages = computed(() =>
   Math.ceil((data.value?.records || []).length / pageSize)
@@ -110,6 +249,55 @@ function changePage(p) {
 <style lang="scss" scoped>
 .invite-page {
   min-height: 100vh;
+}
+
+.invite-tabs {
+  display: flex;
+  margin: 24rpx 24rpx 0;
+  background: #ffffff;
+  border-radius: 16rpx;
+  padding: 8rpx;
+}
+
+.invite-tab {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx 0;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  color: #7A7A7A;
+}
+
+.invite-tab.active {
+  color: #ffffff;
+  background: #048C47;
+  font-weight: 600;
+}
+
+.poster-card {
+  text-align: center;
+}
+
+.poster-canvas {
+  width: 375px;
+  height: 600px;
+}
+
+.poster-preview {
+  width: 100%;
+  border-radius: 16rpx;
+}
+
+.poster-loading {
+  padding: 160rpx 0;
+  color: #B0B0B0;
+  font-size: 26rpx;
+}
+
+.poster-tip {
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  color: #B0B0B0;
 }
 
 .empty {

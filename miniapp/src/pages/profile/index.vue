@@ -67,12 +67,31 @@
         <text class="func-title">编辑资料</text>
         <text class="arrow">›</text>
       </view>
-      <view class="func-row" @click="goAgreement('agreement')">
+      <view class="func-row" @click="goChangePassword">
+        <text class="func-title">账号安全</text>
+        <text class="arrow">›</text>
+      </view>
+      <view class="func-row" @click="goSupport">
+        <text class="func-title">客服与帮助</text>
+        <text class="arrow">›</text>
+      </view>
+      <view class="func-row" @click="showAgreementSheet = true">
         <text class="func-title">用户协议与隐私</text>
         <text class="arrow">›</text>
       </view>
       <view class="func-row func-row--danger" @click="handleLogout">
         <text class="func-title">退出登录</text>
+      </view>
+    </view>
+
+    <!-- 协议选择 -->
+    <view v-if="showAgreementSheet" class="modal-mask" @click.self="showAgreementSheet = false">
+      <view class="sheet">
+        <view class="sheet-title">用户协议与隐私</view>
+        <view v-for="item in agreementList" :key="item.key" class="sheet-item" @click="chooseAgreement(item.key)">
+          {{ item.label }}
+        </view>
+        <view class="sheet-cancel" @click="showAgreementSheet = false">取消</view>
       </view>
     </view>
 
@@ -111,6 +130,13 @@ const funcList = [
 ];
 
 let shown = false;
+const showAgreementSheet = ref(false);
+
+const agreementList = [
+  { key: 'agreement', label: '用户协议' },
+  { key: 'privacy', label: '隐私政策' },
+  { key: 'summary', label: '平台须知' },
+];
 
 onShow(() => {
   if (userStore.isAuthenticated && !shown) {
@@ -142,7 +168,16 @@ function goEdit() {
   uni.navigateTo({ url: '/pages/profile/edit' });
 }
 
-function goAgreement(type) {
+function goChangePassword() {
+  uni.navigateTo({ url: '/pages/profile/change-password' });
+}
+
+function goSupport() {
+  uni.navigateTo({ url: '/pages/common/support' });
+}
+
+function chooseAgreement(type) {
+  showAgreementSheet.value = false;
   uni.navigateTo({ url: `/pages/common/agreement?type=${type}` });
 }
 
@@ -335,5 +370,52 @@ function handleLogout() {
 
 .footer-space {
   height: 40rpx;
+}
+
+.modal-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+}
+
+.sheet {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 24rpx 24rpx 0 0;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.sheet-title {
+  text-align: center;
+  padding: 24rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1A1A1A;
+  border-bottom: 1px solid #F2F4F5;
+}
+
+.sheet-item {
+  text-align: center;
+  padding: 28rpx;
+  font-size: 28rpx;
+  color: #1A1A1A;
+  border-bottom: 1px solid #F7F8F9;
+}
+
+.sheet-item:active {
+  background: #F8FAF9;
+}
+
+.sheet-cancel {
+  text-align: center;
+  padding: 28rpx;
+  font-size: 28rpx;
+  color: #7A7A7A;
 }
 </style>

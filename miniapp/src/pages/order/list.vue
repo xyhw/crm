@@ -65,7 +65,7 @@
 import { ref, computed } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import { api } from '@/api/index';
-import { OPPORTUNITY_STATUS_META, timeAgo } from '@/common/constants';
+import { ORDER_STATUS_META, timeAgo } from '@/common/constants';
 
 const TABS = [
   { title: '我发布的', name: 'published' },
@@ -82,11 +82,11 @@ const totalPages = computed(() => Math.max(1, Math.ceil(list.value.length / page
 const visible = computed(() => list.value.slice((page.value - 1) * pageSize, page.value * pageSize));
 
 function statusLabelOf(value) {
-  return OPPORTUNITY_STATUS_META[value]?.label || value;
+  return ORDER_STATUS_META[value]?.label || value;
 }
 
 function statusStyleOf(value) {
-  const meta = OPPORTUNITY_STATUS_META[value] || OPPORTUNITY_STATUS_META.active;
+  const meta = ORDER_STATUS_META[value] || ORDER_STATUS_META.active;
   return { color: meta.color, background: meta.bg };
 }
 

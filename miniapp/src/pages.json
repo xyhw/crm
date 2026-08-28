@@ -64,6 +64,12 @@
 			}
 		},
 		{
+			"path": "pages/profile/change-password",
+			"style": {
+				"navigationBarTitleText": "账号安全"
+			}
+		},
+		{
 			"path": "pages/order/list",
 			"style": {
 				"navigationBarTitleText": "我的订单",
@@ -98,7 +104,8 @@
 		{
 			"path": "pages/community/credit",
 			"style": {
-				"navigationBarTitleText": "信用分"
+				"navigationBarTitleText": "信用分",
+				"enablePullDownRefresh": true
 			}
 		},
 		{
@@ -136,6 +143,12 @@
 			"path": "pages/common/announcement",
 			"style": {
 				"navigationBarTitleText": "公告详情"
+			}
+		},
+		{
+			"path": "pages/common/support",
+			"style": {
+				"navigationBarTitleText": "客服与帮助"
 			}
 		},
 		{

@@ -45,7 +45,9 @@ onLoad((options) => {
       .then((res) => {
         detail.value = res || null;
       })
-      .catch(() => {})
+      .catch((e) => {
+        uni.showToast({ title: e.message || '获取公告失败', icon: 'none' });
+      })
       .finally(() => {
         loading.value = false;
       });
