@@ -66,17 +66,19 @@
         <view class="picker-header">
           <text class="picker-cancel" @click="showCategory = false">取消</text>
           <text class="picker-title">选择供应商类型</text>
-          <text class="picker-confirm" @click="showCategory = false">确定</text>
+          <text class="picker-confirm" @click="showCategory = false">完成</text>
         </view>
-        <scroll-view scroll-y class="picker-body">
+        <scroll-view scroll-y class="picker-body" :scroll-into-view="'cat-' + form.category" scroll-with-animation>
           <view
             v-for="c in SUPPLIER_CATEGORIES"
             :key="c.value"
+            :id="'cat-' + c.value"
             class="picker-item"
             :class="{ active: form.category === c.value }"
-            @click="form.category = c.value"
+            @click="selectCategory(c.value)"
           >
-            {{ c.label }}
+            <text>{{ c.label }}</text>
+            <text v-if="form.category === c.value" class="picker-check">✓</text>
           </view>
         </scroll-view>
       </view>
@@ -155,6 +157,11 @@ async function handleRegister() {
 
 function goLogin() {
   uni.navigateBack();
+}
+
+function selectCategory(value) {
+  form.category = value;
+  showCategory.value = false;
 }
 
 function goAgreement(type) {
@@ -304,6 +311,9 @@ function goAgreement(type) {
 }
 
 .picker-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 28rpx 32rpx;
   font-size: 28rpx;
   color: #1A1A1A;
@@ -314,5 +324,10 @@ function goAgreement(type) {
   color: #048C47;
   font-weight: 600;
   background: #F3FBF6;
+}
+
+.picker-check {
+  color: #048C47;
+  font-size: 32rpx;
 }
 </style>
