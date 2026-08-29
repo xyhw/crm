@@ -5,33 +5,16 @@
       {{ unreadCount }} 条未读通知
     </view>
 
-    <!-- 公告卡片（自动轮播） -->
+    <!-- 公告条（单行轮播） -->
     <view v-if="announcements.length" class="announcement-card" @click="goAnnouncement(currentAnn)">
-      <view class="announcement-card__icon">告</view>
-      <view class="announcement-card__body">
-        <view class="announcement-card__title-row">
-          <text class="announcement-card__badge">公告</text>
-          <text class="announcement-card__title">{{ currentAnn.title }}</text>
-        </view>
-        <text v-if="timeAgo(currentAnn.created_at)" class="announcement-card__time">
-          {{ timeAgo(currentAnn.created_at) }}
-        </text>
-      </view>
-      <view class="announcement-card__side">
-        <text class="announcement-card__more">更多 ›</text>
-        <text v-if="announcements.length > 1" class="announcement-card__count">
-          {{ annIndex + 1 }}/{{ announcements.length }}
-        </text>
-      </view>
+      <text class="announcement-card__badge">公告</text>
+      <text class="announcement-card__title">{{ currentAnn.title }}</text>
+      <text v-if="timeAgo(currentAnn.created_at)" class="announcement-card__time">{{ timeAgo(currentAnn.created_at) }}</text>
+      <text class="announcement-card__more">›</text>
     </view>
 
     <!-- 用户卡片 -->
     <view class="home-user">
-      <view class="home-user__nav" @click="goPage('/pages/community/notify')">
-        <view v-if="unreadCount > 0" class="home-user__nav-badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</view>
-        <text class="home-user__nav-text">通知</text>
-      </view>
-
       <view class="home-user__top">
         <view class="home-user__avatar">{{ (user?.nickname || '友')[0] }}</view>
         <view class="home-user__info">
@@ -44,44 +27,25 @@
         </view>
       </view>
 
-      <view class="home-user__focus">
-        <view class="home-user__focus-item home-user__focus-item--reminder" @click="goPage('/pages/community/reminder')">
-          <text class="home-user__focus-num">{{ followCount }}</text>
-          <text class="home-user__focus-label">条待跟进</text>
-        </view>
-        <view class="home-user__focus-item" @click="switchTab('/pages/crm/index')">
-          <text class="home-user__focus-num">{{ stats?.crm ?? 0 }}</text>
-          <text class="home-user__focus-label">我的CRM</text>
-        </view>
-      </view>
-
       <view class="home-user__stats">
+        <view class="home-user__stat" @click="goPage('/pages/community/reminder')">
+          <text class="home-user__stat-num">{{ followCount }}</text>
+          <text class="home-user__stat-label">待跟进</text>
+        </view>
+        <view class="home-user__stat" @click="switchTab('/pages/crm/index')">
+          <text class="home-user__stat-num">{{ stats?.crm ?? 0 }}</text>
+          <text class="home-user__stat-label">我的CRM</text>
+        </view>
         <view class="home-user__stat" @click="goPage('/pages/order/list')">
           <text class="home-user__stat-num">{{ stats?.published ?? 0 }}</text>
           <text class="home-user__stat-label">我的投稿</text>
         </view>
-        <view class="home-user__stat" @click="goPage('/pages/community/level')">
-          <text class="home-user__stat-num">{{ level.label }}</text>
-          <text class="home-user__stat-label">会员等级</text>
+        <view class="home-user__stat" @click="goPage('/pages/community/notify')">
+          <text class="home-user__stat-num">{{ unreadCount > 99 ? '99+' : unreadCount }}</text>
+          <text class="home-user__stat-label">通知</text>
         </view>
       </view>
     </view>
-
-    <!-- Banner 轮播 -->
-    <swiper
-      v-if="banners.length"
-      class="home-banner"
-      autoplay
-      circular
-      :interval="3000"
-      :indicator-dots="banners.length > 1"
-      indicator-color="rgba(255,255,255,0.4)"
-      indicator-active-color="#ffffff"
-    >
-      <swiper-item v-for="b in banners" :key="b.id" @click="onBannerTap(b)">
-        <image class="home-banner__img" :src="resolveUploadUrl(b.image_url)" mode="aspectFill" />
-      </swiper-item>
-    </swiper>
 
     <!-- 商机区 Tab -->
     <view class="section-head">
@@ -142,7 +106,6 @@ import { onLoad, onPullDownRefresh, onShow, onHide, onUnload } from '@dcloudio/u
 import { api } from '@/api/index';
 import { useUserStore } from '@/store/user';
 import { timeAgo, LEVEL_META } from '@/common/constants';
-import { UPLOAD_BASE } from '@/common/config';
 
 const userStore = useUserStore();
 const user = computed(() => userStore.user);
@@ -155,7 +118,6 @@ const tabs = [
 
 const announcements = ref([]);
 const annIndex = ref(0);
-const banners = ref([]);
 const stats = ref(null);
 const unreadCount = ref(0);
 const followCount = ref(0);
@@ -178,12 +140,6 @@ const emptyAction = computed(() =>
 );
 
 let annTimer = null;
-
-function resolveUploadUrl(url) {
-  if (!url) return '';
-  if (/^https?:\/\//.test(url)) return url;
-  return UPLOAD_BASE + url;
-}
 
 function categoryLabel(o) {
   return o.categoryName || '商机';
@@ -238,15 +194,6 @@ function stopAnnTimer() {
   }
 }
 
-async function fetchBanners() {
-  try {
-    const res = await api.banners();
-    banners.value = res?.list || [];
-  } catch (e) {
-    banners.value = [];
-  }
-}
-
 function fetchUser() {
   if (userStore.isAuthenticated) {
     userStore.fetchMe().catch(() => {});
@@ -256,7 +203,6 @@ function fetchUser() {
 onLoad(() => {
   fetchHome();
   fetchAnnouncements();
-  fetchBanners();
   fetchUser();
 });
 
@@ -273,7 +219,6 @@ onUnload(stopAnnTimer);
 onPullDownRefresh(() => {
   fetchHome();
   fetchAnnouncements();
-  fetchBanners();
   fetchUser();
 });
 
@@ -306,15 +251,6 @@ function switchTab2(value) {
 
 function goAnnouncement(item) {
   uni.navigateTo({ url: `/pages/common/announcement?id=${item.id}` });
-}
-
-function onBannerTap(b) {
-  if (b.link_url) {
-    uni.setClipboardData({
-      data: b.link_url,
-      success: () => uni.showToast({ title: '链接已复制', icon: 'none' }),
-    });
-  }
 }
 
 function goDetail(id) {
@@ -359,46 +295,19 @@ function onEmptyAction() {
   vertical-align: middle;
 }
 
-/* 公告卡片：绿渐变 + 网格纹理 */
+/* 公告条：单行紧凑 */
 .announcement-card {
   display: flex;
   align-items: center;
-  margin: 16rpx 24rpx 0;
-  padding: 20rpx 28rpx;
-  background:
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.06) 0 2rpx, transparent 2rpx 64rpx),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0 2rpx, transparent 2rpx 64rpx),
-    linear-gradient(135deg, #048C47 0%, #036B38 100%);
-  border-radius: 20rpx;
-  box-shadow: 0 6rpx 16rpx rgba(0, 0, 0, 0.08);
-}
-
-.announcement-card__icon {
-  flex-shrink: 0;
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-  font-size: 28rpx;
-  line-height: 64rpx;
-  text-align: center;
-  margin-right: 20rpx;
-}
-
-.announcement-card__body {
-  flex: 1;
-  min-width: 0;
-}
-
-.announcement-card__title-row {
-  display: flex;
-  align-items: center;
+  margin: 12rpx 24rpx 0;
+  padding: 14rpx 20rpx;
+  background: linear-gradient(135deg, #048C47 0%, #036B38 100%);
+  border-radius: 12rpx;
 }
 
 .announcement-card__badge {
   flex-shrink: 0;
-  margin-right: 16rpx;
+  margin-right: 14rpx;
   padding: 0 10rpx;
   border-radius: 6rpx;
   background: #FFD700;
@@ -420,70 +329,34 @@ function onEmptyAction() {
 }
 
 .announcement-card__time {
-  margin-top: 2rpx;
-  font-size: 22rpx;
-  color: rgba(255, 255, 255, 0.75);
-}
-
-.announcement-card__side {
   flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
   margin-left: 16rpx;
+  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .announcement-card__more {
-  font-size: 22rpx;
+  flex-shrink: 0;
+  margin-left: 12rpx;
+  font-size: 28rpx;
   color: rgba(255, 255, 255, 0.85);
 }
 
-.announcement-card__count {
-  margin-top: 8rpx;
-  padding: 0 14rpx;
-  border-radius: 16rpx;
-  background: rgba(255, 255, 255, 0.22);
-  font-size: 20rpx;
-  line-height: 30rpx;
-  color: #ffffff;
-}
-
-/* 用户卡片：藏青绿渐变 + 网格纹理（对齐 H5 home-user） */
+/* 用户卡片：藏青绿渐变 + 网格纹理 */
 .home-user {
   background:
     repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0 2rpx, transparent 2rpx 68rpx),
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 2rpx, transparent 2rpx 68rpx),
     linear-gradient(135deg, #048C47 0%, #036B38 100%);
-  padding: 28rpx 32rpx;
-  margin-top: 16rpx;
+  padding: 24rpx 32rpx;
+  margin-top: 12rpx;
   color: #ffffff;
-}
-
-.home-user__nav {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin-bottom: 12rpx;
-}
-
-.home-user__nav-badge {
-  padding: 0 12rpx;
-  border-radius: 16rpx;
-  background: #FF3B30;
-  font-size: 20rpx;
-  line-height: 30rpx;
-  margin-right: 8rpx;
-}
-
-.home-user__nav-text {
-  font-size: 24rpx;
-  opacity: 0.9;
 }
 
 .home-user__top {
   display: flex;
   align-items: center;
-  margin-bottom: 24rpx;
+  margin-bottom: 20rpx;
 }
 
 .home-user__avatar {
@@ -533,43 +406,11 @@ function onEmptyAction() {
   opacity: 0.8;
 }
 
-.home-user__focus {
-  display: flex;
-  margin-bottom: 20rpx;
-}
-
-.home-user__focus-item {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16rpx;
-  border-radius: 16rpx;
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.home-user__focus-item--reminder {
-  margin-right: 16rpx;
-  background: rgba(255, 59, 48, 0.9);
-}
-
-.home-user__focus-num {
-  font-size: 32rpx;
-  font-weight: 700;
-  line-height: 1;
-  margin-right: 10rpx;
-}
-
-.home-user__focus-label {
-  font-size: 24rpx;
-  opacity: 0.9;
-}
-
 .home-user__stats {
   display: flex;
   background: rgba(255, 255, 255, 0.16);
   border-radius: 16rpx;
-  padding: 16rpx;
+  padding: 18rpx 8rpx;
 }
 
 .home-user__stat {
@@ -588,19 +429,6 @@ function onEmptyAction() {
   margin-top: 6rpx;
   font-size: 22rpx;
   opacity: 0.8;
-}
-
-/* Banner 轮播：343:120 比例 */
-.home-banner {
-  margin: 24rpx 32rpx;
-  height: 245rpx;
-  border-radius: 20rpx;
-  overflow: hidden;
-}
-
-.home-banner__img {
-  width: 100%;
-  height: 100%;
 }
 
 /* 商机区 Tab */

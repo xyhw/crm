@@ -10,6 +10,7 @@ const router = Router();
 router.get('/', optionalAuth, async (req, res) => {
   try {
     const { category, keyword, status = 'active', page = 1, pageSize = 10, sort = 'newest', mine } = req.query;
+    const statusProvided = req.query.status !== undefined;
     
     let sql = `SELECT o.*, c.name as category_name, c.icon as category_icon, u.nickname as publisher_name,
               (SELECT COUNT(*) FROM follow_up_shares WHERE opportunity_id = o.id AND audit_status = 'approved') as total_shares,
@@ -23,6 +24,10 @@ router.get('/', optionalAuth, async (req, res) => {
     if (mine === '1' && req.userId) {
       sql += ' AND o.user_id = ?';
       params.push(req.userId);
+      if (statusProvided) {
+        sql += ' AND o.status = ?';
+        params.push(status);
+      }
     } else if (status) {
       sql += ' AND o.status = ?';
       params.push(status);
@@ -91,6 +96,10 @@ router.get('/', optionalAuth, async (req, res) => {
     if (mine === '1' && req.userId) {
       countSql += ' AND o.user_id = ?';
       countParams.push(req.userId);
+      if (statusProvided) {
+        countSql += ' AND o.status = ?';
+        countParams.push(status);
+      }
     } else if (status) {
       countSql += ' AND o.status = ?';
       countParams.push(status);

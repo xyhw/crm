@@ -1,8 +1,19 @@
 <template>
   <view class="my-opp-page">
+    <!-- 状态筛选 -->
+    <view class="status-tabs">
+      <view
+        v-for="t in tabOptions"
+        :key="t.value"
+        class="status-tab"
+        :class="{ active: tab === t.value }"
+        @click="switchTab(t.value)"
+      >{{ t.label }}</view>
+    </view>
+
     <view v-if="loading && list.length === 0" class="empty">加载中...</view>
     <view v-else-if="list.length === 0" class="empty-box">
-      <text class="empty-text">还没有发布过商机</text>
+      <text class="empty-text">{{ emptyText }}</text>
       <view class="publish-btn" @click="goPublish">立即发布</view>
     </view>
     <view v-else>
@@ -27,19 +38,12 @@
         </view>
       </view>
 
-      <!-- 固定分页导航 -->
-      <view v-if="pageCount > 1" class="pager">
-        <view class="pager-btn" :class="{ disabled: page <= 1 }" @click="goPage(page - 1)">上一页</view>
-        <view
-          v-for="p in pageItems"
-          :key="p"
-          class="pager-num"
-          :class="{ active: p === page }"
-          @click="goPage(p)"
-        >{{ p }}</view>
-        <view class="pager-btn" :class="{ disabled: page >= pageCount }" @click="goPage(page + 1)">下一页</view>
+      <!-- 加载状态 -->
+      <view class="load-status">
+        <text v-if="loading" class="load-text">加载中...</text>
+        <text v-else-if="!hasMore" class="load-text">没有更多了</text>
+        <text v-else class="load-text">上拉加载更多</text>
       </view>
-      <view class="pager-total">共 {{ total }} 条 · {{ page }} / {{ pageCount }} 页</view>
     </view>
 
     <!-- 底部主导航栏 -->
@@ -49,7 +53,7 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { onShow, onPullDownRefresh } from '@dcloudio/uni-app';
+import { onShow, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app';
 import { api } from '@/api/index';
 import { stageLabel, stageTone } from '@/common/constants';
 import CustomTabBar from '@/components/CustomTabBar.vue';
@@ -59,12 +63,29 @@ const loading = ref(false);
 const page = ref(1);
 const total = ref(0);
 const pageSize = 10;
+const tab = ref('');
+
+const tabOptions = [
+  { label: '全部', value: '' },
+  { label: '销售中', value: 'active' },
+  { label: '已下架', value: 'inactive' },
+  { label: '已失效', value: 'invalid' },
+];
 
 const STATUS_META = {
   active: { label: '销售中', tone: 'verified' },
   inactive: { label: '已下架', tone: 'default' },
   invalid: { label: '已失效', tone: 'hot' },
 };
+
+const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize)));
+const hasMore = computed(() => page.value < pageCount.value);
+const emptyText = computed(() => {
+  if (tab.value === 'active') return '没有销售中的商机';
+  if (tab.value === 'inactive') return '没有已下架的商机';
+  if (tab.value === 'invalid') return '没有已失效的商机';
+  return '还没有发布过商机';
+});
 
 function statusLabel(status) {
   return (STATUS_META[status] || STATUS_META.active).label;
@@ -76,31 +97,15 @@ function editable(item) {
   return item.status !== 'invalid' && (item.purchaseCount || 0) === 0;
 }
 
-const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize)));
-
-// 显示页码序列：最多 5 个，含省略
-const pageItems = computed(() => {
-  const totalPages = pageCount.value;
-  if (totalPages <= 7) {
-    return Array.from({ length: totalPages }, (_, i) => i + 1);
-  }
-  const current = page.value;
-  const pages = new Set([1, totalPages, current - 1, current, current + 1]);
-  const sorted = [...pages].filter((p) => p >= 1 && p <= totalPages).sort((a, b) => a - b);
-  const result = [];
-  let prev = 0;
-  for (const p of sorted) {
-    if (p - prev > 1) result.push('...');
-    result.push(p);
-    prev = p;
-  }
-  return result;
-});
-
-async function fetchList(p) {
+async function fetchList(p, append = false) {
   try {
-    const res = await api.myOpportunities({ page: p, pageSize });
-    list.value = res.list || [];
+    const res = await api.myOpportunities({
+      page: p,
+      pageSize,
+      status: tab.value || undefined,
+    });
+    const items = res.list || [];
+    list.value = append ? [...list.value, ...items] : items;
     total.value = res.total || 0;
     page.value = p;
   } catch (e) {
@@ -115,16 +120,22 @@ async function load() {
   await fetchList(1);
 }
 
-function goPage(p) {
-  if (p < 1 || p > pageCount.value || p === page.value) return;
-  loading.value = true;
-  fetchList(p);
+function switchTab(value) {
+  if (tab.value === value) return;
+  tab.value = value;
+  load();
 }
 
 onShow(load);
 onPullDownRefresh(async () => {
   await load();
   uni.stopPullDownRefresh();
+});
+
+onReachBottom(() => {
+  if (loading.value || !hasMore.value) return;
+  loading.value = true;
+  fetchList(page.value + 1, true);
 });
 
 function goPublish() {
@@ -271,47 +282,34 @@ function goEdit(id) {
   color: #B0B0B0;
 }
 
-/* 固定分页导航 */
-.pager {
+/* 状态筛选 Tab */
+.status-tabs {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-top: 24rpx;
-}
-.pager-btn {
-  padding: 8rpx 24rpx;
-  border: 1px solid #DDDDDD;
-  border-radius: 8rpx;
-  font-size: 26rpx;
-  color: #333333;
   background: #ffffff;
+  border-radius: 12rpx;
+  padding: 8rpx;
+  margin-bottom: 16rpx;
 }
-.pager-btn.disabled {
-  color: #C0C0C0;
-  border-color: #EEEEEE;
-  background: #F7F8F9;
-}
-.pager-num {
-  min-width: 56rpx;
-  height: 56rpx;
-  line-height: 56rpx;
+.status-tab {
+  flex: 1;
   text-align: center;
-  margin: 0 8rpx;
-  border-radius: 8rpx;
   font-size: 26rpx;
-  color: #333333;
-  background: #ffffff;
-  border: 1px solid transparent;
+  color: #7A7A7A;
+  padding: 12rpx 0;
+  border-radius: 8rpx;
 }
-.pager-num.active {
+.status-tab.active {
   color: #ffffff;
   background: #048C47;
-  border-color: #048C47;
+  font-weight: 600;
 }
-.pager-total {
+
+/* 加载状态 */
+.load-status {
   text-align: center;
-  margin: 16rpx 0 8rpx;
+  padding: 24rpx 0 8rpx;
+}
+.load-text {
   font-size: 24rpx;
   color: #B0B0B0;
 }
