@@ -148,22 +148,26 @@ router.put('/:id/points', audit('points', 'adjust_points'), async (req, res) => 
     
     // 检查余额
     if (delta < 0) {
-      const [account] = await query('SELECT balance FROM points_accounts WHERE user_id = ?', [userId]);
-      if ((account[0]?.balance || 0) < Math.abs(delta)) {
+      const account = await queryOne('SELECT balance FROM points_accounts WHERE user_id = ?', [userId]);
+      if ((account?.balance || 0) < Math.abs(delta)) {
         return res.json({ code: 400, message: '余额不足' });
       }
     }
 
-    // 更新积分
+    // 确保积分账户存在，再更新积分
+    await query(
+      'INSERT INTO points_accounts (user_id, balance) VALUES (?, ?) ON DUPLICATE KEY UPDATE user_id = VALUES(user_id)',
+      [userId, 0]
+    );
     await query('UPDATE points_accounts SET balance = balance + ? WHERE user_id = ?', [delta, userId]);
 
-    const [account] = await query('SELECT balance FROM points_accounts WHERE user_id = ?', [userId]);
+    const account = await queryOne('SELECT balance FROM points_accounts WHERE user_id = ?', [userId]);
 
     // 记录流水
     await query(
       `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
        VALUES (?, ?, ?, 'admin_adjust', ?)`,
-      [userId, delta, account[0].balance, reason]
+      [userId, delta, account?.balance ?? 0, reason]
     );
 
     res.json({ code: 0, message: '积分调整成功' });

@@ -39,8 +39,9 @@ export async function insert(table, data) {
   const values = Object.values(data);
   const placeholders = keys.map(() => '?').join(', ');
   const sql = `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${placeholders})`;
-  const result = await query(sql, values);
-  return { id: result.insertId, ...data };
+  const p = await getPool();
+  const [result] = await p.execute(sql, values);
+  return { insertId: result.insertId, id: result.insertId, ...data };
 }
 
 export async function update(table, data, where, whereParams = []) {
@@ -48,13 +49,15 @@ export async function update(table, data, where, whereParams = []) {
   const values = Object.values(data);
   const setClause = keys.map(k => `${k} = ?`).join(', ');
   const sql = `UPDATE ${table} SET ${setClause} WHERE ${where}`;
-  const result = await query(sql, [...values, ...whereParams]);
+  const p = await getPool();
+  const [result] = await p.execute(sql, [...values, ...whereParams]);
   return result.affectedRows;
 }
 
 export async function del(table, where, whereParams = []) {
   const sql = `DELETE FROM ${table} WHERE ${where}`;
-  const result = await query(sql, whereParams);
+  const p = await getPool();
+  const [result] = await p.execute(sql, whereParams);
   return result.affectedRows;
 }
 
