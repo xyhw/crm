@@ -1,6 +1,6 @@
 <template>
   <view class="my-opp-page">
-    <view v-if="loading" class="empty">加载中...</view>
+    <view v-if="loading && list.length === 0" class="empty">加载中...</view>
     <view v-else-if="list.length === 0" class="empty-box">
       <text class="empty-text">还没有发布过商机</text>
       <view class="publish-btn" @click="goPublish">立即发布</view>
@@ -26,18 +26,23 @@
           <text v-else class="locked-text">{{ item.status === 'invalid' ? '已被判无效' : '已有购买者' }}</text>
         </view>
       </view>
+      <view v-if="hasMore" class="load-more" @click="loadMore">加载更多</view>
+      <view v-else-if="list.length > 0" class="load-more">已经到底了</view>
     </view>
   </view>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { onLoad, onPullDownRefresh, onShow } from '@dcloudio/uni-app';
+import { onPullDownRefresh, onShow, onReachBottom } from '@dcloudio/uni-app';
 import { api } from '@/api/index';
 import { stageLabel, stageTone } from '@/common/constants';
 
 const list = ref([]);
 const loading = ref(false);
+const page = ref(1);
+const pageSize = 10;
+const hasMore = ref(true);
 
 const STATUS_META = {
   active: { label: '销售中', tone: 'verified' },
@@ -55,11 +60,13 @@ function editable(item) {
   return item.status !== 'invalid' && (item.purchaseCount || 0) === 0;
 }
 
-async function load() {
-  loading.value = true;
+async function fetchList(p, reset) {
   try {
-    const res = await api.myOpportunities({ pageSize: 50 });
-    list.value = res.list || [];
+    const res = await api.myOpportunities({ page: p, pageSize });
+    const newList = res.list || [];
+    list.value = reset ? newList : [...list.value, ...newList];
+    hasMore.value = newList.length === pageSize;
+    page.value = p;
   } catch (e) {
     uni.showToast({ title: e.message || '获取失败', icon: 'none' });
   } finally {
@@ -67,7 +74,20 @@ async function load() {
   }
 }
 
+async function load() {
+  loading.value = true;
+  await fetchList(1, true);
+}
+
+function loadMore() {
+  if (!loading && hasMore) {
+    loading.value = true;
+    fetchList(page.value + 1, false);
+  }
+}
+
 onShow(load);
+onReachBottom(loadMore);
 onPullDownRefresh(async () => {
   await load();
   uni.stopPullDownRefresh();
@@ -213,6 +233,13 @@ function goEdit(id) {
 }
 
 .locked-text {
+  font-size: 24rpx;
+  color: #B0B0B0;
+}
+
+.load-more {
+  text-align: center;
+  padding: 24rpx 0;
   font-size: 24rpx;
   color: #B0B0B0;
 }
