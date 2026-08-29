@@ -5,7 +5,7 @@ import { api } from '../api';
 import PageNavBar from '../components/PageNavBar';
 import Icon from '../components/Icon';
 import { SkeletonList } from '../components/StateView';
-import { SUPPLIER_CATEGORIES, timeAgo, stageLabel } from '../constants';
+import { SUPPLIER_CATEGORIES, timeAgo, stageLabel, stageTone } from '../constants';
 import { resolveCategoryIcon } from '../utils/category';
 
 export default function Hall() {
@@ -144,13 +144,13 @@ export default function Hall() {
                         </span>
                       )}
                       <span className="opportunity-card__title-text">{item.title}</span>
-                      {item.isPurchased && <span className="opportunity-card__purchased-tag">已解锁</span>}
+                      {item.isPurchased && <span className="opportunity-card__purchased-tag">已购买</span>}
                     </div>
                     <div className="opportunity-card__meta">
                       <span className="opportunity-card__meta-text">
                         {item.hotelName || item.brand || '未知品牌'} · {item.city || '未知城市'}
                       </span>
-                      {item.stage && <span className="opp-stage-tag">{stageLabel(item.stage)}</span>}
+                      {item.stage && <span className={`opp-stage-tag ${stageTone(item.stage)}`}>{stageLabel(item.stage)}</span>}
                     </div>
                     {item.isPurchased && (() => {
                       try {
@@ -168,6 +168,20 @@ export default function Hall() {
                     })()}
                   </div>
                 </div>
+                {item.descriptionPublic && (
+                  <div className="opportunity-card__summary">{item.descriptionPublic}</div>
+                )}
+                <div className="opportunity-card__heat">
+                  <span className="opportunity-card__heat-item opportunity-card__heat-item--buy">
+                    {item.purchaseCount || 0}人已购
+                  </span>
+                  {(item.totalShares || 0) > 0 && (
+                    <span className="opportunity-card__heat-item opportunity-card__heat-item--share">
+                      {item.totalShares}条真实进度
+                    </span>
+                  )}
+                  <span className="opportunity-card__heat-item">{item.viewCount || 0}次浏览</span>
+                </div>
                 <div className="opportunity-card__footer">
                   <div className="opportunity-card__price">
                     {item.isPurchased ? (
@@ -180,7 +194,6 @@ export default function Hall() {
                     )}
                   </div>
                   <div className="opportunity-card__stats">
-                    <Tag size="mini">{item.purchaseCount || 0}人已购</Tag>
                     <span className="opportunity-card__time">{timeAgo(item.createdAt)}</span>
                   </div>
                 </div>

@@ -97,6 +97,15 @@ export function stageLabel(value) {
   return ORDER_STAGES.find((s) => s.value === value)?.label || value || '未填写';
 }
 
+const HOT_STAGES = ['bidding', 'negotiation', 'contract'];
+
+export function stageTone(value) {
+  if (HOT_STAGES.includes(value)) return 'hot';
+  if (value === 'design') return 'warm';
+  if (value === 'inprogress' || value === 'acceptance') return 'verified';
+  return '';
+}
+
 export function maskName(name) {
   if (!name) return '匿名用户';
   if (name.length <= 1) return name[0] + '*';

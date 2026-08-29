@@ -1533,6 +1533,46 @@ body {
 .opportunity-card .opp-stage-tag {
   flex-shrink: 0;
   margin-left: 0;
+  background: #F2F4F5;
+  color: #7A7A7A;
+}
+.opportunity-card .opp-stage-tag.hot {
+  background: #FDECEC;
+  color: #E54848;
+}
+.opportunity-card .opp-stage-tag.warm {
+  background: #FFF4E0;
+  color: #E8920A;
+}
+.opportunity-card .opp-stage-tag.verified {
+  background: #E4F7EC;
+  color: #048C47;
+}
+.opportunity-card__summary {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #555555;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.opportunity-card__heat {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 11px;
+  color: #B0B0B0;
+}
+.opportunity-card__heat-item--buy {
+  color: #7A7A7A;
+}
+.opportunity-card__heat-item--share {
+  color: #048C47;
+  font-weight: 600;
 }
 .opportunity-card__footer {
   display: flex;

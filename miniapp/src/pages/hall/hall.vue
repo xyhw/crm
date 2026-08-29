@@ -55,21 +55,26 @@
           <view class="cat-badge">{{ CATEGORIES[item.categoryId] }}</view>
           <view class="card-info">
             <view class="card-title">
-              <text v-if="item.isPurchased" class="purchased-tag">已解锁</text>
+              <text v-if="item.isPurchased" class="purchased-tag">已购买</text>
               <text class="title-text">{{ item.title }}</text>
             </view>
             <view class="card-meta">
               <text class="meta-text">{{ item.hotelName || item.brand || '未知品牌' }} · {{ item.city || '未知城市' }}</text>
-              <text v-if="item.stage" class="stage-tag">{{ stageLabel(item.stage) }}</text>
+              <text v-if="item.stage" class="stage-tag" :class="stageTone(item.stage)">{{ stageLabel(item.stage) }}</text>
             </view>
           </view>
+        </view>
+        <view v-if="item.descriptionPublic" class="card-summary">{{ item.descriptionPublic }}</view>
+        <view class="heat-bar">
+          <text class="heat-item heat-buy">{{ item.purchaseCount || 0 }}人已购</text>
+          <text v-if="(item.totalShares || 0) > 0" class="heat-item heat-share">{{ item.totalShares }}条真实进度</text>
+          <text class="heat-item">{{ item.viewCount || 0 }}次浏览</text>
         </view>
         <view class="card-footer">
           <view class="card-price">
             <text>{{ item.price }} 积分</text>
           </view>
           <view class="card-stats">
-            <text class="buy-count">{{ item.purchaseCount || 0 }}人已购</text>
             <text class="card-time">{{ timeAgo(item.createdAt) }}</text>
           </view>
         </view>
@@ -84,7 +89,7 @@
 import { ref, computed } from 'vue';
 import { onLoad, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app';
 import { api } from '@/api/index';
-import { SUPPLIER_CATEGORIES, stageLabel, timeAgo } from '@/common/constants';
+import { SUPPLIER_CATEGORIES, stageLabel, stageTone, timeAgo } from '@/common/constants';
 
 const CATEGORIES = {};
 
@@ -323,17 +328,64 @@ onReachBottom(() => {
 .stage-tag {
   margin-left: 12rpx;
   font-size: 20rpx;
-  color: #048C47;
-  background: #E4F7EC;
+  color: #7A7A7A;
+  background: #F2F4F5;
   border-radius: 8rpx;
   padding: 2rpx 10rpx;
+}
+
+.stage-tag.hot {
+  color: #E54848;
+  background: #FDECEC;
+}
+
+.stage-tag.warm {
+  color: #E8920A;
+  background: #FFF4E0;
+}
+
+.stage-tag.verified {
+  color: #048C47;
+  background: #E4F7EC;
+}
+
+.card-summary {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #555555;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.heat-bar {
+  margin-top: 12rpx;
+  display: flex;
+  align-items: center;
+  font-size: 22rpx;
+  color: #B0B0B0;
+}
+
+.heat-item {
+  margin-right: 16rpx;
+}
+
+.heat-buy {
+  color: #7A7A7A;
+}
+
+.heat-share {
+  color: #048C47;
+  font-weight: 600;
 }
 
 .card-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 20rpx;
+  margin-top: 16rpx;
 }
 
 .card-price {
@@ -345,12 +397,6 @@ onReachBottom(() => {
 .card-stats {
   display: flex;
   align-items: center;
-}
-
-.buy-count {
-  font-size: 24rpx;
-  color: #B0B0B0;
-  margin-right: 16rpx;
 }
 
 .card-time {
