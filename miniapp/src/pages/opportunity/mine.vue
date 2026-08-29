@@ -80,7 +80,7 @@ async function load() {
 }
 
 function loadMore() {
-  if (!loading && hasMore) {
+  if (!loading.value && hasMore.value) {
     loading.value = true;
     fetchList(page.value + 1, false);
   }

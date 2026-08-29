@@ -194,6 +194,13 @@ async function reload() {
   await fetchList(1, true);
 }
 
+function loadMore() {
+  if (!loading.value && hasMore.value) {
+    loading.value = true;
+    fetchList(page.value + 1, false);
+  }
+}
+
 function selectMode(value) {
   if (mode.value === value) return;
   mode.value = value;
