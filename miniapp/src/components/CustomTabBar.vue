@@ -51,7 +51,7 @@ function switchTab(path) {
   height: 50px;
 }
 .tabbar-label {
-  font-size: 11px;
+  font-size: 14px;
   color: #7A7A7A;
 }
 .tabbar-item.active .tabbar-label {
