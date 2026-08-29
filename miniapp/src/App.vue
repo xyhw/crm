@@ -59,6 +59,6 @@ page {
 
 /* 底部导航栏文字放大 */
 .uni-tabbar .uni-tabbar__label {
-  font-size: 12px !important;
+  font-size: 14px !important;
 }
 </style>
