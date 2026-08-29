@@ -56,7 +56,7 @@ router.get('/', optionalAuth, setCache(300, { staleWhileRevalidate: 600 }), asyn
            )`,
           [req.userId]
         );
-        currentUserRank = rank[0]?.rank;
+        currentUserRank = rank?.rank;
       }
     }
 

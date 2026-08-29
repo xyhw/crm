@@ -64,7 +64,7 @@ router.put('/follow-up-shares/:id', async (req, res) => {
       const [rewardConfig] = await query(
         "SELECT config_value FROM system_configs WHERE config_key = 'share_reward_points'"
       );
-      const rewardPoints = parseInt(rewardConfig[0]?.config_value || '2');
+      const rewardPoints = parseInt(rewardConfig?.config_value || '2');
       
       if (rewardPoints > 0) {
         await transaction(async (conn) => {
