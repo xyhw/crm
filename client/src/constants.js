@@ -49,7 +49,7 @@ export const FOLLOW_UP_STATUS_META = {
   interested: { label: '意向明确', color: '#048C47', bg: '#E4F7EC' },
   quoting: { label: '报价中', color: '#E8920A', bg: '#FFF4E0' },
   negotiating: { label: '谈判中', color: '#E54848', bg: '#FDECEC' },
-  closed: { label: '成交', color: '#048C47', bg: '#E4F7EC' },
+  closed: { label: '已成交', color: '#048C47', bg: '#E4F7EC' },
   abandoned: { label: '已放弃', color: '#7A7A7A', bg: '#F2F4F5' },
 };
 
