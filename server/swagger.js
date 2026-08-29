@@ -88,7 +88,7 @@ const options = {
       { name: '后台-积分管理', description: '积分流水' },
       { name: '后台-等级配置', description: '会员等级规则配置' },
       { name: '后台-系统配置', description: '系统参数配置' },
-      { name: '后台-审核', description: '共享摘要审核' },
+      { name: '后台-审核', description: '进度分享审核' },
       { name: '后台-Banner', description: 'Banner CRUD' },
       { name: '后台-通知', description: '系统通知推送' },
       { name: '后台-统计', description: '数据统计看板' },

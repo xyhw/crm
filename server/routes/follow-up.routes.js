@@ -75,7 +75,7 @@ router.get('/:crmOpportunityId', authRequired, async (req, res) => {
   }
 });
 
-// 分享摘要
+// 共享进度
 router.post('/share', authRequired, async (req, res) => {
   try {
     const { followUpId, opportunityId, status, summary } = req.body || {};
@@ -90,7 +90,7 @@ router.post('/share', authRequired, async (req, res) => {
       [req.userId, opportunityId]
     );
     if (!purchase) {
-      return res.json({ code: 400, message: '只有购买者才能分享摘要' });
+      return res.json({ code: 400, message: '只有购买者才能共享进度' });
     }
 
     // 检查用户等级，决定是否免审
@@ -125,7 +125,7 @@ router.post('/share', authRequired, async (req, res) => {
           );
           await conn.execute(
             `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-             VALUES (?, ?, ?, 'reward', '分享摘要奖励')`,
+             VALUES (?, ?, ?, 'reward', '进度分享奖励')`,
             [req.userId, rewardPoints, account[0].balance]
           );
         });
@@ -158,12 +158,12 @@ router.post('/helpful', authRequired, async (req, res) => {
       [shareId]
     );
     if (!share) {
-      return res.json({ code: 404, message: '摘要不存在或未审核通过' });
+      return res.json({ code: 404, message: '进度分享不存在或未审核通过' });
     }
 
     // 不能给自己标记有用
     if (share.user_id === req.userId) {
-      return res.json({ code: 403, message: '不能给自己的摘要标记有用' });
+      return res.json({ code: 403, message: '不能给自己的进度分享标记有用' });
     }
 
     // 标记者必须购买过同一条商机
@@ -214,19 +214,19 @@ router.post('/helpful', authRequired, async (req, res) => {
         );
         await conn.execute(
           `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-           VALUES (?, ?, ?, 'reward', '摘要被标记有用')`,
+           VALUES (?, ?, ?, 'reward', '进度分享被标记有用')`,
           [share.user_id, rewardPoints, account[0].balance]
         );
       }
 
-      // 信用分 +1（需求 5.7：共享摘要被标记有用）
+      // 信用分 +1（需求 5.7：共享进度分享被标记有用）
       await conn.execute(
         'UPDATE users SET credit_score = LEAST(100, credit_score + 1) WHERE id = ?',
         [share.user_id]
       );
       await conn.execute(
         `INSERT INTO user_credits (user_id, credit_score, change_amount, change_reason, source_type)
-         SELECT ?, credit_score, 1, '共享摘要被标记有用', 'helpful_mark' FROM users WHERE id = ?`,
+         SELECT ?, credit_score, 1, '共享进度分享被标记有用', 'helpful_mark' FROM users WHERE id = ?`,
         [share.user_id, share.user_id]
       );
     });
@@ -253,7 +253,7 @@ router.post('/report', authRequired, async (req, res) => {
       [shareId]
     );
     if (!share) {
-      return res.json({ code: 404, message: '摘要不存在或未审核通过' });
+      return res.json({ code: 404, message: '进度分享不存在或未审核通过' });
     }
 
     // 不能举报自己

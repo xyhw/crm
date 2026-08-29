@@ -214,7 +214,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
       [opportunity.id]
     );
 
-    // 获取市场情报（已审核的共享摘要，按点赞数排序做进度榜）
+    // 获取市场情报（已审核的进度分享，按点赞数排序做进度榜）
     const shares = await query(
       `SELECT s.id, s.status, s.summary, s.helpful_count, s.report_count, s.created_at, s.user_id, u.nickname
        FROM follow_up_shares s

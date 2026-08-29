@@ -17,7 +17,7 @@ const menuItems = [
   { key: '/users', icon: <UserOutlined />, label: '用户管理' },
   { key: '/orders', icon: <OrderedListOutlined />, label: '订单管理' },
   { key: '/points', icon: <CreditCardOutlined />, label: '积分管理' },
-  { key: '/audit', icon: <AuditOutlined />, label: '摘要审核' },
+  { key: '/audit', icon: <AuditOutlined />, label: '进度审核' },
   { key: '/levels', icon: <SafetyCertificateOutlined />, label: '等级配置' },
   { key: '/configs', icon: <SettingOutlined />, label: '系统配置' },
   { key: '/configs/agreements', icon: <FileSearchOutlined />, label: '协议内容' },

@@ -212,7 +212,7 @@ export async function initDatabase() {
       FOREIGN KEY (user_id) REFERENCES users(id)
     ) ENGINE=InnoDB`,
 
-    // 共享摘要表
+    // 进度分享表
     `CREATE TABLE IF NOT EXISTS follow_up_shares (
       id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
       user_id BIGINT UNSIGNED NOT NULL,

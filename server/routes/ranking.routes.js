@@ -27,7 +27,7 @@ router.get('/', optionalAuth, setCache(300, { staleWhileRevalidate: 600 }), asyn
         [Number(pageSize), offset]
       );
     } else if (type === 'contributor') {
-      // 贡献榜：按共享摘要被标记有用数排序
+      // 贡献榜：按进度分享被标记有用数排序
       list = await query(
         `SELECT u.id, u.nickname, u.avatar, SUM(s.helpful_count) as helpful_count
          FROM users u

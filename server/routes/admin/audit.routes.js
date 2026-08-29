@@ -3,7 +3,7 @@ import { query, queryOne, update, transaction } from '../../db.js';
 
 const router = Router();
 
-// 获取待审核摘要列表
+// 获取待审核进度分享列表
 router.get('/follow-up-shares', async (req, res) => {
   try {
     const { status = 'pending', page = 1, pageSize = 20 } = req.query;
@@ -41,7 +41,7 @@ router.get('/follow-up-shares', async (req, res) => {
   }
 });
 
-// 审核摘要
+// 审核进度分享
 router.put('/follow-up-shares/:id', async (req, res) => {
   try {
     const { status, reason } = req.body || {};
@@ -51,7 +51,7 @@ router.put('/follow-up-shares/:id', async (req, res) => {
 
     const share = await queryOne('SELECT * FROM follow_up_shares WHERE id = ?', [req.params.id]);
     if (!share) {
-      return res.json({ code: 404, message: '摘要不存在' });
+      return res.json({ code: 404, message: '进度分享不存在' });
     }
 
     await update('follow_up_shares', {
@@ -78,7 +78,7 @@ router.put('/follow-up-shares/:id', async (req, res) => {
           );
           await conn.execute(
             `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-             VALUES (?, ?, ?, 'reward', '分享摘要审核通过奖励')`,
+             VALUES (?, ?, ?, 'reward', '进度分享审核通过奖励')`,
             [share.user_id, rewardPoints, account[0].balance]
           );
         });
