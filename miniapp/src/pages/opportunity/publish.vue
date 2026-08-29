@@ -160,6 +160,7 @@
 
 <script setup>
 import { ref, reactive } from 'vue';
+import { onLoad } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/user';
 import { api } from '@/api/index';
 import { getToken } from '@/common/storage';
@@ -176,6 +177,7 @@ const tagInput = ref('');
 const submitting = ref(false);
 const uploading = ref(false);
 const similarList = ref(null);
+const editId = ref('');
 
 const defaultCategory = Number(userStore.user?.category) || null;
 const form = reactive({
@@ -193,6 +195,32 @@ const form = reactive({
   descriptionFull: '',
   tags: [],
   files: [],
+});
+
+onLoad((options) => {
+  if (options.edit) {
+    editId.value = options.edit;
+    api.opportunity(options.edit).then((detail) => {
+      let parsedFiles = [];
+      try {
+        const att = detail.attachments ? JSON.parse(detail.attachments) : [];
+        parsedFiles = Array.isArray(att) ? att.map((url) => ({ url })) : [];
+      } catch {}
+      form.title = detail.title || '';
+      form.categoryId = detail.categoryId || detail.category_id || null;
+      form.categoryName = detail.categoryId || detail.category_id ? SUPPLIER_CATEGORIES.find((c) => c.value === (detail.categoryId || detail.category_id))?.label || '' : '';
+      form.brand = detail.brand || '';
+      form.city = detail.city || '';
+      form.address = detail.address || '';
+      form.contactName = detail.contactName || detail.contact_name || '';
+      form.contactPhone = detail.contactPhone || detail.contact_phone || '';
+      form.wechat = detail.wechat || '';
+      form.price = detail.price || '';
+      form.stage = detail.stage || '';
+      form.descriptionFull = detail.descriptionFull || detail.description_full || '';
+      form.files = parsedFiles;
+    }).catch((e) => uni.showToast({ title: e.message, icon: 'none' }));
+  }
 });
 
 function validate() {
@@ -304,7 +332,7 @@ async function handlePublish() {
 
   submitting.value = true;
   try {
-    const data = await api.createOpportunity({
+    const payload = {
       title: form.title.trim(),
       categoryId: form.categoryId,
       brand: form.brand.trim(),
@@ -318,16 +346,39 @@ async function handlePublish() {
       descriptionFull: form.descriptionFull.trim(),
       tags: form.tags,
       attachments: form.files.map((f) => f.url),
-    });
-
-    if (data?.similarOpportunities?.length) {
-      similarList.value = data.similarOpportunities;
-      toast('存在相似商机，请检查');
-    } else {
-      uni.showToast({ title: '发布成功', icon: 'success' });
+    };
+    if (editId.value) {
+      await api.updateOpportunity(editId.value, payload);
+      uni.showToast({ title: '已更新', icon: 'success' });
       setTimeout(() => {
-        uni.switchTab({ url: '/pages/hall/hall' });
-      }, 800);
+        uni.navigateBack();
+      }, 500);
+    } else {
+      const data = await api.createOpportunity({
+        title: form.title.trim(),
+        categoryId: form.categoryId,
+        brand: form.brand.trim(),
+        city: form.city.trim(),
+        address: form.address.trim(),
+        contactName: form.contactName.trim(),
+        contactPhone: form.contactPhone.trim(),
+        wechat: form.wechat.trim(),
+        price: Number(form.price),
+        stage: form.stage.trim(),
+        descriptionFull: form.descriptionFull.trim(),
+        tags: form.tags,
+        attachments: form.files.map((f) => f.url),
+      });
+
+      if (data?.similarOpportunities?.length) {
+        similarList.value = data.similarOpportunities;
+        toast('存在相似商机，请检查');
+      } else {
+        uni.showToast({ title: '发布成功', icon: 'success' });
+        setTimeout(() => {
+          uni.switchTab({ url: '/pages/hall/hall' });
+        }, 800);
+      }
     }
   } catch (e) {
     toast(e.message || '发布失败');

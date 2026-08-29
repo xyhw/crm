@@ -97,6 +97,7 @@ export default function Profile() {
       {/* 功能列表 */}
       <CellGroup inset>
         <Cell title="积分中心" isLink onClick={() => navigate('/points')} icon={<Icon name="gold-coin-o" size={18} />} />
+        <Cell title="我发布的商机" isLink onClick={() => navigate('/my-opportunities')} icon={<Icon name="notes-o" size={18} />} />
         <Cell title="会员等级" isLink onClick={() => navigate('/member-level')} icon={<Icon name="award-o" size={18} />} />
         <Cell title="信用分" isLink onClick={() => navigate('/credit')} icon={<Icon name="shield-o" size={18} />} />
         <Cell title="邀请好友" isLink onClick={() => navigate('/invite')} icon={<Icon name="friends-o" size={18} />} />

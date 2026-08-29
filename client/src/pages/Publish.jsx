@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Field, CellGroup, Button, Toast, Picker, Popup, Tag, Steps } from 'react-vant';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
@@ -10,6 +10,8 @@ import Uploader from '../components/Uploader';
 
 export default function Publish() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get('edit');
   const { user } = useAuth();
   // 按用户供应商类型预选分类，减少一次手动选择
   const defaultCategory = Number(user?.category) || null;
@@ -34,6 +36,33 @@ export default function Publish() {
   const [submitting, setSubmitting] = useState(false);
   const [similarList, setSimilarList] = useState(null);
   const [step, setStep] = useState(1);
+
+  useEffect(() => {
+    if (!editId) return;
+    api.opportunity(editId).then((detail) => {
+      let parsedFiles = [];
+      try {
+        const att = detail.attachments ? JSON.parse(detail.attachments) : [];
+        parsedFiles = Array.isArray(att) ? att.map((url) => ({ url })) : [];
+      } catch {}
+      setForm({
+        title: detail.title || '',
+        categoryId: detail.categoryId || detail.category_id || null,
+        categoryName: detail.categoryId || detail.category_id ? findCategoryLabel(detail.categoryId || detail.category_id) : '',
+        brand: detail.brand || '',
+        city: detail.city || '',
+        address: detail.address || '',
+        contactName: detail.contactName || detail.contact_name || '',
+        contactPhone: detail.contactPhone || detail.contact_phone || '',
+        wechat: detail.wechat || '',
+        price: detail.price || '',
+        stage: detail.stage || '',
+        descriptionFull: detail.descriptionFull || detail.description_full || '',
+        tags: [],
+        files: parsedFiles,
+      });
+    }).catch((e) => Toast.fail(e.message));
+  }, [editId]);
 
   const updateForm = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
@@ -60,7 +89,7 @@ export default function Publish() {
 
     setSubmitting(true);
     try {
-      const data = await api.createOpportunity({
+      const payload = {
         title: form.title.trim(),
         categoryId: form.categoryId,
         brand: form.brand.trim(),
@@ -74,14 +103,20 @@ export default function Publish() {
         descriptionFull: form.descriptionFull.trim(),
         tags: form.tags,
         attachments: form.files.map((f) => f.url),
-      });
-
-      if (data?.similarOpportunities?.length) {
-        setSimilarList(data.similarOpportunities);
-        Toast.info('存在相似商机，请检查');
+      };
+      if (editId) {
+        await api.updateOpportunity(editId, payload);
+        Toast.success('已更新');
+        navigate('/my-opportunities');
       } else {
-        Toast.success('发布成功');
-        navigate('/');
+        const data = await api.createOpportunity(payload);
+        if (data?.similarOpportunities?.length) {
+          setSimilarList(data.similarOpportunities);
+          Toast.info('存在相似商机，请检查');
+        } else {
+          Toast.success('发布成功');
+          navigate('/');
+        }
       }
     } catch (e) {
       Toast.fail(e.message);
@@ -106,7 +141,7 @@ export default function Publish() {
 
   return (
     <div className="page">
-      <PageNavBar title="发布商机" onClickLeft={() => navigate(-1)} />
+      <PageNavBar title={editId ? '编辑商机' : '发布商机'} onClickLeft={() => navigate(-1)} />
 
       <Steps active={step - 1} className="publish-steps">
         <Steps.Item>基本信息</Steps.Item>

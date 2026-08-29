@@ -10,6 +10,7 @@ const Home = lazy(() => import('./pages/Home'));
 const Hall = lazy(() => import('./pages/Hall'));
 const OpportunityDetail = lazy(() => import('./pages/OpportunityDetail'));
 const Publish = lazy(() => import('./pages/Publish'));
+const MyOpportunities = lazy(() => import('./pages/MyOpportunities'));
 const Profile = lazy(() => import('./pages/Profile'));
 const ProfileEdit = lazy(() => import('./pages/ProfileEdit'));
 const ChangePassword = lazy(() => import('./pages/ChangePassword'));
@@ -53,6 +54,7 @@ function AppRoutes() {
         <Route path="/opportunities" element={<RequireAuth><Suspense fallback={<PageLoading />}><Hall /></Suspense></RequireAuth>} />
         <Route path="/opportunity/:id" element={<RequireAuth><Suspense fallback={<PageLoading />}><OpportunityDetail /></Suspense></RequireAuth>} />
         <Route path="/publish" element={<RequireAuth><Suspense fallback={<PageLoading />}><Publish /></Suspense></RequireAuth>} />
+        <Route path="/my-opportunities" element={<RequireAuth><Suspense fallback={<PageLoading />}><MyOpportunities /></Suspense></RequireAuth>} />
         <Route path="/crm" element={<RequireAuth><Suspense fallback={<PageLoading />}><CRM /></Suspense></RequireAuth>} />
         <Route path="/crm/add" element={<RequireAuth><Suspense fallback={<PageLoading />}><CRMAdd /></Suspense></RequireAuth>} />
         <Route path="/crm/:id" element={<RequireAuth><Suspense fallback={<PageLoading />}><CRMDetail /></Suspense></RequireAuth>} />

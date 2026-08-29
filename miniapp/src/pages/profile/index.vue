@@ -127,6 +127,7 @@ const funcList = [
   { title: '通知中心', action: 'notify' },
   { title: '提醒中心', action: 'reminder' },
   { title: '我的订单', action: 'orders' },
+  { title: '我发布的商机', action: 'myOpportunities' },
 ];
 
 let shown = false;
@@ -159,6 +160,7 @@ function onFunc(item) {
     notify: '/pages/community/notify',
     reminder: '/pages/community/reminder',
     orders: '/pages/order/list',
+    myOpportunities: '/pages/opportunity/mine',
   };
   const url = map[item.action];
   if (url) uni.navigateTo({ url });

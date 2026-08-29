@@ -20,6 +20,8 @@ export const api = {
   opportunities: (params) => request('/opportunities' + buildQuery(params)),
   opportunity: (id) => request('/opportunities/' + id),
   createOpportunity: (data) => request('/opportunities', { method: 'POST', body: data }),
+  updateOpportunity: (id, data) => request('/opportunities/' + id, { method: 'PUT', body: data }),
+  myOpportunities: (params) => request('/opportunities' + buildQuery({ ...params, mine: '1' })),
   markInvalid: (id, data) => request('/opportunities/' + id + '/invalid-mark', { method: 'POST', body: data }),
 
   // 购买

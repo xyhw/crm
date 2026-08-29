@@ -27,6 +27,13 @@
 			}
 		},
 		{
+			"path": "pages/opportunity/mine",
+			"style": {
+				"navigationBarTitleText": "我发布的商机",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
 			"path": "pages/crm/index",
 			"style": {
 				"navigationBarTitleText": "我的CRM",

@@ -1804,6 +1804,63 @@ body {
   height: 20px;
 }
 
+/* 我的商机 */
+.my-opp-list {
+  padding: 12px;
+}
+.my-opp-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.my-opp-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.my-opp-card__time {
+  font-size: 12px;
+  color: #B0B0B0;
+}
+.my-opp-card__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1A1A1A;
+  margin-bottom: 6px;
+}
+.my-opp-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #7A7A7A;
+  margin-bottom: 8px;
+}
+.my-opp-card__stats {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  color: #555;
+  margin-bottom: 10px;
+}
+.my-opp-card__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+.my-opp-card__locked {
+  font-size: 12px;
+  color: #B0B0B0;
+}
+.empty-block {
+  padding: 60px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
 /* 案例卡片 */
 .case-card {
   min-width: 140px;
