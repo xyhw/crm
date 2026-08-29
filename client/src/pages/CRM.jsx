@@ -5,8 +5,14 @@ import { Plus } from '@react-vant/icons';
 import { api } from '../api';
 import PageNavBar from '../components/PageNavBar';
 import Icon from '../components/Icon';
-import { crmStatusMeta, timeAgo } from '../constants';
+import { crmStatusMeta } from '../constants';
 import { resolveCategoryIcon } from '../utils/category';
+
+const OPP_STATUS_META = {
+  active: { label: '销售中', tone: 'verified' },
+  inactive: { label: '已下架', tone: 'default' },
+  invalid: { label: '已失效', tone: 'hot' },
+};
 
 export default function CRM() {
   const navigate = useNavigate();
@@ -14,13 +20,16 @@ export default function CRM() {
   const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState('');
+  const [mode, setMode] = useState('crm');
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const debounceRef = useRef(null);
 
   const fetchList = async (p = 1, reset = false) => {
     try {
-      const res = await api.crmList({ status, keyword, page: p, pageSize: 10 });
+      const res = mode === 'mine'
+        ? await api.myOpportunities({ keyword: keyword || undefined, page: p, pageSize: 10 })
+        : await api.crmList({ status, keyword, page: p, pageSize: 10 });
       const newList = res.list || [];
       setList(reset ? newList : (prev) => [...prev, ...newList]);
       setHasMore(newList.length === 10);
@@ -39,13 +48,18 @@ export default function CRM() {
       fetchList(1, true);
     }, keyword ? 350 : 0);
     return () => clearTimeout(debounceRef.current);
-  }, [status, keyword]);
+  }, [status, keyword, mode]);
 
   const loadMore = () => {
     if (!loading && hasMore) {
       fetchList(page + 1);
     }
   };
+
+  const modeTabs = [
+    { title: '手动线索', name: 'crm' },
+    { title: '我发布的', name: 'mine' },
+  ];
 
   const statusTabs = [
     { title: '全部', name: '' },
@@ -68,21 +82,59 @@ export default function CRM() {
         className="search-bar"
       />
 
-      {/* 状态筛选 */}
-      <Tabs value={status} onChange={setStatus} shrink>
-        {statusTabs.map((tab) => (
+      {/* 数据源切换 */}
+      <Tabs value={mode} onChange={setMode} shrink>
+        {modeTabs.map((tab) => (
           <Tabs.TabPane key={tab.name} title={tab.title} name={tab.name} />
         ))}
       </Tabs>
+
+      {/* 状态筛选（仅手动线索模式） */}
+      {mode === 'crm' && (
+        <Tabs value={status} onChange={setStatus} shrink>
+          {statusTabs.map((tab) => (
+            <Tabs.TabPane key={tab.name} title={tab.title} name={tab.name} />
+          ))}
+        </Tabs>
+      )}
 
       {/* 列表 */}
       <div className="crm-list">
         {loading && list.length === 0 ? (
           <div className="empty-tip">加载中...</div>
         ) : list.length === 0 ? (
-          <Empty description="暂无CRM商机" className="empty-top" />
+          <Empty description={mode === 'mine' ? '还没有发布过商机' : '暂无CRM商机'} className="empty-top" />
         ) : (
           list.map((item) => {
+            if (mode === 'mine') {
+              const statusMeta = OPP_STATUS_META[item.status] || OPP_STATUS_META.active;
+              const editable = item.status !== 'invalid' && (item.purchaseCount || 0) === 0;
+              return (
+                <div className="crm-card pressable" key={item.id} onClick={() => navigate(`/opportunity/${item.id}`)}>
+                  <div className="crm-card__header">
+                    <div className="cat-icon cat-icon--sm">
+                      <Icon name={resolveCategoryIcon(item)} size={20} />
+                    </div>
+                    <div className="crm-card__title">{item.title}</div>
+                  </div>
+                  <div className="crm-card__info">
+                    <span>{item.city || '未知城市'}</span>
+                    <span>{item.hotelName || item.brand || '未知酒店'}</span>
+                  </div>
+                  <div className="crm-card__footer">
+                    <Tag color={statusMeta.tone === 'hot' ? '#E54848' : statusMeta.tone === 'verified' ? '#048C47' : '#7A7A7A'}>{statusMeta.label}</Tag>
+                    <span className="crm-card__time">{item.purchaseCount || 0} 人已购 · {item.viewCount || 0} 浏览</span>
+                  </div>
+                  <div className="crm-card__actions">
+                    {editable ? (
+                      <Button size="small" type="primary" plain onClick={(e) => { e.stopPropagation(); navigate(`/publish?edit=${item.id}`); }}>编辑</Button>
+                    ) : (
+                      <span className="crm-card__locked">{item.status === 'invalid' ? '已被判无效' : '已有购买者'}</span>
+                    )}
+                  </div>
+                </div>
+              );
+            }
             const statusMeta = crmStatusMeta(item.status);
             return (
               <div className="crm-card pressable" key={item.id} onClick={() => navigate(`/crm/${item.id}`)}>
@@ -119,14 +171,16 @@ export default function CRM() {
         </div>
       )}
 
-      {/* 手动录入按钮 */}
-      <Button
-        type="primary"
-        round
-        icon={<Plus />}
-        className="crm-fab"
-        onClick={() => navigate('/crm/add')}
-      />
+      {/* 手动录入按钮（仅手动线索模式） */}
+      {mode === 'crm' && (
+        <Button
+          type="primary"
+          round
+          icon={<Plus />}
+          className="crm-fab"
+          onClick={() => navigate('/crm/add')}
+        />
+      )}
     </div>
   );
 }

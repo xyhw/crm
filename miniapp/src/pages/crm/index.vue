@@ -12,8 +12,23 @@
       />
     </view>
 
-    <!-- 状态筛选 -->
+    <!-- 数据源切换 -->
     <scroll-view scroll-x class="status-scroll">
+      <view class="status-tabs">
+        <view
+          v-for="tab in modeTabs"
+          :key="tab.name"
+          class="status-tab"
+          :class="{ active: mode === tab.name }"
+          @click="selectMode(tab.name)"
+        >
+          {{ tab.title }}
+        </view>
+      </view>
+    </scroll-view>
+
+    <!-- 状态筛选（仅手动线索模式） -->
+    <scroll-view v-if="mode === 'crm'" scroll-x class="status-scroll">
       <view class="status-tabs">
         <view
           v-for="tab in statusTabs"
@@ -30,38 +45,71 @@
     <!-- 列表 -->
     <view class="list-wrap">
       <view v-if="loading && list.length === 0" class="empty">加载中...</view>
-      <view v-else-if="list.length === 0" class="empty">暂无CRM商机</view>
-      <view
-        v-for="item in list"
-        :key="item.id"
-        class="crm-card"
-        @click="goDetail(item.id)"
-      >
-        <view class="crm-card-header">
-          <view class="cat-badge">{{ item.category_icon || 'CRM' }}</view>
-          <view class="crm-card-title">{{ item.title || '手动录入商机' }}</view>
+      <view v-else-if="list.length === 0" class="empty">{{ mode === 'mine' ? '还没有发布过商机' : '暂无CRM商机' }}</view>
+
+      <!-- 我发布的商机卡片 -->
+      <template v-else-if="mode === 'mine'">
+        <view
+          v-for="item in list"
+          :key="item.id"
+          class="crm-card"
+          @click="goOppDetail(item.id)"
+        >
+          <view class="crm-card-header">
+            <view class="cat-badge">{{ item.category_icon || '商机' }}</view>
+            <view class="crm-card-title">{{ item.title }}</view>
+          </view>
+          <view class="crm-card-info">
+            <text>{{ item.city || '未知城市' }}</text>
+            <text class="sep">·</text>
+            <text>{{ item.hotelName || item.brand || '未知酒店' }}</text>
+          </view>
+          <view class="crm-card-footer">
+            <text class="status-tag" :style="oppStatusStyle(item.status)">{{ oppStatusLabel(item.status) }}</text>
+            <text class="follow-count">{{ item.purchaseCount || 0 }} 人已购 · {{ item.viewCount || 0 }} 浏览</text>
+          </view>
+          <view class="crm-card-actions">
+            <view v-if="editableOpp(item)" class="edit-btn" @click.stop="goEditOpp(item.id)">编辑</view>
+            <text v-else class="locked-text">{{ item.status === 'invalid' ? '已被判无效' : '已有购买者' }}</text>
+          </view>
         </view>
-        <view class="crm-card-info">
-          <text>{{ item.city || '未知城市' }}</text>
-          <text class="sep">·</text>
-          <text>{{ item.hotel_name || '未知酒店' }}</text>
-          <text class="sep">·</text>
-          <text>{{ item.category_name || '其他' }}</text>
+      </template>
+
+      <!-- 手动线索卡片 -->
+      <template v-else>
+        <view
+          v-for="item in list"
+          :key="item.id"
+          class="crm-card"
+          @click="goCrmDetail(item.id)"
+        >
+          <view class="crm-card-header">
+            <view class="cat-badge">{{ item.category_icon || 'CRM' }}</view>
+            <view class="crm-card-title">{{ item.title || '手动录入商机' }}</view>
+          </view>
+          <view class="crm-card-info">
+            <text>{{ item.city || '未知城市' }}</text>
+            <text class="sep">·</text>
+            <text>{{ item.hotel_name || '未知酒店' }}</text>
+            <text class="sep">·</text>
+            <text>{{ item.category_name || '其他' }}</text>
+          </view>
+          <view class="crm-card-footer">
+            <text class="status-tag" :style="statusMetaOf(item.status)">{{ crmStatusLabel(item.status) }}</text>
+            <text class="follow-count">{{ item.follow_up_count || 0 }} 次跟进</text>
+          </view>
+          <view v-if="item.next_follow_date" class="crm-card-remind">
+            下次跟进：{{ formatDate(item.next_follow_date) }}
+          </view>
         </view>
-        <view class="crm-card-footer">
-          <text class="status-tag" :style="statusMetaOf(item.status)">{{ crmStatusLabel(item.status) }}</text>
-          <text class="follow-count">{{ item.follow_up_count || 0 }} 次跟进</text>
-        </view>
-        <view v-if="item.next_follow_date" class="crm-card-remind">
-          下次跟进：{{ formatDate(item.next_follow_date) }}
-        </view>
-      </view>
+      </template>
+
       <view v-if="!loading && hasMore && list.length > 0" class="load-more" @click="loadMore">加载更多</view>
       <view v-if="!loading && !hasMore && list.length > 0" class="load-more">已经到底了</view>
     </view>
 
-    <!-- 手动录入按钮 -->
-    <view class="fab" @click="goAdd">
+    <!-- 手动录入按钮（仅手动线索模式） -->
+    <view v-if="mode === 'crm'" class="fab" @click="goAdd">
       <text class="fab-plus">+</text>
     </view>
   </view>
@@ -71,7 +119,7 @@
 import { ref } from 'vue';
 import { onLoad, onUnload, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app';
 import { api } from '@/api/index';
-import { CRM_STATUS_META, crmStatusLabel, formatDate } from '@/common/constants';
+import { CRM_STATUS_META, crmStatusLabel, formatDate, opportunityStatusLabel } from '@/common/constants';
 
 let debounceTimer = null;
 
@@ -81,6 +129,12 @@ const keyword = ref('');
 const status = ref('');
 const page = ref(1);
 const hasMore = ref(true);
+const mode = ref('crm');
+
+const modeTabs = [
+  { title: '手动线索', name: 'crm' },
+  { title: '我发布的', name: 'mine' },
+];
 
 const statusTabs = [
   { title: '全部', name: '' },
@@ -90,19 +144,40 @@ const statusTabs = [
   { title: '已放弃', name: 'abandoned' },
 ];
 
+const OPP_STATUS_META = {
+  active: { color: '#048C47', background: '#E4F7EC' },
+  inactive: { color: '#7A7A7A', background: '#F2F4F5' },
+  invalid: { color: '#E54848', background: '#FDECEC' },
+};
+
 function statusMetaOf(value) {
   const meta = CRM_STATUS_META[value] || CRM_STATUS_META.pending;
   return { color: meta.color, background: meta.bg };
 }
 
+function oppStatusLabel(value) {
+  return opportunityStatusLabel(value);
+}
+
+function oppStatusStyle(value) {
+  const meta = OPP_STATUS_META[value] || OPP_STATUS_META.active;
+  return { color: meta.color, background: meta.background };
+}
+
+function editableOpp(item) {
+  return item.status !== 'invalid' && (item.purchaseCount || 0) === 0;
+}
+
 async function fetchList(p = 1, reset = false) {
   try {
-    const res = await api.crmList({
-      status: status.value || undefined,
-      keyword: keyword.value || undefined,
-      page: p,
-      pageSize: 10,
-    });
+    const res = mode.value === 'mine'
+      ? await api.myOpportunities({ keyword: keyword.value || undefined, page: p, pageSize: 10 })
+      : await api.crmList({
+          status: status.value || undefined,
+          keyword: keyword.value || undefined,
+          page: p,
+          pageSize: 10,
+        });
     const newList = res.list || [];
     list.value = reset ? newList : [...list.value, ...newList];
     hasMore.value = newList.length === 10;
@@ -117,6 +192,13 @@ async function fetchList(p = 1, reset = false) {
 async function reload() {
   loading.value = true;
   await fetchList(1, true);
+}
+
+function selectMode(value) {
+  if (mode.value === value) return;
+  mode.value = value;
+  status.value = '';
+  reload();
 }
 
 function selectStatus(value) {
@@ -134,6 +216,22 @@ function onKeywordInput() {
   debounceTimer = setTimeout(() => {
     reload();
   }, keyword.value ? 350 : 0);
+}
+
+function goCrmDetail(id) {
+  uni.navigateTo({ url: `/pages/crm/detail?id=${id}` });
+}
+
+function goOppDetail(id) {
+  uni.navigateTo({ url: `/pages/opportunity/detail?id=${id}` });
+}
+
+function goEditOpp(id) {
+  uni.navigateTo({ url: `/pages/opportunity/publish?edit=${id}` });
+}
+
+function goAdd() {
+  uni.navigateTo({ url: '/pages/crm/add' });
 }
 
 onLoad(() => {
@@ -304,5 +402,24 @@ onReachBottom(() => {
   padding: 24rpx;
   color: #B0B0B0;
   font-size: 26rpx;
+}
+
+.crm-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12rpx;
+}
+
+.edit-btn {
+  padding: 8rpx 32rpx;
+  border-radius: 32rpx;
+  border: 1px solid #048C47;
+  color: #048C47;
+  font-size: 24rpx;
+}
+
+.locked-text {
+  font-size: 24rpx;
+  color: #B0B0B0;
 }
 </style>
