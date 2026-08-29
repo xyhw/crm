@@ -10,16 +10,22 @@ const TABS = [
   { path: '/profile', icon: <UserO width={22} height={22} />, name: '我的' },
 ];
 
+// 二级页面路径 -> 所属主 tab 高亮
+const ACTIVE_ALIAS = {
+  '/my-opportunities': '/profile',
+};
+
 export default function TabBar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const isTabPath = TABS.some((t) => t.path === location.pathname);
+  const activePath = ACTIVE_ALIAS[location.pathname] || location.pathname;
+  const isTabPath = TABS.some((t) => t.path === location.pathname) || Boolean(ACTIVE_ALIAS[location.pathname]);
   if (!isTabPath) return null;
 
   return (
     <Tabbar
-      value={location.pathname}
+      value={activePath}
       onChange={(path) => navigate(path)}
       safeAreaInsetBottom
     >

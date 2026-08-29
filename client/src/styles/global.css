@@ -1871,6 +1871,9 @@ body {
   align-items: center;
   gap: 16px;
 }
+.opp-pagination {
+  margin: 16px 0 8px;
+}
 
 /* 案例卡片 */
 .case-card {

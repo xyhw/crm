@@ -26,23 +26,39 @@
           <text v-else class="locked-text">{{ item.status === 'invalid' ? '已被判无效' : '已有购买者' }}</text>
         </view>
       </view>
-      <view v-if="hasMore" class="load-more" @click="loadMore">加载更多</view>
-      <view v-else-if="list.length > 0" class="load-more">已经到底了</view>
+
+      <!-- 固定分页导航 -->
+      <view v-if="pageCount > 1" class="pager">
+        <view class="pager-btn" :class="{ disabled: page <= 1 }" @click="goPage(page - 1)">上一页</view>
+        <view
+          v-for="p in pageItems"
+          :key="p"
+          class="pager-num"
+          :class="{ active: p === page }"
+          @click="goPage(p)"
+        >{{ p }}</view>
+        <view class="pager-btn" :class="{ disabled: page >= pageCount }" @click="goPage(page + 1)">下一页</view>
+      </view>
+      <view class="pager-total">共 {{ total }} 条 · {{ page }} / {{ pageCount }} 页</view>
     </view>
+
+    <!-- 底部主导航栏 -->
+    <CustomTabBar active-tab="我的" />
   </view>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { onPullDownRefresh, onShow, onReachBottom } from '@dcloudio/uni-app';
+import { ref, computed } from 'vue';
+import { onShow, onPullDownRefresh } from '@dcloudio/uni-app';
 import { api } from '@/api/index';
 import { stageLabel, stageTone } from '@/common/constants';
+import CustomTabBar from '@/components/CustomTabBar.vue';
 
 const list = ref([]);
 const loading = ref(false);
 const page = ref(1);
+const total = ref(0);
 const pageSize = 10;
-const hasMore = ref(true);
 
 const STATUS_META = {
   active: { label: '销售中', tone: 'verified' },
@@ -60,12 +76,32 @@ function editable(item) {
   return item.status !== 'invalid' && (item.purchaseCount || 0) === 0;
 }
 
-async function fetchList(p, reset) {
+const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize)));
+
+// 显示页码序列：最多 5 个，含省略
+const pageItems = computed(() => {
+  const totalPages = pageCount.value;
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  const current = page.value;
+  const pages = new Set([1, totalPages, current - 1, current, current + 1]);
+  const sorted = [...pages].filter((p) => p >= 1 && p <= totalPages).sort((a, b) => a - b);
+  const result = [];
+  let prev = 0;
+  for (const p of sorted) {
+    if (p - prev > 1) result.push('...');
+    result.push(p);
+    prev = p;
+  }
+  return result;
+});
+
+async function fetchList(p) {
   try {
     const res = await api.myOpportunities({ page: p, pageSize });
-    const newList = res.list || [];
-    list.value = reset ? newList : [...list.value, ...newList];
-    hasMore.value = newList.length === pageSize;
+    list.value = res.list || [];
+    total.value = res.total || 0;
     page.value = p;
   } catch (e) {
     uni.showToast({ title: e.message || '获取失败', icon: 'none' });
@@ -76,18 +112,16 @@ async function fetchList(p, reset) {
 
 async function load() {
   loading.value = true;
-  await fetchList(1, true);
+  await fetchList(1);
 }
 
-function loadMore() {
-  if (!loading.value && hasMore.value) {
-    loading.value = true;
-    fetchList(page.value + 1, false);
-  }
+function goPage(p) {
+  if (p < 1 || p > pageCount.value || p === page.value) return;
+  loading.value = true;
+  fetchList(p);
 }
 
 onShow(load);
-onReachBottom(loadMore);
 onPullDownRefresh(async () => {
   await load();
   uni.stopPullDownRefresh();
@@ -107,7 +141,7 @@ function goEdit(id) {
 <style lang="scss" scoped>
 .my-opp-page {
   min-height: 100vh;
-  padding: 16rpx 24rpx;
+  padding: 16rpx 24rpx calc(110px + env(safe-area-inset-bottom));
 }
 
 .empty {
@@ -237,9 +271,47 @@ function goEdit(id) {
   color: #B0B0B0;
 }
 
-.load-more {
+/* 固定分页导航 */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 24rpx;
+}
+.pager-btn {
+  padding: 8rpx 24rpx;
+  border: 1px solid #DDDDDD;
+  border-radius: 8rpx;
+  font-size: 26rpx;
+  color: #333333;
+  background: #ffffff;
+}
+.pager-btn.disabled {
+  color: #C0C0C0;
+  border-color: #EEEEEE;
+  background: #F7F8F9;
+}
+.pager-num {
+  min-width: 56rpx;
+  height: 56rpx;
+  line-height: 56rpx;
   text-align: center;
-  padding: 24rpx 0;
+  margin: 0 8rpx;
+  border-radius: 8rpx;
+  font-size: 26rpx;
+  color: #333333;
+  background: #ffffff;
+  border: 1px solid transparent;
+}
+.pager-num.active {
+  color: #ffffff;
+  background: #048C47;
+  border-color: #048C47;
+}
+.pager-total {
+  text-align: center;
+  margin: 16rpx 0 8rpx;
   font-size: 24rpx;
   color: #B0B0B0;
 }
