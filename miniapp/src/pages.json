@@ -182,6 +182,138 @@
 			"style": {
 				"navigationBarTitleText": "找回密码"
 			}
+		},
+		{
+			"path": "pages/admin/login",
+			"style": {
+				"navigationBarTitleText": "管理后台登录"
+			}
+		},
+		{
+			"path": "pages/admin/index",
+			"style": {
+				"navigationBarTitleText": "商机管理后台"
+			}
+		},
+		{
+			"path": "pages/admin/dashboard",
+			"style": {
+				"navigationBarTitleText": "仪表盘"
+			}
+		},
+		{
+			"path": "pages/admin/opportunities",
+			"style": {
+				"navigationBarTitleText": "商机管理"
+			}
+		},
+		{
+			"path": "pages/admin/opportunities/import",
+			"style": {
+				"navigationBarTitleText": "批量导入"
+			}
+		},
+		{
+			"path": "pages/admin/users",
+			"style": {
+				"navigationBarTitleText": "用户管理"
+			}
+		},
+		{
+			"path": "pages/admin/orders",
+			"style": {
+				"navigationBarTitleText": "订单管理"
+			}
+		},
+		{
+			"path": "pages/admin/points",
+			"style": {
+				"navigationBarTitleText": "积分管理"
+			}
+		},
+		{
+			"path": "pages/admin/audit",
+			"style": {
+				"navigationBarTitleText": "进度审核"
+			}
+		},
+		{
+			"path": "pages/admin/levels",
+			"style": {
+				"navigationBarTitleText": "等级配置"
+			}
+		},
+		{
+			"path": "pages/admin/configs",
+			"style": {
+				"navigationBarTitleText": "系统配置"
+			}
+		},
+		{
+			"path": "pages/admin/configs/agreements",
+			"style": {
+				"navigationBarTitleText": "协议内容"
+			}
+		},
+		{
+			"path": "pages/admin/stats",
+			"style": {
+				"navigationBarTitleText": "数据统计"
+			}
+		},
+		{
+			"path": "pages/admin/roles",
+			"style": {
+				"navigationBarTitleText": "角色权限"
+			}
+		},
+		{
+			"path": "pages/admin/audit-logs",
+			"style": {
+				"navigationBarTitleText": "操作日志"
+			}
+		},
+		{
+			"path": "pages/admin/announcements",
+			"style": {
+				"navigationBarTitleText": "公告管理"
+			}
+		},
+		{
+			"path": "pages/admin/banners",
+			"style": {
+				"navigationBarTitleText": "Banner管理"
+			}
+		},
+		{
+			"path": "pages/admin/notifications",
+			"style": {
+				"navigationBarTitleText": "通知推送"
+			}
+		},
+		{
+			"path": "pages/admin/admins",
+			"style": {
+				"navigationBarTitleText": "管理员管理"
+			}
+		},
+		{
+			"path": "pages/admin/finance",
+			"style": {
+				"navigationBarTitleText": "财务看板"
+			}
+		},
+		{
+			"path": "pages/admin/categories",
+			"style": {
+				"navigationBarTitleText": "分类管理"
+			}
+		},
+		{
+			"path": "pages/admin/tags",
+			"style": {
+				"navigationBarTitleText": "标签管理"
+			}
 		}
 	],
 	"tabBar": {
