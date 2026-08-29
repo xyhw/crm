@@ -390,6 +390,62 @@ router.post('/', authRequired, async (req, res) => {
   }
 });
 
+// 编辑商机（仅本人，且未被购买）
+router.put('/:id', authRequired, async (req, res) => {
+  try {
+    const opportunityId = req.params.id;
+    const existing = await queryOne('SELECT user_id, status FROM opportunities WHERE id = ? AND deleted_at IS NULL', [opportunityId]);
+    if (!existing) {
+      return res.json({ code: 404, message: '商机不存在' });
+    }
+    if (existing.user_id !== req.userId) {
+      return res.json({ code: 403, message: '只能编辑自己发布的商机' });
+    }
+    if (existing.status === 'invalid') {
+      return res.json({ code: 400, message: '已被判无效的商机不可编辑' });
+    }
+
+    const purchase = await queryOne(
+      'SELECT id FROM orders WHERE opportunity_id = ? AND status = "paid" LIMIT 1',
+      [opportunityId]
+    );
+    if (purchase) {
+      return res.json({ code: 400, message: '已有购买者，不可编辑' });
+    }
+
+    const { title, categoryId, descriptionFull, contactName, contactPhone, city, address, brand, wechat, stage, price, descriptionPublic, attachments } = req.body || {};
+
+    const data = {};
+    if (title !== undefined) data.title = title;
+    if (categoryId !== undefined) data.category_id = categoryId;
+    if (descriptionFull !== undefined) data.description_full = descriptionFull;
+    if (descriptionPublic !== undefined) data.description_public = descriptionPublic;
+    if (contactName !== undefined) data.contact_name = contactName;
+    if (contactPhone !== undefined) data.contact_phone = contactPhone;
+    if (wechat !== undefined) data.wechat = wechat;
+    if (city !== undefined) data.city = city;
+    if (address !== undefined) data.address = address;
+    if (brand !== undefined) data.brand = brand;
+    if (stage !== undefined) data.stage = stage;
+    if (price !== undefined) data.price = Number(price);
+    if (attachments !== undefined) data.attachments = Array.isArray(attachments) && attachments.length > 0 ? JSON.stringify(attachments) : null;
+
+    if (data.title !== undefined && !data.title) return res.json({ code: 400, message: '标题不能为空' });
+    if (data.price !== undefined && (!data.price || data.price <= 0)) return res.json({ code: 400, message: '价格无效' });
+
+    if (Object.keys(data).length === 0) {
+      return res.json({ code: 400, message: '没有可更新的字段' });
+    }
+
+    await update('opportunities', data, 'id = ?', [opportunityId]);
+
+    res.json({ code: 0, message: '更新成功' });
+  } catch (err) {
+    console.error('Update opportunity error:', err);
+    res.status(500).json({ code: 500, message: '更新失败' });
+  }
+});
+
 // 标记无效
 router.post('/:id/invalid-mark', authRequired, async (req, res) => {
   try {
