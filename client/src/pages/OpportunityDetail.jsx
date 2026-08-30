@@ -7,7 +7,7 @@ import PageNavBar from '../components/PageNavBar';
 import Icon from '../components/Icon';
 import MarketIntelligence from '../components/MarketIntelligence';
 import AttachmentGrid from '../components/AttachmentGrid';
-import { stageLabel, statusMeta, INVALID_REASONS, levelMeta, maskName, formatDate } from '../constants';
+import { stageLabel, statusMeta, INVALID_REASONS, levelMeta, formatDate } from '../constants';
 
 export default function OpportunityDetail() {
   const { id } = useParams();
@@ -94,7 +94,7 @@ export default function OpportunityDetail() {
   const meta = statusMeta(detail.status);
   const canViewFull = detail.isPurchased || detail.isPublisher;
   const displayBrand = detail.brand || detail.hotelName || '未知品牌';
-  const publisherDisplay = maskName(detail.publisherName);
+  const publisherDisplay = detail.publisherName;
 
   // 未购买时的预览文本：仅从公开描述取前 2 行
   const previewSource = detail.descriptionPublic || '';

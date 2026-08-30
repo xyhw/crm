@@ -57,7 +57,7 @@ const makeDetail = (over = {}) => ({
   stage: '已完成设计，正在招投标',
   isPurchased: false,
   isPublisher: false,
-  publisherName: '投稿人甲',
+  publisherName: '甲',
   publisherCompany: '某某工程公司',
   marketIntelligence: { totalShares: 0, statusDistribution: {} },
   createdAt: '2026-08-01T00:00:00.000Z',
@@ -158,7 +158,7 @@ describe('商机详情（开发需求 6.1.2/6.1.3 购买解锁）', () => {
       </MemoryRouter>
     );
     await waitFor(() => expect(screen.getByText('完整联系方式与详情')).toBeTruthy());
-    expect(document.querySelector('.detail-publisher__name').textContent).toBe('投**甲');
+    expect(document.querySelector('.detail-publisher__name').textContent).toBe('甲');
     expect(screen.queryByText('某某工程公司')).toBeNull();
     expect(screen.getByText('zhang_gong')).toBeTruthy();
     expect(screen.getByText('西湖区文三路100号维也纳酒店')).toBeTruthy();

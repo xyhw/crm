@@ -3,6 +3,7 @@ import { query, queryOne, insert, update, transaction } from '../db.js';
 import { authRequired, optionalAuth } from '../auth.js';
 import { getMarkWeight } from '../services/level.service.js';
 import { detectSimilar } from '../services/similarity.service.js';
+import { anonymizeName } from '../constants.js';
 
 const router = Router();
 
@@ -142,7 +143,7 @@ router.get('/', optionalAuth, async (req, res) => {
         status: item.status,
         purchaseCount: item.purchase_count,
         viewCount: item.view_count,
-        publisherName: item.publisher_name,
+        publisherName: anonymizeName(item.publisher_name),
         createdAt: item.created_at,
         totalShares: item.total_shares || 0,
         latestShareAt: item.latest_share_at,
@@ -276,7 +277,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
       purchaseCount: opportunity.purchase_count,
       viewCount: finalViewCount,
       invalidMarkCount: opportunity.invalid_mark_count,
-      publisherName: opportunity.publisher_name,
+      publisherName: anonymizeName(opportunity.publisher_name),
       publisherCompany: opportunity.publisher_company,
       tags: tags.map(t => ({ id: t.id, name: t.name })),
       createdAt: opportunity.created_at,
@@ -306,7 +307,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
           summary: s.summary,
           helpfulCount: s.helpful_count,
           createdAt: s.created_at,
-          nickname: s.nickname || '匿名用户',
+          nickname: anonymizeName(s.nickname),
           isOwn: req.userId === s.user_id,
           isLiked: myLikedShares.has(s.id),
           reportCount: s.report_count || 0,

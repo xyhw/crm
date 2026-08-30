@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { query, queryOne, insert, update } from '../db.js';
 import { authRequired } from '../auth.js';
+import { anonymizeName } from '../constants.js';
 
 const router = Router();
 
@@ -124,7 +125,7 @@ router.get('/:id', authRequired, async (req, res) => {
           summary: s.summary,
           helpfulCount: s.helpful_count,
           createdAt: s.created_at,
-          nickname: s.nickname || '匿名用户',
+          nickname: anonymizeName(s.nickname),
           isOwn: req.userId === s.user_id,
           isLiked: myLikedShares.has(s.id),
           reportCount: s.report_count || 0,

@@ -237,7 +237,7 @@ import { onLoad } from '@dcloudio/uni-app';
 import { api } from '@/api/index';
 import { useUserStore } from '@/store/user';
 import { UPLOAD_BASE } from '@/common/config';
-import { INVALID_REASONS, OPPORTUNITY_STATUS_META, LEVEL_META, stageLabel, maskName, formatDate } from '@/common/constants';
+import { INVALID_REASONS, OPPORTUNITY_STATUS_META, LEVEL_META, stageLabel, formatDate } from '@/common/constants';
 import MarketIntelligence from '@/components/MarketIntelligence.vue';
 
 onShareAppMessage(() => {
@@ -298,7 +298,7 @@ const statusStyle = computed(() => ({
   background: statusMeta.value.bg,
 }));
 const displayBrand = computed(() => detail.value?.brand || detail.value?.hotelName || '未知品牌');
-const publisherDisplay = computed(() => maskName(detail.value?.publisherName));
+const publisherDisplay = computed(() => detail.value?.publisherName);
 const previewLines = computed(() => {
   const src = detail.value?.descriptionPublic || '';
   return src.split('\n').filter(Boolean).slice(0, 2).join('\n');

@@ -3,7 +3,7 @@ import { Button, Dialog, Field, Tag, Toast } from 'react-vant';
 import Icon from './Icon';
 import Pagination from './Pagination';
 import { api } from '../api';
-import { followUpStatusLabel, timeAgo, maskName, SHARE_INVALID_REASONS } from '../constants';
+import { followUpStatusLabel, timeAgo, SHARE_INVALID_REASONS } from '../constants';
 
 export default function MarketIntelligence({ intelligence, onLiked }) {
   const [likingId, setLikingId] = useState(null);
@@ -83,7 +83,7 @@ export default function MarketIntelligence({ intelligence, onLiked }) {
               <div className="mi-share-main">
                 <div className="mi-share-row">
                   <Tag size="mini">{followUpStatusLabel(s.status)}</Tag>
-                  <span className="mi-share-user">{s.isOwn ? '我' : maskName(s.nickname)}</span>
+                  <span className="mi-share-user">{s.isOwn ? '我' : s.nickname}</span>
                   <span className="mi-share-time">{timeAgo(s.createdAt)}</span>
                 </div>
                 {s.summary && <div className="mi-share-summary">{s.summary}</div>}

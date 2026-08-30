@@ -45,6 +45,16 @@ export function categoryLabel(value) {
   return SUPPLIER_CATEGORIES.find((c) => c.value === value)?.label || value;
 }
 
+// 投稿人姓名匿名：取用户名中的一个字符显示（确定性哈希选择，同一用户名始终显示同一个字，避免列表内抖动）
+export function anonymizeName(name) {
+  const text = (name || '').trim();
+  if (!text) return '匿';
+  const chars = Array.from(text);
+  let h = 0;
+  for (const c of text) h = (h * 31 + (c.codePointAt(0) || 0)) >>> 0;
+  return chars[h % chars.length];
+}
+
 export function stageLabel(value) {
   return ORDER_STAGES.find((s) => s.value === value)?.label || value;
 }

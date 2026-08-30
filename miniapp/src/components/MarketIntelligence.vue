@@ -24,7 +24,7 @@
         <view class="mi-share-main">
           <view class="mi-share-row">
             <text class="mi-share-status" :style="statusStyleOf(s.status)">{{ followUpStatusLabel(s.status) }}</text>
-            <text class="mi-share-user">{{ s.isOwn ? '我' : maskName(s.nickname) }}</text>
+            <text class="mi-share-user">{{ s.isOwn ? '我' : s.nickname }}</text>
             <text class="mi-share-time">{{ timeAgo(s.createdAt) }}</text>
           </view>
           <view v-if="s.summary" class="mi-share-summary">{{ s.summary }}</view>
@@ -95,7 +95,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { api } from '@/api/index';
-import { SHARE_INVALID_REASONS, FOLLOW_UP_STATUS_META, maskName, timeAgo, followUpStatusLabel } from '@/common/constants';
+import { SHARE_INVALID_REASONS, FOLLOW_UP_STATUS_META, timeAgo, followUpStatusLabel } from '@/common/constants';
 
 const props = defineProps({
   intelligence: { type: Object, default: () => null },

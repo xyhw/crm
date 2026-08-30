@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { query } from '../db.js';
 import { authRequired, optionalAuth } from '../auth.js';
 import { setCache } from '../middleware/cache-headers.js';
+import { anonymizeName } from '../constants.js';
 
 const router = Router();
 
@@ -12,32 +13,50 @@ router.get('/', optionalAuth, setCache(300, { staleWhileRevalidate: 600 }), asyn
     const offset = (Number(page) - 1) * Number(pageSize);
 
     let list = [];
+    let total = 0;
 
     if (type === 'publisher') {
       // 达人榜：按投稿被购买量排序
-      list = await query(
-        `SELECT u.id, u.nickname, u.avatar, COUNT(o.id) as purchase_count
-         FROM users u
-         JOIN opportunities opp ON u.id = opp.user_id
-         JOIN orders o ON opp.id = o.opportunity_id AND o.status = 'paid'
-         WHERE u.status = 'active' AND u.deleted_at IS NULL
-         GROUP BY u.id
-         ORDER BY purchase_count DESC
-         LIMIT ? OFFSET ?`,
-        [Number(pageSize), offset]
-      );
+      [list, [{ total }]] = await Promise.all([
+        query(
+          `SELECT u.id, u.nickname, u.avatar, COUNT(o.id) as purchase_count
+           FROM users u
+           JOIN opportunities opp ON u.id = opp.user_id
+           JOIN orders o ON opp.id = o.opportunity_id AND o.status = 'paid'
+           WHERE u.status = 'active' AND u.deleted_at IS NULL
+           GROUP BY u.id
+           ORDER BY purchase_count DESC
+           LIMIT ? OFFSET ?`,
+          [Number(pageSize), offset]
+        ),
+        query(
+          `SELECT COUNT(DISTINCT u.id) as total
+           FROM users u
+           JOIN opportunities opp ON u.id = opp.user_id
+           JOIN orders o ON opp.id = o.opportunity_id AND o.status = 'paid'
+           WHERE u.status = 'active' AND u.deleted_at IS NULL`
+        ),
+      ]);
     } else if (type === 'contributor') {
       // 贡献榜：按进度分享被标记有用数排序
-      list = await query(
-        `SELECT u.id, u.nickname, u.avatar, SUM(s.helpful_count) as helpful_count
-         FROM users u
-         JOIN follow_up_shares s ON u.id = s.user_id
-         WHERE u.status = 'active' AND u.deleted_at IS NULL
-         GROUP BY u.id
-         ORDER BY helpful_count DESC
-         LIMIT ? OFFSET ?`,
-        [Number(pageSize), offset]
-      );
+      [list, [{ total }]] = await Promise.all([
+        query(
+          `SELECT u.id, u.nickname, u.avatar, SUM(s.helpful_count) as helpful_count
+           FROM users u
+           JOIN follow_up_shares s ON u.id = s.user_id
+           WHERE u.status = 'active' AND u.deleted_at IS NULL
+           GROUP BY u.id
+           ORDER BY helpful_count DESC
+           LIMIT ? OFFSET ?`,
+          [Number(pageSize), offset]
+        ),
+        query(
+          `SELECT COUNT(DISTINCT u.id) as total
+           FROM users u
+           JOIN follow_up_shares s ON u.id = s.user_id
+           WHERE u.status = 'active' AND u.deleted_at IS NULL`
+        ),
+      ]);
     }
 
     // 检查当前用户是否在排行榜中
@@ -70,7 +89,9 @@ router.get('/', optionalAuth, setCache(300, { staleWhileRevalidate: 600 }), asyn
         list: list.map((item, index) => ({
           rank: offset + index + 1,
           ...item,
+          nickname: anonymizeName(item.nickname),
         })),
+        total: Number(total) || 0,
         currentUserRank,
         type,
         period,
