@@ -310,7 +310,7 @@ router.post('/login', loginLimiter, async (req, res) => {
 
     const user = await queryOne('SELECT * FROM users WHERE phone = ? AND deleted_at IS NULL', [phone]);
     if (!user) {
-      return res.json({ code: 400, message: '手机号未注册' });
+      return res.json({ code: 400, message: '手机号或密码错误' });
     }
 
     if (user.status === 'banned') {
@@ -325,7 +325,7 @@ router.post('/login', loginLimiter, async (req, res) => {
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
       await recordLoginFailure(user.id);
-      return res.json({ code: 400, message: '密码错误' });
+      return res.json({ code: 400, message: '手机号或密码错误' });
     }
     await clearLoginFailures(user.id);
 

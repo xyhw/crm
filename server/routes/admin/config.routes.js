@@ -5,13 +5,30 @@ import { ensureAndLoadPaymentConfig } from '../../services/payment/config-loader
 
 const router = Router();
 
+// 敏感配置打码：支付私钥/密钥/敏感凭证禁止明文回显（列表页也生效）
+const SENSITIVE_KEY_PATTERNS = [
+  /private_?key/i,
+  /secret_?key/i,
+  /webhook_?secret/i,
+  /api_?key/i,
+  /apiv3key/i,
+  /mch_?key/i,
+  /app_?secret/i,
+];
+
+function maskSensitiveValue(key, value) {
+  if (typeof value !== 'string' || value === '') return value;
+  if (!SENSITIVE_KEY_PATTERNS.some((re) => re.test(key))) return value;
+  return '******';
+}
+
 // 获取系统配置（返回对象形式）
 router.get('/', async (req, res) => {
   try {
     const configs = await query('SELECT * FROM system_configs ORDER BY config_key');
     const map = {};
     for (const c of configs) {
-      map[c.config_key] = parseConfigValue(c.config_value);
+      map[c.config_key] = maskSensitiveValue(c.config_key, parseConfigValue(c.config_value));
     }
     res.json({ code: 0, data: map });
   } catch (err) {

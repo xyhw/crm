@@ -27,4 +27,13 @@
 - 说明:
   - 当前环境支付默认渠道为 `waffo`（PAY_DEFAULT_CHANNEL=waffo），其支付方式是 redirect 托管收银台，只能浏览器跳转；微信小程序内无法拉起该渠道，必须过滤掉。
   - 小程序端点充值一律走 `miniapp/src/common/payment.js` 的 `resolveMiniappChannels()`：只保留 `mock` / `wechat`(jsapi) 渠道，wechat 未配置时兜底 mock，避免创建 waffo 订单后在小程序内无意义。
-  - mock 渠道链路验证：注册送 10 积分 → 建 mock 订单（payMethod=auto）→ `POST /api/points/recharge/mock-pay/:orderNo` → 余额到账 100。小程序充值/购买接口冒烟用 `curl` + 注册临时账号（手机号 `139` + 时间戳）即可。
+  - mock 渠道链路验证（2026-08-30 更新）：`mock` 渠道在生产环境已禁用（`_channelEnabled.mock = NODE_ENV!=='production'`），且 `POST /api/points/recharge/mock-pay/:orderNo` 与 `createRechargeOrder` 均加了生产守卫。开发环境验证：注册送 10 积分 → 建 mock 订单 → mock-pay → 余额到账。
+  - 小程序充值/购买接口冒烟用 `curl` + 注册临时账号（手机号 `139` + 时间戳）即可；**注册密码必须 ≥8 位且同时含字母和数字**（如 `pass1234`）。
+
+## 商机发布价格约束
+- 日期: 2026-08-30
+- 上下文: 资金安全修复落地时确认（主动记录）
+- 类别: 环境配置 / 业务约束
+- 说明:
+  - 商机发布/编辑/CRM投稿统一校验 `price` 为正整数，下限 10、上限由 `system_configs` 的 `opportunity_price_min/max` 配置（seed 默认 10~200）。
+  - 手动录入 CRM 的商机为 `inactive` 状态（不可公开购买），经 `POST /api/crm/:id/publish` 定价后置 `active` 公开。

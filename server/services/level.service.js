@@ -155,7 +155,7 @@ export async function recalculateAllLevels() {
          JOIN opportunities op ON fus.opportunity_id = op.id 
          WHERE op.user_id = ? AND fus.status = 'approved') as useful_shares,
         (SELECT COUNT(*) FROM opportunities WHERE user_id = ? AND status = 'active') as total_opportunities,
-        (SELECT COUNT(*) FROM opportunities WHERE user_id = ? AND status = 'invalidated') as invalid_opportunities,
+        (SELECT COUNT(*) FROM opportunities WHERE user_id = ? AND status = 'invalid') as invalid_opportunities,
         (SELECT COUNT(*) FROM crm_opportunities WHERE user_id = ?) as total_crm
       FROM orders o WHERE o.user_id = ? AND o.status = 'paid'`,
       [user.id, user.id, user.id, user.id, user.id]

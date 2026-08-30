@@ -45,11 +45,15 @@ router.get('/', optionalAuth, setCache(300, { staleWhileRevalidate: 600 }), asyn
     if (req.userId) {
       if (type === 'publisher') {
         const [rank] = await query(
-          `SELECT COUNT(*) + 1 as rank FROM users u
-           JOIN opportunities opp ON u.id = opp.user_id
-           JOIN orders o ON opp.id = o.opportunity_id AND o.status = 'paid'
-           WHERE u.status = 'active' AND u.deleted_at IS NULL
-           HAVING purchase_count > (
+          `SELECT COUNT(*) + 1 as rank FROM (
+             SELECT u.id, COUNT(o.id) as purchase_count
+             FROM users u
+             JOIN opportunities opp ON u.id = opp.user_id
+             JOIN orders o ON opp.id = o.opportunity_id AND o.status = 'paid'
+             WHERE u.status = 'active' AND u.deleted_at IS NULL
+             GROUP BY u.id
+           ) t
+           WHERE t.purchase_count > (
              SELECT COUNT(*) FROM orders o2
              JOIN opportunities opp2 ON o2.opportunity_id = opp2.id
              WHERE opp2.user_id = ? AND o2.status = 'paid'

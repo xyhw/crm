@@ -25,3 +25,5 @@ client/test-rv.mjs
 
 # 后端运行时输出
 server/coverage/
+server/seeds/ihg-opportunities.json
+server/seeds/import-ihg.js

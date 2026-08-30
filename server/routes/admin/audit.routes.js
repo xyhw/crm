@@ -54,12 +54,19 @@ router.put('/follow-up-shares/:id', async (req, res) => {
       return res.json({ code: 404, message: '进度分享不存在' });
     }
 
-    await update('follow_up_shares', {
+    // 仅 pending -> approved/rejected 才允许变更，防止重复审核重复发奖
+    const affectedRows = await update('follow_up_shares', {
       audit_status: status,
       audit_reason: reason || '',
-    }, 'id = ?', [req.params.id]);
+    }, 'id = ? AND audit_status = "pending"', [req.params.id]);
 
-    // 如果通过，给奖励积分
+    if (affectedRows === 0) {
+      const fresh = await queryOne('SELECT audit_status FROM follow_up_shares WHERE id = ?', [req.params.id]);
+      const msg = status === fresh?.audit_status ? '该分享已审核过' : '审核状态已变更，请刷新后重试';
+      return res.json({ code: 409, message: msg });
+    }
+
+    // 如果通过（且未重复发放），给奖励积分
     if (status === 'approved') {
       const [rewardConfig] = await query(
         "SELECT config_value FROM system_configs WHERE config_key = 'share_reward_points'"
