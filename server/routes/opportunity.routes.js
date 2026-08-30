@@ -344,10 +344,19 @@ router.post('/', authRequired, async (req, res) => {
     }
 
     // 检查价格范围
-    const [priceConfig] = await query(
-      "SELECT config_value FROM system_configs WHERE config_key IN ('opportunity_price_min', 'opportunity_price_max')"
+    const priceRows = await query(
+      "SELECT config_key, config_value FROM system_configs WHERE config_key IN ('opportunity_price_min', 'opportunity_price_max')"
     );
-    // 简化：直接使用传入的价格
+    const priceConfig = {};
+    for (const row of priceRows) {
+      priceConfig[row.config_key] = Number(row.config_value);
+    }
+    const priceMin = priceConfig.opportunity_price_min || 10;
+    const priceMax = priceConfig.opportunity_price_max || 200;
+    const priceNum = Number(price);
+    if (!Number.isFinite(priceNum) || priceNum < priceMin || priceNum > priceMax) {
+      return res.json({ code: 400, message: `价格需为 ${priceMin}~${priceMax} 之间的整数` });
+    }
 
     // 相似度检测
     const similar = await detectSimilar(title, city, address, categoryId);
@@ -440,7 +449,10 @@ router.put('/:id', authRequired, async (req, res) => {
     if (attachments !== undefined) data.attachments = Array.isArray(attachments) && attachments.length > 0 ? JSON.stringify(attachments) : null;
 
     if (data.title !== undefined && !data.title) return res.json({ code: 400, message: '标题不能为空' });
-    if (data.price !== undefined && (!data.price || data.price <= 0)) return res.json({ code: 400, message: '价格无效' });
+    if (data.price !== undefined) {
+      const priceNum = Number(data.price);
+      if (!Number.isFinite(priceNum) || priceNum < 10) return res.json({ code: 400, message: '价格无效，最低 10 积分' });
+    }
 
     if (Object.keys(data).length === 0) {
       return res.json({ code: 400, message: '没有可更新的字段' });
@@ -474,16 +486,19 @@ router.post('/:id/invalid-mark', authRequired, async (req, res) => {
       return res.json({ code: 400, message: '只有购买者才能标记无效' });
     }
 
-    // 检查是否已标记
-    const existing = await queryOne(
-      'SELECT id FROM opportunity_invalid_marks WHERE opportunity_id = ? AND user_id = ?',
-      [opportunityId, req.userId]
-    );
-    if (existing) {
-      return res.json({ code: 409, message: '你已经标记过此商机' });
-    }
-
     await transaction(async (conn) => {
+      // 行锁商机，防止并发重复退款
+      await conn.execute('SELECT id FROM opportunities WHERE id = ? FOR UPDATE', [opportunityId]);
+
+      // 事务内重新检查是否已标记（行锁后串行安全）
+      const [marks] = await conn.execute(
+        'SELECT id FROM opportunity_invalid_marks WHERE opportunity_id = ? AND user_id = ?',
+        [opportunityId, req.userId]
+      );
+      if (marks.length > 0) {
+        throw Object.assign(new Error('你已经标记过此商机'), { expose: true, code: 409 });
+      }
+
       // 插入标记
       await conn.execute(
         'INSERT INTO opportunity_invalid_marks (opportunity_id, user_id, reason, reason_text) VALUES (?, ?, ?, ?)',
@@ -626,6 +641,12 @@ router.post('/:id/invalid-mark', authRequired, async (req, res) => {
 
     res.json({ code: 0, message: '标记成功' });
   } catch (err) {
+    if (err.expose) {
+      return res.json({ code: err.code || 400, message: err.message });
+    }
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.json({ code: 409, message: '你已经标记过此商机' });
+    }
     console.error('Mark invalid error:', err);
     res.status(500).json({ code: 500, message: '标记失败' });
   }

@@ -68,11 +68,17 @@ router.post('/', authRequired, async (req, res) => {
     const totalSellerIncome = earningsInfo.sellerEarnings;
 
     await transaction(async (conn) => {
-      // 1. 扣减购买者积分
-      await conn.execute(
+      // 0. 行锁商机，防止并发重复购买（配合唯一索引兜底）
+      await conn.execute('SELECT id FROM opportunities WHERE id = ? FOR UPDATE', [opportunityId]);
+
+      // 1. 扣减购买者积分；affectedRows 为 0 说明余额不足，回滚
+      const [deductResult] = await conn.execute(
         'UPDATE points_accounts SET balance = balance - ?, total_consumed = total_consumed + ? WHERE user_id = ? AND balance >= ?',
         [actualPrice, actualPrice, req.userId, actualPrice]
       );
+      if (deductResult.affectedRows === 0) {
+        throw new Error('INSUFFICIENT_BALANCE');
+      }
       
       const [buyerAccount] = await conn.execute(
         'SELECT balance FROM points_accounts WHERE user_id = ?',
@@ -85,7 +91,11 @@ router.post('/', authRequired, async (req, res) => {
         [req.userId, -actualPrice, buyerAccount[0].balance, opportunityId, `购买商机「${opportunity.title}」`]
       );
 
-      // 2. 给投稿人加积分
+      // 2. 投稿人积分账户不存在时先初始化，再加积分
+      await conn.execute(
+        'INSERT IGNORE INTO points_accounts (user_id, balance, total_consumed) VALUES (?, 0, 0)',
+        [opportunity.user_id]
+      );
       await conn.execute(
         'UPDATE points_accounts SET balance = balance + ? WHERE user_id = ?',
         [totalSellerIncome, opportunity.user_id]
@@ -147,6 +157,12 @@ router.post('/', authRequired, async (req, res) => {
       message: '购买成功',
     });
   } catch (err) {
+    if (err.message === 'INSUFFICIENT_BALANCE') {
+      return res.json({ code: 422, message: '积分余额不足' });
+    }
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.json({ code: 409, message: '你已购买过此商机' });
+    }
     console.error('Purchase error:', err);
     res.status(500).json({ code: 500, message: '购买失败' });
   }

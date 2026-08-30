@@ -45,6 +45,7 @@ class Scheduler {
       const expiredResult = await query(
         `SELECT id, user_id, delta FROM points_logs
          WHERE delta > 0
+         AND expires_at IS NULL
          AND created_at < DATE_SUB(NOW(), INTERVAL ? DAY)`,
         [expiryDays]
       );
@@ -69,6 +70,11 @@ class Scheduler {
           await connection.query(
             'UPDATE points_accounts SET balance = balance - ?, total_expired = total_expired + ? WHERE user_id = ? AND balance >= ?',
             [log.delta, log.delta, log.user_id, log.delta]
+          );
+
+          await connection.query(
+            'UPDATE points_logs SET expires_at = NOW() WHERE id = ?',
+            [log.id]
           );
         }
 

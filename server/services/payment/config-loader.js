@@ -101,10 +101,9 @@ export async function ensureAndLoadPaymentConfig() {
   config.payment.waffo.environment = parseVal(map.pay_waffo_environment, 'string', 'test');
   config.payment.waffo.successUrl = parseVal(map.pay_waffo_success_url, 'string', '');
 
-  // 渠道可用性：mock 永远可用；其余渠道由后台开关决定（开关关闭则视为不可用）
-  // listAvailableChannels 已通过 isConfigured 判断，这里额外用 enabled 开关兜底
+  // 渠道可用性：mock 仅在非生产环境可用；其余渠道由后台开关决定（开关关闭则视为不可用）
   config.payment._channelEnabled = {
-    mock: true,
+    mock: process.env.NODE_ENV !== 'production',
     wechat: parseVal(map.pay_wechat_enabled, 'boolean', false),
     alipay: parseVal(map.pay_alipay_enabled, 'boolean', false),
     stripe: parseVal(map.pay_stripe_enabled, 'boolean', false),

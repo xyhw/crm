@@ -9,6 +9,36 @@ import crypto from 'crypto';
 const upload = multer({ dest: os.tmpdir(), limits: { fileSize: 5 * 1024 * 1024 } });
 const router = Router();
 
+function parseCsvLine(line) {
+  const result = [];
+  let field = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (line[i + 1] === '"') {
+          field += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        field += ch;
+      }
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === ',') {
+      result.push(field.trim());
+      field = '';
+    } else {
+      field += ch;
+    }
+  }
+  result.push(field.trim());
+  return result;
+}
+
 router.post('/', adminAuthRequired, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.json({ code: 400, message: '请选择CSV文件' });
@@ -19,38 +49,39 @@ router.post('/', adminAuthRequired, upload.single('file'), async (req, res) => {
     
     if (lines.length < 2) return res.json({ code: 400, message: 'CSV文件格式错误：无数据行' });
 
-    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+    const headers = parseCsvLine(lines[0]).map(h => h.replace(/^"|"$/g, ''));
 
     const fieldMap = {
-      '标题': 'title', '分类ID': 'category_id', '城市': 'city', 
+      '标题': 'title', '分类ID': 'category_id', '城市': 'city',
       '酒店名称': 'hotel_name', '阶段': 'stage', '价格': 'price',
       '公开描述': 'description_public', '详细描述': 'description_full',
-      '联系人': 'contact_name', '联系电话': 'contact_phone'
+      '联系人': 'contact_name', '联系电话': 'contact_phone', '状态': 'status'
     };
 
     const errors = [], successes = [];
 
     for (let i = 1; i < lines.length; i++) {
       try {
-        const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+        const values = parseCsvLine(lines[i]);
         const row = {};
         headers.forEach((h, idx) => {
           const key = fieldMap[h];
           if (key) row[key] = values[idx];
         });
 
-        if (!row.title || !row.email) continue;
+        if (!row.title) continue;
         if (!row.category_id) row.category_id = 10;
-        if (row.status && !['active', 'inactive'].includes(row.status)) row.status = 'active';
+        const rawPrice = parseInt(row.price, 10);
+        const price = Number.isFinite(rawPrice) && rawPrice >= 10 ? rawPrice : 50;
 
         await insert('opportunities', {
           user_id: req.adminId,
           title: row.title,
-          category_id: parseInt(row.category_id),
+          category_id: parseInt(row.category_id, 10),
           city: row.city || '',
           hotel_name: row.hotel_name || '',
           stage: row.stage || '',
-          price: parseInt(row.price) || 50,
+          price,
           description_public: row.description_public || '',
           description_full: row.description_full || '',
           contact_name: row.contact_name || '',

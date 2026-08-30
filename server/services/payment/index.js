@@ -24,13 +24,13 @@ export function getAdapter(channel) {
   return cache[key];
 }
 
-/** 列出当前可用的渠道：mock 永远可用；其余渠道需后台开关开启且配置齐全 */
+/** 列出当前可用的渠道：各渠道均需后台开关开启且配置齐全 */
 export function listAvailableChannels() {
   return Object.keys(ADAPTERS).filter((c) => {
     const enabled = config.payment._channelEnabled?.[c];
     if (enabled === false) return false;
     const a = getAdapter(c);
-    return c === 'mock' || (typeof a.isConfigured === 'function' && a.isConfigured());
+    return typeof a.isConfigured === 'function' && a.isConfigured();
   });
 }
 
@@ -57,6 +57,11 @@ export async function createRechargeOrder({ userId, amount, channel }) {
   }
 
   const adapter = getAdapter(channel);
+  if (adapter.channel === 'mock' && process.env.NODE_ENV === 'production') {
+    const err = new Error('生产环境不提供 mock 支付渠道');
+    err.code = 403;
+    throw err;
+  }
   const orderNo = BasePaymentAdapter.genOrderNo();
   const price = adapter.pointsToFen(amount);
   const now = new Date();

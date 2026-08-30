@@ -178,7 +178,7 @@ router.post('/', authRequired, async (req, res) => {
       city: city || '',
       hotel_name: hotelName || '',
       price: 0,
-      status: 'active',
+      status: 'inactive',
     });
 
     // 入库CRM
@@ -217,14 +217,16 @@ router.post('/:id/publish', authRequired, async (req, res) => {
     }
 
     const { price, descriptionFull } = req.body || {};
-    if (!price) {
-      return res.json({ code: 400, message: '请设置定价' });
+    const priceNum = Number(price);
+    if (!Number.isFinite(priceNum) || priceNum < 10) {
+      return res.json({ code: 400, message: '价格最低 10 积分' });
     }
 
-    // 更新商机信息
+    // 更新商机信息并公开（设置价格后出现在商机大厅）
     await update('opportunities', {
-      price: Number(price),
+      price: priceNum,
       description_full: descriptionFull || '',
+      status: 'active',
     }, 'id = ?', [crm.opportunity_id]);
 
     // 更新CRM状态

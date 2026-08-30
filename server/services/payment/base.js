@@ -57,6 +57,11 @@ export class BasePaymentAdapter {
     return { code: 0, message: 'success' };
   }
 
+  /** 渠道是否已配置可用；无配置要求的渠道（如 mock）默认可用 */
+  isConfigured() {
+    return true;
+  }
+
   /** 工具：生成订单号 前缀+时间戳+随机 */
   static genOrderNo(prefix = 'R') {
     const ts = Date.now();

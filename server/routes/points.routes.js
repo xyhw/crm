@@ -135,8 +135,11 @@ router.get('/recharge/order/:orderNo', authRequired, async (req, res) => {
   }
 });
 
-// 模拟支付完成（仅 mock 渠道，开发联调用）
+// 模拟支付完成（仅 mock 渠道，开发联调用；生产环境禁用）
 router.post('/recharge/mock-pay/:orderNo', authRequired, async (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.json({ code: 403, message: '生产环境不提供模拟支付' });
+  }
   try {
     const order = await getOrderForUser(req.params.orderNo, req.userId);
     if (!order) return res.json({ code: 404, message: '订单不存在' });
