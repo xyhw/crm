@@ -20,7 +20,7 @@
       </view>
       <template v-else>
         <view
-          v-for="item in visible"
+          v-for="item in list"
           :key="item.id"
           class="order-card"
           @click="goDetail(item.id)"
@@ -76,10 +76,10 @@ const tab = ref('published');
 const list = ref([]);
 const loading = ref(true);
 const page = ref(1);
+const total = ref(0);
 const pageSize = 6;
 
-const totalPages = computed(() => Math.max(1, Math.ceil(list.value.length / pageSize)));
-const visible = computed(() => list.value.slice((page.value - 1) * pageSize, page.value * pageSize));
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize)));
 
 function statusLabelOf(value) {
   return ORDER_STATUS_META[value]?.label || value;
@@ -92,12 +92,13 @@ function statusStyleOf(value) {
 
 async function fetchList() {
   loading.value = true;
-  page.value = 1;
   try {
+    const params = { page: page.value, pageSize };
     const res = tab.value === 'purchased'
-      ? await api.myOrders({ pageSize: 50 })
-      : await api.opportunities({ mine: 1, pageSize: 50 });
+      ? await api.myOrders(params)
+      : await api.opportunities({ mine: 1, ...params });
     list.value = res.list || [];
+    total.value = res.total ?? list.value.length;
   } catch (e) {
     uni.showToast({ title: e.message || '获取失败', icon: 'none' });
   } finally {
@@ -108,15 +109,22 @@ async function fetchList() {
 function switchTab(name) {
   if (tab.value === name) return;
   tab.value = name;
+  page.value = 1;
   fetchList();
 }
 
 function prevPage() {
-  if (page.value > 1) page.value -= 1;
+  if (page.value > 1) {
+    page.value -= 1;
+    fetchList();
+  }
 }
 
 function nextPage() {
-  if (page.value < totalPages.value) page.value += 1;
+  if (page.value < totalPages.value) {
+    page.value += 1;
+    fetchList();
+  }
 }
 
 function goDetail(id) {

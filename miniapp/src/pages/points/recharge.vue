@@ -134,6 +134,15 @@ async function handleRecharge() {
         });
         return;
       }
+    } else if (order.payMethod === 'redirect' && order.payUrl) {
+      // H5 托管收银台：跳转后由轮询页/回跳确认结果
+      // #ifdef H5
+      window.location.href = order.payUrl;
+      // #endif
+      // #ifndef H5
+      uni.showToast({ title: '当前端不支持该支付方式', icon: 'none' });
+      // #endif
+      return;
     } else {
       // mock 或 autopay：展示确认并模拟完成
       showPayDetail.value = true;

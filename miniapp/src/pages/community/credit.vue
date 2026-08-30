@@ -16,7 +16,7 @@
       <view class="section-card">
         <view v-if="!logs.length" class="empty">暂无信用分变动记录</view>
         <view v-else class="log-list">
-          <view v-for="log in visibleLogs" :key="log.id" class="log-item">
+          <view v-for="log in logs" :key="log.id" class="log-item">
             <view class="log-info">
               <view class="log-reason">{{ log.reason || CHANGE_LABELS[log.sourceType] || '信用分变动' }}</view>
               <view class="log-time">{{ timeAgo(log.createdAt) }}</view>
@@ -77,6 +77,7 @@ const loading = ref(true);
 const score = ref(100);
 const logs = ref([]);
 const page = ref(1);
+const total = ref(0);
 const pageSize = 6;
 
 onLoad(() => {
@@ -85,6 +86,7 @@ onLoad(() => {
 
 async function loadCredit() {
   loading.value = true;
+  page.value = 1;
   try {
     const me = await api.me();
     score.value = me?.creditScore ?? 100;
@@ -102,16 +104,13 @@ onPullDownRefresh(() => {
 });
 
 async function fetchLogs() {
-  const res = await api.credits({ page: 1, pageSize: 50 });
+  const res = await api.credits({ page: page.value, pageSize });
   logs.value = res?.list || [];
+  total.value = res?.total ?? logs.value.length;
   return res;
 }
 
-const totalPages = computed(() => Math.ceil(logs.value.length / pageSize));
-const visibleLogs = computed(() => {
-  const start = (page.value - 1) * pageSize;
-  return logs.value.slice(start, start + pageSize);
-});
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize)));
 
 const scoreColor = computed(() => {
   const s = score.value;
@@ -123,9 +122,10 @@ const scoreLabel = computed(() => {
   return s >= 80 ? '信用良好' : s >= 60 ? '信用一般' : '信用较差';
 });
 
-function changePage(p) {
+async function changePage(p) {
   if (p < 1 || p > totalPages.value) return;
   page.value = p;
+  await fetchLogs();
 }
 </script>
 

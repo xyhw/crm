@@ -13,6 +13,22 @@
       <text class="announcement-card__more">›</text>
     </view>
 
+    <!-- Banner 轮播 -->
+    <swiper
+      v-if="banners.length"
+      class="home-banner"
+      :autoplay="banners.length > 1"
+      :interval="3000"
+      :circular="banners.length > 1"
+      :indicator-dots="banners.length > 1"
+      indicator-color="rgba(255,255,255,0.4)"
+      indicator-active-color="#ffffff"
+    >
+      <swiper-item v-for="b in banners" :key="b.id" @click="onBannerTap(b)">
+        <image class="home-banner__img" :src="b.image_url" mode="aspectFill" />
+      </swiper-item>
+    </swiper>
+
     <!-- 用户卡片 -->
     <view class="home-user">
       <view class="home-user__top">
@@ -180,6 +196,30 @@ async function fetchAnnouncements() {
   }
 }
 
+const banners = ref([]);
+
+async function fetchBanners() {
+  try {
+    const res = await api.banners();
+    banners.value = res?.list || [];
+  } catch (e) {
+    banners.value = [];
+  }
+}
+
+function onBannerTap(b) {
+  if (!b.link_url) return;
+  // #ifdef H5
+  window.location.href = b.link_url;
+  // #endif
+  // #ifdef MP-WEIXIN
+  uni.setClipboardData({
+    data: b.link_url,
+    success: () => uni.showToast({ title: '链接已复制', icon: 'none' }),
+  });
+  // #endif
+}
+
 function startAnnTimer() {
   stopAnnTimer();
   annTimer = setInterval(() => {
@@ -203,6 +243,7 @@ function fetchUser() {
 onLoad(() => {
   fetchHome();
   fetchAnnouncements();
+  fetchBanners();
   fetchUser();
 });
 
@@ -219,6 +260,7 @@ onUnload(stopAnnTimer);
 onPullDownRefresh(() => {
   fetchHome();
   fetchAnnouncements();
+  fetchBanners();
   fetchUser();
 });
 
@@ -340,6 +382,19 @@ function onEmptyAction() {
   margin-left: 12rpx;
   font-size: 28rpx;
   color: rgba(255, 255, 255, 0.85);
+}
+
+/* Banner 轮播 */
+.home-banner {
+  height: 240rpx;
+  margin: 16rpx 24rpx 0;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+
+.home-banner__img {
+  width: 100%;
+  height: 100%;
 }
 
 /* 用户卡片：藏青绿渐变 + 网格纹理 */

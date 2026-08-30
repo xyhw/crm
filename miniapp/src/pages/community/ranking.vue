@@ -16,7 +16,7 @@
     <view v-if="loading" class="empty">加载中...</view>
     <view v-else-if="!list.length" class="empty">暂无排行数据</view>
     <view v-else class="rank-list">
-      <view v-for="item in visible" :key="item.id" class="rank-item">
+      <view v-for="item in list" :key="item.id" class="rank-item">
         <view class="rank-no" :class="{ 'rank-no--top': item.rank <= 3 }">{{ item.rank }}</view>
         <view class="rank-avatar">{{ item.nickname?.[0] || '匿' }}</view>
         <view class="rank-info">
@@ -49,7 +49,10 @@ const type = ref('publisher');
 const list = ref([]);
 const loading = ref(true);
 const page = ref(1);
+const total = ref(0);
 const pageSize = 6;
+
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize)));
 
 onLoad(() => {
   fetchRank();
@@ -72,10 +75,10 @@ function switchType(name) {
 
 async function fetchRank() {
   loading.value = true;
-  page.value = 1;
   try {
-    const res = await api.rankings({ type: type.value, pageSize: 50 });
+    const res = await api.rankings({ type: type.value, page: page.value, pageSize });
     list.value = res?.list || [];
+    total.value = res?.total ?? list.value.length;
   } catch (e) {
     list.value = [];
     uni.showToast({ title: e.message || '加载失败', icon: 'none' });
@@ -85,15 +88,10 @@ async function fetchRank() {
   }
 }
 
-const totalPages = computed(() => Math.ceil(list.value.length / pageSize));
-const visible = computed(() => {
-  const start = (page.value - 1) * pageSize;
-  return list.value.slice(start, start + pageSize);
-});
-
-function changePage(p) {
+async function changePage(p) {
   if (p < 1 || p > totalPages.value) return;
   page.value = p;
+  await fetchRank();
 }
 </script>
 

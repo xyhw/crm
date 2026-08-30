@@ -8,6 +8,17 @@ export default {
   },
   onShow: function () {},
   onHide: function () {},
+  // 全局错误兜底（对应 Web 端 ErrorBoundary）：记录日志，避免白屏无提示
+  onError: function (err) {
+    console.error('[App onError]', err);
+    try {
+      const logs = uni.getStorageSync('app_error_logs') || [];
+      logs.unshift({ time: Date.now(), message: String(err).slice(0, 500) });
+      uni.setStorageSync('app_error_logs', logs.slice(0, 20));
+    } catch (e) {
+      // 存储失败时忽略，不影响主流程
+    }
+  },
 }
 </script>
 

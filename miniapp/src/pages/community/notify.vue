@@ -20,7 +20,7 @@
     <view v-else-if="!list.length" class="empty">暂无通知</view>
     <view v-else class="notify-list">
       <view
-        v-for="item in visible"
+        v-for="item in list"
         :key="item.id"
         class="notify-item"
         :class="{ 'notify-item--unread': !item.is_read }"
@@ -60,9 +60,13 @@ const list = ref([]);
 const loading = ref(true);
 const unreadCount = ref(0);
 const page = ref(1);
+const total = ref(0);
 const pageSize = 6;
 
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize)));
+
 onShow(() => {
+  page.value = 1;
   fetchList();
 });
 
@@ -75,10 +79,10 @@ function switchType(name) {
 
 async function fetchList() {
   loading.value = true;
-  page.value = 1;
   try {
-    const res = await api.notifications({ type: type.value || undefined, pageSize: 50 });
+    const res = await api.notifications({ type: type.value || undefined, page: page.value, pageSize });
     list.value = res?.list || [];
+    total.value = res?.total ?? list.value.length;
     unreadCount.value = res?.unreadCount || 0;
   } catch (e) {
     list.value = [];
@@ -109,15 +113,10 @@ async function handleReadAll() {
   }
 }
 
-const totalPages = computed(() => Math.ceil(list.value.length / pageSize));
-const visible = computed(() => {
-  const start = (page.value - 1) * pageSize;
-  return list.value.slice(start, start + pageSize);
-});
-
-function changePage(p) {
+async function changePage(p) {
   if (p < 1 || p > totalPages.value) return;
   page.value = p;
+  await fetchList();
 }
 </script>
 
