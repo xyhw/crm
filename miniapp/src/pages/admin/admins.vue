@@ -2,17 +2,29 @@
   <view class="admin-list-page">
     <view class="page-head">
       <text class="page-title">管理员管理</text>
-      <view class="add-btn" @click="openNew">新建管理员</view>
+      <view class="head-actions">
+        <text class="refresh-btn" @click="fetchList(page)">刷新</text>
+        <view class="add-btn" @click="openNew">新建管理员</view>
+      </view>
     </view>
 
     <view class="filter-bar">
       <input
         v-model="keywordInput"
         class="filter-input"
-        placeholder="搜索用户名/姓名"
+        placeholder="搜索用户名/姓名/手机号"
         confirm-type="search"
         @confirm="applyFilter"
       />
+      <view class="filter-tabs">
+        <view
+          v-for="s in statusOptions"
+          :key="s.value"
+          class="filter-tab"
+          :class="{ active: status === s.value }"
+          @click="selectStatus(s.value)"
+        >{{ s.label }}</view>
+      </view>
     </view>
 
     <view v-if="loading && list.length === 0" class="empty">加载中...</view>
@@ -82,8 +94,15 @@ const total = ref(0);
 const page = ref(1);
 const pageSize = 10;
 const keywordInput = ref('');
+const status = ref('');
 const editItem = ref(null);
 const editForm = ref({});
+
+const statusOptions = [
+  { label: '全部', value: '' },
+  { label: '启用', value: 'active' },
+  { label: '停用', value: 'inactive' },
+];
 
 const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize)));
 
@@ -94,6 +113,7 @@ async function fetchList(p = 1) {
       page: p,
       pageSize,
       keyword: keywordInput.value || undefined,
+      status: status.value || undefined,
     });
     list.value = res.list || [];
     total.value = res.total || 0;
@@ -108,6 +128,7 @@ async function fetchList(p = 1) {
 onShow(() => fetchList(1));
 
 function applyFilter() { fetchList(1); }
+function selectStatus(s) { status.value = s; fetchList(1); }
 function goPage(p) {
   if (p < 1 || p > pageCount.value || p === page.value) return;
   fetchList(p);
@@ -175,9 +196,14 @@ function remove(item) {
 .admin-list-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx; }
 .page-head { display: flex; justify-content: space-between; align-items: center; padding: 16rpx 0; }
 .page-title { font-size: 32rpx; font-weight: 700; color: #1A1A1A; }
+.head-actions { display: flex; align-items: center; gap: 16rpx; }
+.refresh-btn { font-size: 24rpx; color: #666; padding: 6rpx 16rpx; border: 1px solid #ccc; border-radius: 28rpx; }
 .add-btn { font-size: 24rpx; color: #048C47; padding: 6rpx 24rpx; border: 1px solid #048C47; border-radius: 28rpx; }
 .filter-bar { margin-bottom: 16rpx; }
 .filter-input { height: 72rpx; background: #fff; border-radius: 36rpx; padding: 0 24rpx; font-size: 26rpx; }
+.filter-tabs { display: flex; flex-wrap: wrap; margin-top: 16rpx; }
+.filter-tab { padding: 8rpx 24rpx; margin-right: 16rpx; margin-bottom: 12rpx; border-radius: 28rpx; font-size: 24rpx; color: #7A7A7A; background: #fff; }
+.filter-tab.active { color: #fff; background: #048C47; }
 .card-item { background: #fff; border-radius: 16rpx; padding: 24rpx; margin-bottom: 16rpx; }
 .card-item__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12rpx; }
 .card-item__title { font-size: 30rpx; font-weight: 600; color: #1A1A1A; }

@@ -2,7 +2,10 @@
   <view class="role-page">
     <view class="page-head">
       <text class="page-title">角色管理</text>
-      <view class="add-btn" @click="openNewRole">新建角色</view>
+      <view class="head-actions">
+        <text class="refresh-btn" @click="fetchData">刷新</text>
+        <view class="add-btn" @click="openNewRole">新建角色</view>
+      </view>
     </view>
 
     <view class="card-item" v-for="r in roles" :key="r.id">
@@ -24,7 +27,10 @@
 
     <view class="page-head" style="margin-top: 32rpx;">
       <text class="page-title">管理员</text>
-      <view class="add-btn" @click="openNewAdmin">新建管理员</view>
+      <view class="head-actions">
+        <text class="refresh-btn" @click="fetchData">刷新</text>
+        <view class="add-btn" @click="openNewAdmin">新建管理员</view>
+      </view>
     </view>
 
     <view class="card-item" v-for="a in admins" :key="a.id">
@@ -157,6 +163,10 @@ function togglePerm(key) {
   else roleForm.permissions.push(key);
 }
 async function saveRole() {
+  if (!roleForm.name || !roleForm.name.trim()) {
+    uni.showToast({ title: '角色名不能为空', icon: 'none' });
+    return;
+  }
   const body = {
     name: roleForm.name,
     description: roleForm.description,
@@ -213,6 +223,14 @@ function toggleRole(id) {
   else adminForm.roleIds.push(id);
 }
 async function saveAdmin() {
+  if (!adminForm.id && (!adminForm.username || !adminForm.password)) {
+    uni.showToast({ title: '用户名和密码不能为空', icon: 'none' });
+    return;
+  }
+  if (!adminForm.name || !adminForm.name.trim()) {
+    uni.showToast({ title: '姓名不能为空', icon: 'none' });
+    return;
+  }
   try {
     if (adminForm.id) {
       await adminApi.updateAdminWithRoles(adminForm.id, {
@@ -251,6 +269,8 @@ async function toggleAdmin(a) {
 .role-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx; }
 .page-head { display: flex; justify-content: space-between; align-items: center; padding: 16rpx 0; }
 .page-title { font-size: 32rpx; font-weight: 700; color: #1A1A1A; }
+.head-actions { display: flex; align-items: center; gap: 16rpx; }
+.refresh-btn { font-size: 24rpx; color: #666; padding: 6rpx 16rpx; border: 1px solid #ccc; border-radius: 28rpx; }
 .add-btn { font-size: 24rpx; color: #048C47; padding: 6rpx 24rpx; border: 1px solid #048C47; border-radius: 28rpx; }
 .card-item { background: #fff; border-radius: 16rpx; padding: 24rpx; margin-bottom: 16rpx; }
 .card-item__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12rpx; }

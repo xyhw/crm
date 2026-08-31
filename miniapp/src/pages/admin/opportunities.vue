@@ -60,12 +60,22 @@
         <view class="modal-row"><text class="modal-label">发布者</text><text>{{ detail.publisher_name }}</text></view>
         <view class="modal-row"><text class="modal-label">定价</text><text>{{ detail.price }}积分</text></view>
         <view class="modal-row"><text class="modal-label">销量/浏览</text><text>{{ detail.purchase_count }} / {{ detail.view_count }}</text></view>
+        <view class="modal-row"><text class="modal-label">无效标记</text><text>{{ detail.invalid_mark_count || 0 }}次</text></view>
+        <view class="modal-row"><text class="modal-label">有效至</text><text>{{ detail.valid_until ? formatDate(detail.valid_until) : '-' }}</text></view>
         <view class="modal-row"><text class="modal-label">状态</text><text>{{ opportunityStatusLabel(detail.status) }}</text></view>
         <view class="modal-row"><text class="modal-label">阶段</text><text>{{ detail.stage || '-' }}</text></view>
         <view class="modal-row"><text class="modal-label">公开描述</text><text>{{ detail.description_public || '-' }}</text></view>
         <view class="modal-row"><text class="modal-label">完整描述</text><text>{{ detail.description_full || '-' }}</text></view>
         <view class="modal-row"><text class="modal-label">联系人</text><text>{{ detail.contact_name || '-' }} {{ detail.contact_phone || '-' }}</text></view>
         <view class="modal-row"><text class="modal-label">发布时间</text><text>{{ formatDate(detail.created_at) }}</text></view>
+        <view v-if="detail.invalidMarks && detail.invalidMarks.length > 0" class="mark-section">
+          <view class="mark-title">无效标记记录</view>
+          <view v-for="m in detail.invalidMarks" :key="m.id" class="mark-item">
+            <text class="mark-user">{{ m.user_name || '-' }}</text>
+            <text class="mark-reason">{{ m.reason || '-' }}</text>
+            <text class="mark-time">{{ formatDate(m.created_at) }}</text>
+          </view>
+        </view>
         <view class="modal-btn" @click="detail = null">关闭</view>
       </view>
     </view>
@@ -311,6 +321,45 @@ async function toggleStatus(item) {
 .modal-label {
   width: 160rpx;
   color: #7A7A7A;
+  flex-shrink: 0;
+}
+.mark-section {
+  margin-top: 16rpx;
+  padding: 16rpx;
+  background: #F7F8F9;
+  border-radius: 12rpx;
+}
+.mark-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #1A1A1A;
+  margin-bottom: 12rpx;
+}
+.mark-item {
+  display: flex;
+  align-items: center;
+  font-size: 24rpx;
+  color: #333;
+  padding: 8rpx 0;
+  border-bottom: 1px solid #EEEEEE;
+}
+.mark-item:last-child {
+  border-bottom: none;
+}
+.mark-user {
+  width: 160rpx;
+  color: #048C47;
+  flex-shrink: 0;
+}
+.mark-reason {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mark-time {
+  margin-left: 16rpx;
+  color: #B0B0B0;
   flex-shrink: 0;
 }
 .modal-btn {

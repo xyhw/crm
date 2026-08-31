@@ -35,6 +35,10 @@
           <text>积分 {{ item.points_balance || 0 }} · {{ levelName(item.level) }}</text>
           <text>信用 {{ item.credit_score || 0 }}</text>
         </view>
+        <view class="card-item__info">
+          <text>注册时间</text>
+          <text>{{ formatDate(item.created_at) }}</text>
+        </view>
         <view class="card-item__actions">
           <view class="act-btn" @click.stop="openEdit(item)">编辑</view>
           <view class="act-btn" @click.stop="openAdjust(item, 'points')">积分</view>

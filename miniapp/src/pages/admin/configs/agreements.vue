@@ -134,6 +134,21 @@ function removeSection(i) {
 }
 
 async function save() {
+  if (!editForm.value.title || !editForm.value.title.trim()) {
+    uni.showToast({ title: '请输入协议标题', icon: 'none' });
+    return;
+  }
+  for (let i = 0; i < editForm.value.sections.length; i += 1) {
+    const s = editForm.value.sections[i];
+    if (!s.h || !s.h.trim()) {
+      uni.showToast({ title: `请输入第${i + 1}个章节的小标题`, icon: 'none' });
+      return;
+    }
+    if (!s.p || !s.p.trim()) {
+      uni.showToast({ title: `请输入第${i + 1}个章节的正文`, icon: 'none' });
+      return;
+    }
+  }
   try {
     const payload = {
       title: editForm.value.title,

@@ -2,7 +2,10 @@
   <view class="admin-list-page">
     <view class="page-head">
       <text class="page-title">通知推送</text>
-      <view class="add-btn" @click="openSend">发送通知</view>
+      <view class="head-actions">
+        <text class="refresh-btn" @click="fetchList(page)">刷新</text>
+        <view class="add-btn" @click="openSend">发送通知</view>
+      </view>
     </view>
 
     <view v-if="loading && list.length === 0" class="empty">加载中...</view>
@@ -100,6 +103,14 @@ async function send() {
     uni.showToast({ title: '标题和内容不能为空', icon: 'none' });
     return;
   }
+  if (sendForm.value.title.length > 100) {
+    uni.showToast({ title: '标题不能超过100字', icon: 'none' });
+    return;
+  }
+  if (sendForm.value.content.length > 500) {
+    uni.showToast({ title: '内容不能超过500字', icon: 'none' });
+    return;
+  }
   if (!sendForm.value.sendAll && !sendForm.value.userIds.trim()) {
     uni.showToast({ title: '请输入用户ID', icon: 'none' });
     return;
@@ -133,6 +144,8 @@ async function send() {
 .admin-list-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx; }
 .page-head { display: flex; justify-content: space-between; align-items: center; padding: 16rpx 0; }
 .page-title { font-size: 32rpx; font-weight: 700; color: #1A1A1A; }
+.head-actions { display: flex; align-items: center; gap: 16rpx; }
+.refresh-btn { font-size: 24rpx; color: #666; padding: 6rpx 16rpx; border: 1px solid #ccc; border-radius: 28rpx; }
 .add-btn { font-size: 24rpx; color: #048C47; padding: 6rpx 24rpx; border: 1px solid #048C47; border-radius: 28rpx; }
 .card-item { background: #fff; border-radius: 16rpx; padding: 24rpx; margin-bottom: 16rpx; }
 .card-item__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8rpx; }

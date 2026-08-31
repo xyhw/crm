@@ -1,6 +1,13 @@
 <template>
   <view class="admin-list-page">
     <view class="filter-bar">
+      <input
+        v-model="keywordInput"
+        class="filter-input"
+        placeholder="搜索商机标题/买家"
+        confirm-type="search"
+        @confirm="applyFilter"
+      />
       <view class="filter-tabs">
         <view
           v-for="s in statusOptions"
@@ -27,7 +34,11 @@
         </view>
         <view class="card-item__info">
           <text>成交价 {{ item.actual_price }} 积分</text>
-          <text>{{ formatDate(item.created_at) }}</text>
+          <text>佣金 {{ item.platform_commission }} · 收入 {{ item.seller_income }}</text>
+        </view>
+        <view class="card-item__info">
+          <text>下单 {{ formatDate(item.created_at) }}</text>
+          <text>{{ item.order_no }}</text>
         </view>
       </view>
 
@@ -69,6 +80,7 @@ const loading = ref(false);
 const total = ref(0);
 const page = ref(1);
 const pageSize = 10;
+const keywordInput = ref('');
 const status = ref('');
 const detail = ref(null);
 
@@ -98,6 +110,7 @@ async function fetchList(p = 1) {
       page: p,
       pageSize,
       status: status.value || undefined,
+      keyword: keywordInput.value || undefined,
     });
     list.value = res.list || [];
     total.value = res.total || 0;
@@ -112,6 +125,7 @@ async function fetchList(p = 1) {
 onShow(() => fetchList(1));
 
 function selectStatus(s) { status.value = s; fetchList(1); }
+function applyFilter() { fetchList(1); }
 function goPage(p) {
   if (p < 1 || p > pageCount.value || p === page.value) return;
   fetchList(p);
@@ -125,6 +139,7 @@ function openDetail(item) {
 <style lang="scss" scoped>
 .admin-list-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx; }
 .filter-bar { margin-bottom: 16rpx; }
+.filter-input { height: 72rpx; background: #fff; border-radius: 36rpx; padding: 0 24rpx; font-size: 26rpx; margin-bottom: 16rpx; }
 .filter-tabs { display: flex; flex-wrap: wrap; }
 .filter-tab { padding: 8rpx 24rpx; margin-right: 16rpx; margin-bottom: 12rpx; border-radius: 28rpx; font-size: 24rpx; color: #7A7A7A; background: #fff; }
 .filter-tab.active { color: #fff; background: #048C47; }

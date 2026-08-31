@@ -9,11 +9,19 @@
         </view>
         <view class="card-item__info">
           <text>佣金加成 +{{ pct(item.commission_bonus) }}</text>
-          <text>免费审核 {{ item.free_audit ? '是' : '否' }}</text>
+          <text>标记权重 {{ item.mark_weight }}</text>
         </view>
         <view class="card-item__info">
           <text>购买率 {{ item.purchase_rate_threshold }}%</text>
           <text>失效率 {{ item.invalid_rate_threshold }}%</text>
+        </view>
+        <view class="card-item__info">
+          <text>有用率 {{ item.helpful_rate_threshold }}%</text>
+          <text>活跃度 {{ item.activity_threshold }}</text>
+        </view>
+        <view class="card-item__info">
+          <text>无效标记权重 {{ item.mark_weight }}</text>
+          <text>免审 {{ item.free_audit ? '是' : '否' }}</text>
         </view>
       </view>
     </view>

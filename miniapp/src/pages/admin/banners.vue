@@ -2,7 +2,29 @@
   <view class="admin-list-page">
     <view class="page-head">
       <text class="page-title">Banner 管理</text>
-      <view class="add-btn" @click="openNew">新建 Banner</view>
+      <view class="head-actions">
+        <text class="refresh-btn" @click="fetchList(page)">刷新</text>
+        <view class="add-btn" @click="openNew">新建 Banner</view>
+      </view>
+    </view>
+
+    <view class="filter-bar">
+      <input
+        v-model="keywordInput"
+        class="filter-input"
+        placeholder="搜索标题"
+        confirm-type="search"
+        @confirm="applyFilter"
+      />
+      <view class="filter-tabs">
+        <view
+          v-for="s in statusOptions"
+          :key="s.value"
+          class="filter-tab"
+          :class="{ active: status === s.value }"
+          @click="selectStatus(s.value)"
+        >{{ s.label }}</view>
+      </view>
     </view>
 
     <view v-if="loading && list.length === 0" class="empty">加载中...</view>
@@ -50,6 +72,7 @@
           <text class="form-label">图片URL</text>
           <input v-model="editForm.image_url" class="form-input" placeholder="图片地址" />
         </view>
+        <image v-if="editForm.image_url" :src="editForm.image_url" class="form-preview" mode="aspectFill" />
         <view class="form-row">
           <text class="form-label">链接</text>
           <input v-model="editForm.link_url" class="form-input" placeholder="跳转链接" />
@@ -57,6 +80,20 @@
         <view class="form-row">
           <text class="form-label">排序</text>
           <input v-model="editForm.sort_order" class="form-input" type="number" placeholder="数字越小越靠前" />
+        </view>
+        <view class="form-row">
+          <text class="form-label">状态</text>
+          <picker :range="formStatusOptions.map(o => o.label)" :value="editForm.status === 'inactive' ? 1 : 0" @change="editForm.status = formStatusOptions[$event.detail.value].value">
+            <view class="select-value">{{ editForm.status === 'active' ? '启用' : '停用' }}</view>
+          </picker>
+        </view>
+        <view class="form-row">
+          <text class="form-label">生效时间</text>
+          <input v-model="editForm.start_at" class="form-input" placeholder="YYYY-MM-DD HH:mm:ss，可空" />
+        </view>
+        <view class="form-row">
+          <text class="form-label">失效时间</text>
+          <input v-model="editForm.end_at" class="form-input" placeholder="YYYY-MM-DD HH:mm:ss，可空" />
         </view>
         <view class="modal-btn" @click="save">保存</view>
       </view>
@@ -75,15 +112,32 @@ const loading = ref(false);
 const total = ref(0);
 const page = ref(1);
 const pageSize = 10;
+const keywordInput = ref('');
+const status = ref('');
 const editItem = ref(null);
 const editForm = ref({});
+
+const statusOptions = [
+  { label: '全部', value: '' },
+  { label: '启用', value: 'active' },
+  { label: '停用', value: 'inactive' },
+];
+const formStatusOptions = [
+  { label: '启用', value: 'active' },
+  { label: '停用', value: 'inactive' },
+];
 
 const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize)));
 
 async function fetchList(p = 1) {
   loading.value = true;
   try {
-    const res = await adminApi.getBanners({ page: p, pageSize });
+    const res = await adminApi.getBanners({
+      page: p,
+      pageSize,
+      keyword: keywordInput.value || undefined,
+      status: status.value || undefined,
+    });
     list.value = res.list || [];
     total.value = res.total || 0;
     page.value = p;
@@ -95,6 +149,9 @@ async function fetchList(p = 1) {
 }
 
 onShow(() => fetchList(1));
+
+function applyFilter() { fetchList(1); }
+function selectStatus(s) { status.value = s; fetchList(1); }
 function goPage(p) {
   if (p < 1 || p > pageCount.value || p === page.value) return;
   fetchList(p);
@@ -102,7 +159,7 @@ function goPage(p) {
 
 function openNew() {
   editItem.value = { id: null };
-  editForm.value = { title: '', image_url: '', link_url: '', sort_order: '0' };
+  editForm.value = { title: '', image_url: '', link_url: '', sort_order: '0', status: 'active', start_at: '', end_at: '' };
 }
 function openEdit(item) {
   editItem.value = item;
@@ -111,6 +168,9 @@ function openEdit(item) {
     image_url: item.image_url || '',
     link_url: item.link_url || '',
     sort_order: String(item.sort_order ?? 0),
+    status: item.status || 'active',
+    start_at: item.start_at || '',
+    end_at: item.end_at || '',
   };
 }
 async function save() {
@@ -119,7 +179,14 @@ async function save() {
     image_url: editForm.value.image_url,
     link_url: editForm.value.link_url,
     sort_order: Number(editForm.value.sort_order) || 0,
+    status: editForm.value.status,
+    start_at: editForm.value.start_at || null,
+    end_at: editForm.value.end_at || null,
   };
+  if (!body.title) {
+    uni.showToast({ title: '标题不能为空', icon: 'none' });
+    return;
+  }
   if (!body.image_url) {
     uni.showToast({ title: '图片URL不能为空', icon: 'none' });
     return;
@@ -169,7 +236,16 @@ function remove(item) {
 .admin-list-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx; }
 .page-head { display: flex; justify-content: space-between; align-items: center; padding: 16rpx 0; }
 .page-title { font-size: 32rpx; font-weight: 700; color: #1A1A1A; }
+.head-actions { display: flex; align-items: center; gap: 16rpx; }
+.refresh-btn { font-size: 24rpx; color: #666; padding: 6rpx 16rpx; border: 1px solid #ccc; border-radius: 28rpx; }
 .add-btn { font-size: 24rpx; color: #048C47; padding: 6rpx 24rpx; border: 1px solid #048C47; border-radius: 28rpx; }
+.filter-bar { margin-bottom: 16rpx; }
+.filter-input { height: 72rpx; background: #fff; border-radius: 36rpx; padding: 0 24rpx; font-size: 26rpx; margin-bottom: 16rpx; }
+.filter-tabs { display: flex; flex-wrap: wrap; }
+.filter-tab { padding: 8rpx 24rpx; margin-right: 16rpx; margin-bottom: 12rpx; border-radius: 28rpx; font-size: 24rpx; color: #7A7A7A; background: #fff; }
+.filter-tab.active { color: #fff; background: #048C47; }
+.form-preview { width: 100%; height: 240rpx; border-radius: 12rpx; margin-top: 12rpx; }
+.select-value { height: 72rpx; line-height: 72rpx; background: #F7F8F9; border-radius: 12rpx; padding: 0 20rpx; font-size: 26rpx; color: #333; flex: 1; }
 .card-item { background: #fff; border-radius: 16rpx; padding: 24rpx; margin-bottom: 16rpx; }
 .banner-main { display: flex; }
 .banner-img { width: 160rpx; height: 100rpx; border-radius: 8rpx; margin-right: 20rpx; flex-shrink: 0; background: #F2F4F5; }

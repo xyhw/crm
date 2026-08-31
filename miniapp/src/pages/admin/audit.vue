@@ -23,7 +23,7 @@
         <view class="card-item__info"><text>{{ item.opportunity_title || '-' }}</text></view>
         <view class="card-item__info">
           <text>{{ formatDateTime(item.created_at) }}</text>
-          <text v-if="item.content">{{ item.content }}</text>
+          <text v-if="item.summary">{{ item.summary }}</text>
         </view>
         <view v-if="item.status === 'pending'" class="card-item__actions">
           <view class="act-btn" @click.stop="audit(item, 'approved')">通过</view>

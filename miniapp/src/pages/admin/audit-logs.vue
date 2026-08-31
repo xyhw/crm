@@ -19,6 +19,17 @@
           >{{ s.label }}</view>
         </view>
       </scroll-view>
+      <scroll-view scroll-x class="filter-scroll">
+        <view class="filter-tabs">
+          <view
+            v-for="t in targetOptions"
+            :key="t.value"
+            class="filter-tab"
+            :class="{ active: targetType === t.value }"
+            @click="selectTarget(t.value)"
+          >{{ t.label }}</view>
+        </view>
+      </scroll-view>
     </view>
 
     <view v-if="loading && list.length === 0" class="empty">加载中...</view>
@@ -60,6 +71,7 @@ const page = ref(1);
 const pageSize = 15;
 const keywordInput = ref('');
 const action = ref('');
+const targetType = ref('');
 
 const ACTION_LABELS = {
   view: '查看', edit: '编辑', delete: '删除', create: '创建',
@@ -80,6 +92,18 @@ const actionOptions = [
   { label: '调整信用分', value: 'adjust_credits' },
 ];
 
+const targetOptions = [
+  { label: '全部目标', value: '' },
+  { label: '商机', value: 'opportunities' },
+  { label: '用户', value: 'users' },
+  { label: '订单', value: 'orders' },
+  { label: '进度分享', value: 'follow_up_shares' },
+  { label: '等级', value: 'member_levels' },
+  { label: '配置', value: 'system_configs' },
+  { label: '角色', value: 'role' },
+  { label: '管理员', value: 'admin_user' },
+];
+
 const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize)));
 
 function actionLabel(v) {
@@ -94,6 +118,7 @@ async function fetchList(p = 1) {
       pageSize,
       keyword: keywordInput.value || undefined,
       action: action.value || undefined,
+      targetType: targetType.value || undefined,
     });
     list.value = res.list || [];
     total.value = res.total || 0;
@@ -109,6 +134,7 @@ onShow(() => fetchList(1));
 
 function applyFilter() { fetchList(1); }
 function selectAction(v) { action.value = v; fetchList(1); }
+function selectTarget(v) { targetType.value = v; fetchList(1); }
 function goPage(p) {
   if (p < 1 || p > pageCount.value || p === page.value) return;
   fetchList(p);

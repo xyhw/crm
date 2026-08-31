@@ -2,7 +2,29 @@
   <view class="admin-list-page">
     <view class="page-head">
       <text class="page-title">公告管理</text>
-      <view class="add-btn" @click="openNew">新建公告</view>
+      <view class="head-actions">
+        <text class="refresh-btn" @click="fetchList(page)">刷新</text>
+        <view class="add-btn" @click="openNew">新建公告</view>
+      </view>
+    </view>
+
+    <view class="filter-bar">
+      <input
+        v-model="keywordInput"
+        class="filter-input"
+        placeholder="搜索标题"
+        confirm-type="search"
+        @confirm="applyFilter"
+      />
+      <view class="filter-tabs">
+        <view
+          v-for="s in statusOptions"
+          :key="s.value"
+          class="filter-tab"
+          :class="{ active: status === s.value }"
+          @click="selectStatus(s.value)"
+        >{{ s.label }}</view>
+      </view>
     </view>
 
     <view v-if="loading && list.length === 0" class="empty">加载中...</view>
@@ -58,6 +80,24 @@
           <text class="form-label">媒体链接</text>
           <input v-model="editForm.media_url" class="form-input" placeholder="图片/视频URL" />
         </view>
+        <image
+          v-if="editForm.media_url && editForm.media_type !== 'video'"
+          :src="editForm.media_url"
+          class="media-preview"
+          mode="aspectFill"
+        />
+        <view class="form-row">
+          <text class="form-label">跳转链接</text>
+          <input v-model="editForm.link_url" class="form-input" placeholder="点击公告跳转的URL" />
+        </view>
+        <view class="form-row">
+          <text class="form-label">生效时间</text>
+          <input v-model="editForm.start_at" class="form-input" placeholder="YYYY-MM-DD HH:mm:ss，可空" />
+        </view>
+        <view class="form-row">
+          <text class="form-label">失效时间</text>
+          <input v-model="editForm.end_at" class="form-input" placeholder="YYYY-MM-DD HH:mm:ss，可空" />
+        </view>
         <view class="form-row">
           <text class="form-label">排序</text>
           <input v-model="editForm.sort_order" class="form-input" type="number" placeholder="数字越小越靠前" />
@@ -83,6 +123,8 @@ const loading = ref(false);
 const total = ref(0);
 const page = ref(1);
 const pageSize = 10;
+const keywordInput = ref('');
+const status = ref('');
 const editItem = ref(null);
 const editForm = ref({});
 
@@ -90,18 +132,29 @@ const mediaOptions = [
   { label: '文字', value: 'text' },
   { label: '图片', value: 'image' },
   { label: '视频', value: 'video' },
+  { label: '图文混合', value: 'mixed' },
 ];
 const mediaTypeLabel = (v) => {
   const o = mediaOptions.find((x) => x.value === v);
   return o ? o.label : (v || 'text');
 };
+const statusOptions = [
+  { label: '全部', value: '' },
+  { label: '启用', value: 'active' },
+  { label: '停用', value: 'inactive' },
+];
 
 const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize)));
 
 async function fetchList(p = 1) {
   loading.value = true;
   try {
-    const res = await adminApi.getAnnouncements({ page: p, pageSize });
+    const res = await adminApi.getAnnouncements({
+      page: p,
+      pageSize,
+      keyword: keywordInput.value || undefined,
+      status: status.value || undefined,
+    });
     list.value = res.list || [];
     total.value = res.total || 0;
     page.value = p;
@@ -113,6 +166,9 @@ async function fetchList(p = 1) {
 }
 
 onShow(() => fetchList(1));
+
+function applyFilter() { fetchList(1); }
+function selectStatus(s) { status.value = s; fetchList(1); }
 function goPage(p) {
   if (p < 1 || p > pageCount.value || p === page.value) return;
   fetchList(p);
@@ -120,7 +176,7 @@ function goPage(p) {
 
 function openNew() {
   editItem.value = { id: null };
-  editForm.value = { title: '', content: '', media_type: 'text', media_url: '', sort_order: '0', is_top: 0 };
+  editForm.value = { title: '', content: '', media_type: 'text', media_url: '', link_url: '', start_at: '', end_at: '', sort_order: '0', is_top: 0 };
 }
 function openEdit(item) {
   editItem.value = item;
@@ -129,6 +185,9 @@ function openEdit(item) {
     content: item.content || '',
     media_type: item.media_type || 'text',
     media_url: item.media_url || '',
+    link_url: item.link_url || '',
+    start_at: item.start_at || '',
+    end_at: item.end_at || '',
     sort_order: String(item.sort_order ?? 0),
     is_top: item.is_top ? 1 : 0,
   };
@@ -139,11 +198,22 @@ async function save() {
     content: editForm.value.content,
     media_type: editForm.value.media_type,
     media_url: editForm.value.media_url,
+    link_url: editForm.value.link_url,
+    start_at: editForm.value.start_at || null,
+    end_at: editForm.value.end_at || null,
     sort_order: Number(editForm.value.sort_order) || 0,
     is_top: editForm.value.is_top ? 1 : 0,
   };
   if (!body.title) {
     uni.showToast({ title: '标题不能为空', icon: 'none' });
+    return;
+  }
+  if (!body.content && !body.media_url) {
+    uni.showToast({ title: '正文和附件不能同时为空', icon: 'none' });
+    return;
+  }
+  if (body.media_type === 'mixed' && !body.media_url) {
+    uni.showToast({ title: '图文混合需填写媒体链接', icon: 'none' });
     return;
   }
   try {
@@ -191,6 +261,8 @@ function remove(item) {
 .admin-list-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx; }
 .page-head { display: flex; justify-content: space-between; align-items: center; padding: 16rpx 0; }
 .page-title { font-size: 32rpx; font-weight: 700; color: #1A1A1A; }
+.head-actions { display: flex; align-items: center; gap: 16rpx; }
+.refresh-btn { font-size: 24rpx; color: #666; padding: 6rpx 16rpx; border: 1px solid #ccc; border-radius: 28rpx; }
 .add-btn { font-size: 24rpx; color: #048C47; padding: 6rpx 24rpx; border: 1px solid #048C47; border-radius: 28rpx; }
 .card-item { background: #fff; border-radius: 16rpx; padding: 24rpx; margin-bottom: 16rpx; }
 .card-item__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12rpx; }
@@ -215,5 +287,11 @@ function remove(item) {
 .form-input { flex: 1; height: 72rpx; background: #F7F8F9; border-radius: 12rpx; padding: 0 20rpx; font-size: 26rpx; }
 .form-textarea { flex: 1; min-height: 120rpx; background: #F7F8F9; border-radius: 12rpx; padding: 16rpx 20rpx; font-size: 26rpx; }
 .select-value { height: 72rpx; line-height: 72rpx; background: #F7F8F9; border-radius: 12rpx; padding: 0 20rpx; font-size: 26rpx; color: #333; flex: 1; }
+.media-preview { width: 100%; height: 240rpx; border-radius: 12rpx; margin-top: 12rpx; }
+.filter-bar { margin-bottom: 16rpx; }
+.filter-input { height: 72rpx; background: #fff; border-radius: 36rpx; padding: 0 24rpx; font-size: 26rpx; margin-bottom: 16rpx; }
+.filter-tabs { display: flex; flex-wrap: wrap; }
+.filter-tab { padding: 8rpx 24rpx; margin-right: 16rpx; margin-bottom: 12rpx; border-radius: 28rpx; font-size: 24rpx; color: #7A7A7A; background: #fff; }
+.filter-tab.active { color: #fff; background: #048C47; }
 .modal-btn { margin-top: 32rpx; height: 80rpx; line-height: 80rpx; text-align: center; background: #048C47; color: #fff; border-radius: 40rpx; font-size: 28rpx; }
 </style>

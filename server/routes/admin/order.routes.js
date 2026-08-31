@@ -6,7 +6,7 @@ const router = Router();
 // 获取订单列表
 router.get('/', async (req, res) => {
   try {
-    const { status, page = 1, pageSize = 20 } = req.query;
+    const { status, keyword, page = 1, pageSize = 20 } = req.query;
     const offset = (Number(page) - 1) * Number(pageSize);
 
     let sql = `SELECT o.*, u.nickname as buyer_name, opp.title as opportunity_title, su.nickname as seller_name
@@ -21,17 +21,28 @@ router.get('/', async (req, res) => {
       sql += ' AND o.status = ?';
       params.push(status);
     }
+    if (keyword) {
+      sql += ' AND (opp.title LIKE ? OR u.nickname LIKE ?)';
+      params.push(`%${keyword}%`, `%${keyword}%`);
+    }
 
     sql += ' ORDER BY o.created_at DESC LIMIT ? OFFSET ?';
     params.push(Number(pageSize), offset);
 
     const list = await query(sql, params);
 
-    let countSql = 'SELECT COUNT(*) as total FROM orders o WHERE 1=1';
+    let countSql = `SELECT COUNT(*) as total FROM orders o
+                    LEFT JOIN opportunities opp ON o.opportunity_id = opp.id
+                    LEFT JOIN users u ON o.user_id = u.id
+                    WHERE 1=1`;
     const countParams = [];
     if (status) {
       countSql += ' AND o.status = ?';
       countParams.push(status);
+    }
+    if (keyword) {
+      countSql += ' AND (opp.title LIKE ? OR u.nickname LIKE ?)';
+      countParams.push(`%${keyword}%`, `%${keyword}%`);
     }
     const [countResult] = await query(countSql, countParams);
 
