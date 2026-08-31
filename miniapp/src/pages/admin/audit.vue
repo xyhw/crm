@@ -12,9 +12,13 @@
       </view>
     </view>
 
-    <view v-if="loading && list.length === 0" class="empty">加载中...</view>
-    <view v-else-if="list.length === 0" class="empty">暂无数据</view>
-    <view v-else>
+    <StateView
+      :loading="loading"
+      :empty="!loading && list.length === 0"
+      empty-title="暂无审核记录"
+      empty-desc="暂无跟进分享审核记录"
+      :skeleton-count="4"
+    >
       <view v-for="item in list" :key="item.id" class="card-item">
         <view class="card-item__head">
           <text class="card-item__title">{{ item.user_name || '-' }}</text>
@@ -26,18 +30,23 @@
           <text v-if="item.summary">{{ item.summary }}</text>
         </view>
         <view v-if="item.status === 'pending'" class="card-item__actions">
-          <view class="act-btn" @click.stop="audit(item, 'approved')">通过</view>
-          <view class="act-btn danger" @click.stop="audit(item, 'rejected')">驳回</view>
+          <view class="act-btn" @click.stop="confirmAudit(item, 'approved')">通过</view>
+          <view class="act-btn danger" @click.stop="confirmAudit(item, 'rejected')">驳回</view>
         </view>
       </view>
+    </StateView>
 
-      <view v-if="pageCount > 1" class="pager">
-        <view class="pager-btn" :class="{ disabled: page <= 1 }" @click="goPage(page - 1)">上一页</view>
-        <text class="pager-info">{{ page }} / {{ pageCount }}</text>
-        <view class="pager-btn" :class="{ disabled: page >= pageCount }" @click="goPage(page + 1)">下一页</view>
-      </view>
-      <view class="pager-total">共 {{ total }} 条</view>
-    </view>
+    <Pagination :page="page" :page-count="pageCount" :total="total" @change="goPage" />
+
+    <ConfirmDialog
+      v-model:visible="confirmVisible"
+      title="审核确认"
+      :content="`确认${confirmAction === 'approved' ? '通过' : '驳回'}该跟进分享？`"
+      desc="该操作不可撤销"
+      :confirm-text="confirmAction === 'approved' ? '通过' : '驳回'"
+      :tone="confirmAction === 'rejected' ? 'danger' : 'primary'"
+      @confirm="doAudit"
+    />
   </view>
 </template>
 
@@ -46,6 +55,9 @@ import { ref, computed } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import { adminApi } from '@/admin/adminApi';
 import { formatDateTime, followUpStatusLabel } from '@/common/constants';
+import Pagination from '@/components/Pagination.vue';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
+import StateView from '@/components/StateView.vue';
 
 const list = ref([]);
 const loading = ref(false);
@@ -53,6 +65,9 @@ const total = ref(0);
 const page = ref(1);
 const pageSize = 10;
 const status = ref('');
+const confirmVisible = ref(false);
+const confirmItem = ref(null);
+const confirmAction = ref('');
 
 const statusOptions = [
   { label: '全部', value: '' },
@@ -96,27 +111,29 @@ function goPage(p) {
   fetchList(p);
 }
 
-function audit(item, action) {
+function confirmAudit(item, action) {
+  confirmItem.value = item;
+  confirmAction.value = action;
+  confirmVisible.value = true;
+}
+async function doAudit() {
+  if (!confirmItem.value || !confirmAction.value) return;
+  const action = confirmAction.value;
   const label = action === 'approved' ? '通过' : '驳回';
-  uni.showModal({
-    title: '提示',
-    content: `确认${label}该跟进分享？`,
-    success: async (res) => {
-      if (!res.confirm) return;
-      try {
-        await adminApi.auditFollowUp(item.id, { status: action });
-        uni.showToast({ title: `${label}成功`, icon: 'success' });
-        fetchList(page.value);
-      } catch (e) {
-        uni.showToast({ title: e.message, icon: 'none' });
-      }
-    },
-  });
+  try {
+    await adminApi.auditFollowUp(confirmItem.value.id, { status: action });
+    uni.showToast({ title: `${label}成功`, icon: 'success' });
+    confirmItem.value = null;
+    confirmAction.value = '';
+    fetchList(page.value);
+  } catch (e) {
+    uni.showToast({ title: e.message, icon: 'none' });
+  }
 }
 </script>
 
 <style lang="scss" scoped>
-.admin-list-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx; }
+.admin-list-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx 140rpx; }
 .filter-bar { margin-bottom: 16rpx; }
 .filter-tabs { display: flex; flex-wrap: wrap; }
 .filter-tab { padding: 8rpx 24rpx; margin-right: 16rpx; margin-bottom: 12rpx; border-radius: 28rpx; font-size: 24rpx; color: #7A7A7A; background: #fff; }
@@ -133,9 +150,4 @@ function audit(item, action) {
 .card-item__actions { display: flex; justify-content: flex-end; margin-top: 12rpx; gap: 16rpx; }
 .act-btn { padding: 8rpx 32rpx; border-radius: 32rpx; border: 1px solid #048C47; color: #048C47; font-size: 24rpx; }
 .act-btn.danger { border-color: #E54848; color: #E54848; }
-.pager { display: flex; align-items: center; justify-content: center; padding: 16rpx 0; }
-.pager-btn { padding: 8rpx 28rpx; border: 1px solid #DDD; border-radius: 8rpx; font-size: 26rpx; color: #333; background: #fff; }
-.pager-btn.disabled { color: #C0C0C0; border-color: #EEE; background: #F7F8F9; }
-.pager-info { margin: 0 24rpx; font-size: 26rpx; color: #333; }
-.pager-total { text-align: center; font-size: 24rpx; color: #B0B0B0; padding-bottom: 16rpx; }
 </style>

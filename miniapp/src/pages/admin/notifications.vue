@@ -8,9 +8,13 @@
       </view>
     </view>
 
-    <view v-if="loading && list.length === 0" class="empty">加载中...</view>
-    <view v-else-if="list.length === 0" class="empty">暂无推送记录</view>
-    <view v-else>
+    <StateView
+      :loading="loading"
+      :empty="!loading && list.length === 0"
+      empty-title="暂无推送记录"
+      empty-desc="暂无通知推送记录"
+      :skeleton-count="4"
+    >
       <view v-for="(item, i) in list" :key="item.id || item.sent_time || i" class="card-item">
         <view class="card-item__head">
           <text class="card-item__title">{{ item.title }}</text>
@@ -19,14 +23,9 @@
         <view class="card-item__detail">{{ item.content }}</view>
         <view class="card-item__info"><text>{{ formatDate(item.sent_time || item.created_at) }}</text></view>
       </view>
+    </StateView>
 
-      <view v-if="pageCount > 1" class="pager">
-        <view class="pager-btn" :class="{ disabled: page <= 1 }" @click="goPage(page - 1)">上一页</view>
-        <text class="pager-info">{{ page }} / {{ pageCount }}</text>
-        <view class="pager-btn" :class="{ disabled: page >= pageCount }" @click="goPage(page + 1)">下一页</view>
-      </view>
-      <view class="pager-total">共 {{ total }} 条</view>
-    </view>
+    <Pagination :page="page" :page-count="pageCount" :total="total" @change="goPage" />
 
     <!-- 发送弹层 -->
     <view v-if="sendOpen" class="modal-mask" @click="sendOpen = false">
@@ -34,11 +33,30 @@
         <view class="modal-title">发送通知</view>
         <view class="form-row">
           <text class="form-label">标题</text>
-          <input v-model="sendForm.title" class="form-input" placeholder="标题" />
+          <view class="form-field">
+            <input
+              v-model="sendForm.title"
+              class="form-input"
+              :class="{ 'form-input--error': errors.title }"
+              placeholder="标题"
+              @blur="validateField('title')"
+            />
+            <text v-if="errors.title" class="form-error">{{ errors.title }}</text>
+          </view>
         </view>
         <view class="form-row" style="align-items: flex-start;">
           <text class="form-label">内容</text>
-          <textarea v-model="sendForm.content" class="form-textarea" placeholder="通知内容" auto-height />
+          <view class="form-field">
+            <textarea
+              v-model="sendForm.content"
+              class="form-textarea"
+              :class="{ 'form-input--error': errors.content }"
+              placeholder="通知内容"
+              auto-height
+              @blur="validateField('content')"
+            />
+            <text v-if="errors.content" class="form-error">{{ errors.content }}</text>
+          </view>
         </view>
         <view class="form-row">
           <text class="form-label">发送范围</text>
@@ -58,10 +76,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import { adminApi } from '@/admin/adminApi';
 import { formatDate } from '@/common/constants';
+import Pagination from '@/components/Pagination.vue';
+import StateView from '@/components/StateView.vue';
 
 const list = ref([]);
 const loading = ref(false);
@@ -71,6 +91,7 @@ const pageSize = 10;
 const sendOpen = ref(false);
 const sending = ref(false);
 const sendForm = ref({ title: '', content: '', sendAll: true, userIds: '' });
+const errors = reactive({ title: '', content: '' });
 
 const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize)));
 
@@ -96,11 +117,22 @@ function goPage(p) {
 
 function openSend() {
   sendForm.value = { title: '', content: '', sendAll: true, userIds: '' };
+  errors.title = '';
+  errors.content = '';
   sendOpen.value = true;
 }
+function validateField(field) {
+  if (field === 'title') {
+    errors.title = sendForm.value.title && sendForm.value.title.trim() ? '' : '标题不能为空';
+  } else if (field === 'content') {
+    errors.content = sendForm.value.content && sendForm.value.content.trim() ? '' : '内容不能为空';
+  }
+}
 async function send() {
-  if (!sendForm.value.title || !sendForm.value.content) {
-    uni.showToast({ title: '标题和内容不能为空', icon: 'none' });
+  validateField('title');
+  validateField('content');
+  if (errors.title || errors.content) {
+    uni.showToast({ title: errors.title || errors.content, icon: 'none' });
     return;
   }
   if (sendForm.value.title.length > 100) {
@@ -141,7 +173,7 @@ async function send() {
 </script>
 
 <style lang="scss" scoped>
-.admin-list-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx; }
+.admin-list-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx 140rpx; }
 .page-head { display: flex; justify-content: space-between; align-items: center; padding: 16rpx 0; }
 .page-title { font-size: 32rpx; font-weight: 700; color: #1A1A1A; }
 .head-actions { display: flex; align-items: center; gap: 16rpx; }
@@ -153,18 +185,16 @@ async function send() {
 .status-tag { font-size: 20rpx; padding: 2rpx 12rpx; border-radius: 8rpx; color: #048C47; background: #E4F7EC; flex-shrink: 0; }
 .card-item__detail { font-size: 24rpx; color: #555; background: #F7F8F9; border-radius: 8rpx; padding: 12rpx; margin-bottom: 8rpx; }
 .card-item__info { display: flex; justify-content: flex-end; font-size: 24rpx; color: #B0B0B0; }
-.pager { display: flex; align-items: center; justify-content: center; padding: 16rpx 0; }
-.pager-btn { padding: 8rpx 28rpx; border: 1px solid #DDD; border-radius: 8rpx; font-size: 26rpx; color: #333; background: #fff; }
-.pager-btn.disabled { color: #C0C0C0; border-color: #EEE; background: #F7F8F9; }
-.pager-info { margin: 0 24rpx; font-size: 26rpx; color: #333; }
-.pager-total { text-align: center; font-size: 24rpx; color: #B0B0B0; padding-bottom: 16rpx; }
 .modal-mask { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 999; display: flex; align-items: flex-end; }
 .modal-box { width: 100%; background: #fff; border-radius: 24rpx 24rpx 0 0; padding: 32rpx 32rpx calc(32rpx + env(safe-area-inset-bottom)); max-height: 85vh; overflow-y: auto; }
 .modal-title { font-size: 32rpx; font-weight: 600; color: #1A1A1A; margin-bottom: 24rpx; text-align: center; }
 .form-row { display: flex; align-items: center; padding: 12rpx 0; }
 .form-label { width: 150rpx; font-size: 26rpx; color: #7A7A7A; flex-shrink: 0; }
-.form-input { flex: 1; height: 72rpx; background: #F7F8F9; border-radius: 12rpx; padding: 0 20rpx; font-size: 26rpx; }
-.form-textarea { flex: 1; min-height: 120rpx; background: #F7F8F9; border-radius: 12rpx; padding: 16rpx 20rpx; font-size: 26rpx; }
+.form-field { flex: 1; }
+.form-input { width: 100%; height: 72rpx; background: #F7F8F9; border-radius: 12rpx; padding: 0 20rpx; font-size: 26rpx; box-sizing: border-box; border: 1px solid transparent; }
+.form-textarea { width: 100%; min-height: 120rpx; background: #F7F8F9; border-radius: 12rpx; padding: 16rpx 20rpx; font-size: 26rpx; box-sizing: border-box; border: 1px solid transparent; }
+.form-input--error { border-color: #E54848; background: #FEF2F2; }
+.form-error { display: block; font-size: 22rpx; color: #E54848; margin-top: 8rpx; padding-left: 8rpx; }
 .range-options { flex: 1; display: flex; }
 .perm-option { font-size: 22rpx; padding: 8rpx 24rpx; border-radius: 24rpx; border: 1px solid #DDD; color: #555; margin-right: 16rpx; }
 .perm-option.active { border-color: #048C47; color: #048C47; background: #E4F7EC; }

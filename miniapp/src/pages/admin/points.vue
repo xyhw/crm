@@ -1,13 +1,7 @@
 <template>
   <view class="admin-list-page">
     <view class="filter-bar">
-      <input
-        v-model="keywordInput"
-        class="filter-input"
-        placeholder="搜索用户手机号/昵称"
-        confirm-type="search"
-        @confirm="applyFilter"
-      />
+      <SearchBar v-model="keywordInput" placeholder="搜索用户手机号/昵称" @search="onSearch" @clear="onClear" />
       <view class="filter-tabs">
         <view
           v-for="s in typeOptions"
@@ -19,9 +13,13 @@
       </view>
     </view>
 
-    <view v-if="loading && list.length === 0" class="empty">加载中...</view>
-    <view v-else-if="list.length === 0" class="empty">暂无数据</view>
-    <view v-else>
+    <StateView
+      :loading="loading"
+      :empty="!loading && list.length === 0"
+      empty-title="暂无积分记录"
+      empty-desc="暂无符合条件的积分流水"
+      :skeleton-count="4"
+    >
       <view v-for="item in list" :key="item.id" class="card-item">
         <view class="card-item__head">
           <text class="card-item__title">{{ item.user_name || '-' }}</text>
@@ -36,14 +34,9 @@
           <text v-if="item.source_title">{{ item.source_title }}</text>
         </view>
       </view>
+    </StateView>
 
-      <view v-if="pageCount > 1" class="pager">
-        <view class="pager-btn" :class="{ disabled: page <= 1 }" @click="goPage(page - 1)">上一页</view>
-        <text class="pager-info">{{ page }} / {{ pageCount }}</text>
-        <view class="pager-btn" :class="{ disabled: page >= pageCount }" @click="goPage(page + 1)">下一页</view>
-      </view>
-      <view class="pager-total">共 {{ total }} 条</view>
-    </view>
+    <Pagination :page="page" :page-count="pageCount" :total="total" @change="goPage" />
   </view>
 </template>
 
@@ -52,6 +45,9 @@ import { ref, computed } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import { adminApi } from '@/admin/adminApi';
 import { formatDateTime, pointsSourceTypeLabel } from '@/common/constants';
+import SearchBar from '@/components/SearchBar.vue';
+import Pagination from '@/components/Pagination.vue';
+import StateView from '@/components/StateView.vue';
 
 const list = ref([]);
 const loading = ref(false);
@@ -97,6 +93,8 @@ async function fetchList(p = 1) {
 
 onShow(() => fetchList(1));
 
+function onSearch() { fetchList(1); }
+function onClear() { fetchList(1); }
 function applyFilter() { fetchList(1); }
 function selectType(v) { sourceType.value = v; fetchList(1); }
 function goPage(p) {
@@ -106,9 +104,8 @@ function goPage(p) {
 </script>
 
 <style lang="scss" scoped>
-.admin-list-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx; }
+.admin-list-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx 140rpx; }
 .filter-bar { margin-bottom: 16rpx; }
-.filter-input { height: 72rpx; background: #fff; border-radius: 36rpx; padding: 0 24rpx; font-size: 26rpx; }
 .filter-tabs { display: flex; flex-wrap: wrap; margin-top: 16rpx; }
 .filter-tab { padding: 8rpx 24rpx; margin-right: 16rpx; margin-bottom: 12rpx; border-radius: 28rpx; font-size: 24rpx; color: #7A7A7A; background: #fff; }
 .filter-tab.active { color: #fff; background: #048C47; }
@@ -119,9 +116,4 @@ function goPage(p) {
 .tone-verified { color: #048C47; }
 .tone-hot { color: #E54848; }
 .card-item__info { display: flex; justify-content: space-between; font-size: 24rpx; color: #7A7A7A; margin-bottom: 8rpx; }
-.pager { display: flex; align-items: center; justify-content: center; padding: 16rpx 0; }
-.pager-btn { padding: 8rpx 28rpx; border: 1px solid #DDD; border-radius: 8rpx; font-size: 26rpx; color: #333; background: #fff; }
-.pager-btn.disabled { color: #C0C0C0; border-color: #EEE; background: #F7F8F9; }
-.pager-info { margin: 0 24rpx; font-size: 26rpx; color: #333; }
-.pager-total { text-align: center; font-size: 24rpx; color: #B0B0B0; padding-bottom: 16rpx; }
 </style>

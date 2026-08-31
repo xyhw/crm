@@ -111,6 +111,16 @@
         <view class="modal-btn" @click="saveAdmin">保存</view>
       </view>
     </view>
+
+    <ConfirmDialog
+      v-model:visible="confirmRoleVisible"
+      title="删除确认"
+      :content="`确认删除角色「${confirmRole?.name}」？`"
+      desc="删除后不可恢复"
+      confirm-text="删除"
+      tone="danger"
+      @confirm="doRemoveRole"
+    />
   </view>
 </template>
 
@@ -118,6 +128,10 @@
 import { ref, reactive } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import { adminApi } from '@/admin/adminApi';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
+
+const confirmRoleVisible = ref(false);
+const confirmRole = ref(null);
 
 const roles = ref([]);
 const admins = ref([]);
@@ -186,20 +200,19 @@ async function saveRole() {
   }
 }
 function removeRole(r) {
-  uni.showModal({
-    title: '提示',
-    content: `确认删除角色「${r.name}」？`,
-    success: async (res) => {
-      if (!res.confirm) return;
-      try {
-        await adminApi.deleteRole(r.id);
-        uni.showToast({ title: '已删除', icon: 'success' });
-        fetchData();
-      } catch (e) {
-        uni.showToast({ title: e.message, icon: 'none' });
-      }
-    },
-  });
+  confirmRole.value = r;
+  confirmRoleVisible.value = true;
+}
+async function doRemoveRole() {
+  if (!confirmRole.value) return;
+  try {
+    await adminApi.deleteRole(confirmRole.value.id);
+    uni.showToast({ title: '已删除', icon: 'success' });
+    confirmRole.value = null;
+    fetchData();
+  } catch (e) {
+    uni.showToast({ title: e.message, icon: 'none' });
+  }
 }
 
 function openNewAdmin() {
@@ -266,7 +279,7 @@ async function toggleAdmin(a) {
 </script>
 
 <style lang="scss" scoped>
-.role-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx; }
+.role-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx 140rpx; }
 .page-head { display: flex; justify-content: space-between; align-items: center; padding: 16rpx 0; }
 .page-title { font-size: 32rpx; font-weight: 700; color: #1A1A1A; }
 .head-actions { display: flex; align-items: center; gap: 16rpx; }

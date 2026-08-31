@@ -1,13 +1,7 @@
 <template>
   <view class="admin-list-page">
     <view class="filter-bar">
-      <input
-        v-model="keywordInput"
-        class="filter-input"
-        placeholder="搜索标题/酒店/城市"
-        confirm-type="search"
-        @confirm="applyFilter"
-      />
+      <SearchBar v-model="keywordInput" placeholder="搜索标题/酒店/城市" @search="onSearch" @clear="onClear" />
       <view class="filter-tabs">
         <view
           v-for="s in statusOptions"
@@ -19,9 +13,13 @@
       </view>
     </view>
 
-    <view v-if="loading && list.length === 0" class="empty">加载中...</view>
-    <view v-else-if="list.length === 0" class="empty">暂无数据</view>
-    <view v-else>
+    <StateView
+      :loading="loading"
+      :empty="!loading && list.length === 0"
+      empty-title="暂无商机"
+      empty-desc="暂无商机记录"
+      :skeleton-count="4"
+    >
       <view v-for="item in list" :key="item.id" class="card-item" @click="openDetail(item)">
         <view class="card-item__head">
           <text class="card-item__title">{{ item.title }}</text>
@@ -36,19 +34,13 @@
           <text>{{ formatDate(item.created_at) }}</text>
         </view>
         <view class="card-item__actions">
-          <view v-if="item.status === 'active'" class="act-btn danger" @click.stop="toggleStatus(item)">下架</view>
-          <view v-else-if="item.status === 'inactive'" class="act-btn" @click.stop="toggleStatus(item)">上架</view>
+          <view v-if="item.status === 'active'" class="act-btn danger" @click.stop="confirmToggle(item)">下架</view>
+          <view v-else-if="item.status === 'inactive'" class="act-btn" @click.stop="confirmToggle(item)">上架</view>
         </view>
       </view>
+    </StateView>
 
-      <!-- 固定分页 -->
-      <view v-if="pageCount > 1" class="pager">
-        <view class="pager-btn" :class="{ disabled: page <= 1 }" @click="goPage(page - 1)">上一页</view>
-        <text class="pager-info">{{ page }} / {{ pageCount }}</text>
-        <view class="pager-btn" :class="{ disabled: page >= pageCount }" @click="goPage(page + 1)">下一页</view>
-      </view>
-      <view class="pager-total">共 {{ total }} 条</view>
-    </view>
+    <Pagination :page="page" :page-count="pageCount" :total="total" @change="goPage" />
 
     <!-- 详情弹层 -->
     <view v-if="detail" class="modal-mask" @click="detail = null">
@@ -79,6 +71,15 @@
         <view class="modal-btn" @click="detail = null">关闭</view>
       </view>
     </view>
+
+    <ConfirmDialog
+      v-model:visible="confirmVisible"
+      title="操作确认"
+      :content="`确认${confirmNext === 'inactive' ? '下架' : '上架'}该商机？`"
+      :confirm-text="confirmNext === 'inactive' ? '下架' : '上架'"
+      :tone="confirmNext === 'inactive' ? 'danger' : 'primary'"
+      @confirm="doToggle"
+    />
   </view>
 </template>
 
@@ -87,6 +88,10 @@ import { ref, computed } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import { adminApi } from '@/admin/adminApi';
 import { formatDate, opportunityStatusLabel } from '@/common/constants';
+import SearchBar from '@/components/SearchBar.vue';
+import Pagination from '@/components/Pagination.vue';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
+import StateView from '@/components/StateView.vue';
 
 const list = ref([]);
 const loading = ref(false);
@@ -96,6 +101,9 @@ const pageSize = 10;
 const keywordInput = ref('');
 const status = ref('');
 const detail = ref(null);
+const confirmVisible = ref(false);
+const confirmItem = ref(null);
+const confirmNext = ref('');
 
 const statusOptions = [
   { label: '全部', value: '' },
@@ -130,6 +138,12 @@ onShow(() => fetchList(1));
 function applyFilter() {
   fetchList(1);
 }
+function onSearch() {
+  fetchList(1);
+}
+function onClear() {
+  fetchList(1);
+}
 function selectStatus(s) {
   status.value = s;
   fetchList(1);
@@ -147,23 +161,24 @@ async function openDetail(item) {
   }
 }
 
-async function toggleStatus(item) {
-  const next = item.status === 'active' ? 'inactive' : 'active';
+function confirmToggle(item) {
+  confirmItem.value = item;
+  confirmNext.value = item.status === 'active' ? 'inactive' : 'active';
+  confirmVisible.value = true;
+}
+async function doToggle() {
+  if (!confirmItem.value) return;
+  const next = confirmNext.value;
   const label = next === 'inactive' ? '下架' : '上架';
-  uni.showModal({
-    title: '提示',
-    content: `确认${label}该商机？`,
-    success: async (res) => {
-      if (!res.confirm) return;
-      try {
-        await adminApi.updateOpportunity(item.id, { status: next });
-        uni.showToast({ title: `${label}成功`, icon: 'success' });
-        fetchList(page.value);
-      } catch (e) {
-        uni.showToast({ title: e.message, icon: 'none' });
-      }
-    },
-  });
+  try {
+    await adminApi.updateOpportunity(confirmItem.value.id, { status: next });
+    uni.showToast({ title: `${label}成功`, icon: 'success' });
+    confirmItem.value = null;
+    confirmNext.value = '';
+    fetchList(page.value);
+  } catch (e) {
+    uni.showToast({ title: e.message, icon: 'none' });
+  }
 }
 </script>
 
@@ -171,17 +186,9 @@ async function toggleStatus(item) {
 .admin-list-page {
   min-height: 100vh;
   background: #F2F4F5;
-  padding: 16rpx 24rpx;
+  padding: 16rpx 24rpx 140rpx;
 }
 .filter-bar {
-  margin-bottom: 16rpx;
-}
-.filter-input {
-  height: 72rpx;
-  background: #ffffff;
-  border-radius: 36rpx;
-  padding: 0 24rpx;
-  font-size: 26rpx;
   margin-bottom: 16rpx;
 }
 .filter-tabs {
@@ -257,36 +264,6 @@ async function toggleStatus(item) {
 .act-btn.danger {
   border-color: #E54848;
   color: #E54848;
-}
-.pager {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16rpx 0;
-}
-.pager-btn {
-  padding: 8rpx 28rpx;
-  border: 1px solid #DDDDDD;
-  border-radius: 8rpx;
-  font-size: 26rpx;
-  color: #333;
-  background: #fff;
-}
-.pager-btn.disabled {
-  color: #C0C0C0;
-  border-color: #EEEEEE;
-  background: #F7F8F9;
-}
-.pager-info {
-  margin: 0 24rpx;
-  font-size: 26rpx;
-  color: #333;
-}
-.pager-total {
-  text-align: center;
-  font-size: 24rpx;
-  color: #B0B0B0;
-  padding-bottom: 16rpx;
 }
 .modal-mask {
   position: fixed;

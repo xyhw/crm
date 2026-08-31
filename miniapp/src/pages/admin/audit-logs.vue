@@ -1,13 +1,7 @@
 <template>
   <view class="admin-list-page">
     <view class="filter-bar">
-      <input
-        v-model="keywordInput"
-        class="filter-input"
-        placeholder="搜索操作人/详情"
-        confirm-type="search"
-        @confirm="applyFilter"
-      />
+      <SearchBar v-model="keywordInput" placeholder="搜索操作人/详情" @search="onSearch" @clear="onClear" />
       <scroll-view scroll-x class="filter-scroll">
         <view class="filter-tabs">
           <view
@@ -32,9 +26,13 @@
       </scroll-view>
     </view>
 
-    <view v-if="loading && list.length === 0" class="empty">加载中...</view>
-    <view v-else-if="list.length === 0" class="empty">暂无数据</view>
-    <view v-else>
+    <StateView
+      :loading="loading"
+      :empty="!loading && list.length === 0"
+      empty-title="暂无日志"
+      empty-desc="暂无操作日志记录"
+      :skeleton-count="4"
+    >
       <view v-for="item in list" :key="item.id" class="card-item">
         <view class="card-item__head">
           <text class="card-item__title">{{ actionLabel(item.action) }}</text>
@@ -47,14 +45,9 @@
         <view v-if="item.detail" class="card-item__detail">{{ item.detail }}</view>
         <view v-if="item.ip" class="card-item__info"><text>IP {{ item.ip }}</text></view>
       </view>
+    </StateView>
 
-      <view v-if="pageCount > 1" class="pager">
-        <view class="pager-btn" :class="{ disabled: page <= 1 }" @click="goPage(page - 1)">上一页</view>
-        <text class="pager-info">{{ page }} / {{ pageCount }}</text>
-        <view class="pager-btn" :class="{ disabled: page >= pageCount }" @click="goPage(page + 1)">下一页</view>
-      </view>
-      <view class="pager-total">共 {{ total }} 条</view>
-    </view>
+    <Pagination :page="page" :page-count="pageCount" :total="total" @change="goPage" />
   </view>
 </template>
 
@@ -63,6 +56,9 @@ import { ref, computed } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import { adminApi } from '@/admin/adminApi';
 import { formatDateTime } from '@/common/constants';
+import SearchBar from '@/components/SearchBar.vue';
+import Pagination from '@/components/Pagination.vue';
+import StateView from '@/components/StateView.vue';
 
 const list = ref([]);
 const loading = ref(false);
@@ -133,6 +129,8 @@ async function fetchList(p = 1) {
 onShow(() => fetchList(1));
 
 function applyFilter() { fetchList(1); }
+function onSearch() { fetchList(1); }
+function onClear() { fetchList(1); }
 function selectAction(v) { action.value = v; fetchList(1); }
 function selectTarget(v) { targetType.value = v; fetchList(1); }
 function goPage(p) {
@@ -142,9 +140,8 @@ function goPage(p) {
 </script>
 
 <style lang="scss" scoped>
-.admin-list-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx; }
+.admin-list-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx 140rpx; }
 .filter-bar { margin-bottom: 16rpx; }
-.filter-input { height: 72rpx; background: #fff; border-radius: 36rpx; padding: 0 24rpx; font-size: 26rpx; margin-bottom: 16rpx; }
 .filter-scroll { white-space: nowrap; }
 .filter-tabs { display: inline-flex; padding: 4rpx 0; }
 .filter-tab { padding: 8rpx 24rpx; margin-right: 16rpx; border-radius: 28rpx; font-size: 24rpx; color: #7A7A7A; background: #fff; display: inline-block; }
@@ -155,9 +152,4 @@ function goPage(p) {
 .status-tag { font-size: 20rpx; padding: 2rpx 12rpx; border-radius: 8rpx; color: #048C47; background: #E4F7EC; }
 .card-item__info { display: flex; justify-content: space-between; font-size: 24rpx; color: #7A7A7A; margin-bottom: 8rpx; }
 .card-item__detail { font-size: 24rpx; color: #555; background: #F7F8F9; border-radius: 8rpx; padding: 12rpx; margin-bottom: 8rpx; }
-.pager { display: flex; align-items: center; justify-content: center; padding: 16rpx 0; }
-.pager-btn { padding: 8rpx 28rpx; border: 1px solid #DDD; border-radius: 8rpx; font-size: 26rpx; color: #333; background: #fff; }
-.pager-btn.disabled { color: #C0C0C0; border-color: #EEE; background: #F7F8F9; }
-.pager-info { margin: 0 24rpx; font-size: 26rpx; color: #333; }
-.pager-total { text-align: center; font-size: 24rpx; color: #B0B0B0; padding-bottom: 16rpx; }
 </style>

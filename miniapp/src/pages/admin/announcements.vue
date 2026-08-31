@@ -9,13 +9,7 @@
     </view>
 
     <view class="filter-bar">
-      <input
-        v-model="keywordInput"
-        class="filter-input"
-        placeholder="搜索标题"
-        confirm-type="search"
-        @confirm="applyFilter"
-      />
+      <SearchBar v-model="keywordInput" placeholder="搜索标题" @search="onSearch" @clear="onClear" />
       <view class="filter-tabs">
         <view
           v-for="s in statusOptions"
@@ -27,9 +21,13 @@
       </view>
     </view>
 
-    <view v-if="loading && list.length === 0" class="empty">加载中...</view>
-    <view v-else-if="list.length === 0" class="empty">暂无数据</view>
-    <view v-else>
+    <StateView
+      :loading="loading"
+      :empty="!loading && list.length === 0"
+      empty-title="暂无公告"
+      empty-desc="点击右上角「新建公告」添加"
+      :skeleton-count="4"
+    >
       <view v-for="item in list" :key="item.id" class="card-item">
         <view class="card-item__head">
           <text class="card-item__title">{{ item.title }}</text>
@@ -46,17 +44,12 @@
         <view class="card-item__actions">
           <view class="act-btn" @click="openEdit(item)">编辑</view>
           <view class="act-btn" @click="toggleStatus(item)">{{ item.status === 'active' ? '停用' : '启用' }}</view>
-          <view class="act-btn danger" @click="remove(item)">删除</view>
+          <view class="act-btn danger" @click="confirmRemove(item)">删除</view>
         </view>
       </view>
+    </StateView>
 
-      <view v-if="pageCount > 1" class="pager">
-        <view class="pager-btn" :class="{ disabled: page <= 1 }" @click="goPage(page - 1)">上一页</view>
-        <text class="pager-info">{{ page }} / {{ pageCount }}</text>
-        <view class="pager-btn" :class="{ disabled: page >= pageCount }" @click="goPage(page + 1)">下一页</view>
-      </view>
-      <view class="pager-total">共 {{ total }} 条</view>
-    </view>
+    <Pagination :page="page" :page-count="pageCount" :total="total" @change="goPage" />
 
     <!-- 编辑弹层 -->
     <view v-if="editItem" class="modal-mask" @click="editItem = null">
@@ -64,7 +57,16 @@
         <view class="modal-title">{{ editItem.id ? '编辑公告' : '新建公告' }}</view>
         <view class="form-row">
           <text class="form-label">标题</text>
-          <input v-model="editForm.title" class="form-input" placeholder="标题" />
+          <view class="form-field">
+            <input
+              v-model="editForm.title"
+              class="form-input"
+              :class="{ 'form-input--error': errors.title }"
+              placeholder="标题"
+              @blur="validateField('title')"
+            />
+            <text v-if="errors.title" class="form-error">{{ errors.title }}</text>
+          </view>
         </view>
         <view class="form-row">
           <text class="form-label">内容</text>
@@ -78,7 +80,9 @@
         </view>
         <view class="form-row">
           <text class="form-label">媒体链接</text>
-          <input v-model="editForm.media_url" class="form-input" placeholder="图片/视频URL" />
+          <view class="form-field">
+            <input v-model="editForm.media_url" class="form-input" placeholder="图片/视频URL" />
+          </view>
         </view>
         <image
           v-if="editForm.media_url && editForm.media_type !== 'video'"
@@ -88,19 +92,27 @@
         />
         <view class="form-row">
           <text class="form-label">跳转链接</text>
-          <input v-model="editForm.link_url" class="form-input" placeholder="点击公告跳转的URL" />
+          <view class="form-field">
+            <input v-model="editForm.link_url" class="form-input" placeholder="点击公告跳转的URL" />
+          </view>
         </view>
         <view class="form-row">
           <text class="form-label">生效时间</text>
-          <input v-model="editForm.start_at" class="form-input" placeholder="YYYY-MM-DD HH:mm:ss，可空" />
+          <view class="form-field">
+            <input v-model="editForm.start_at" class="form-input" placeholder="YYYY-MM-DD HH:mm:ss，可空" />
+          </view>
         </view>
         <view class="form-row">
           <text class="form-label">失效时间</text>
-          <input v-model="editForm.end_at" class="form-input" placeholder="YYYY-MM-DD HH:mm:ss，可空" />
+          <view class="form-field">
+            <input v-model="editForm.end_at" class="form-input" placeholder="YYYY-MM-DD HH:mm:ss，可空" />
+          </view>
         </view>
         <view class="form-row">
           <text class="form-label">排序</text>
-          <input v-model="editForm.sort_order" class="form-input" type="number" placeholder="数字越小越靠前" />
+          <view class="form-field">
+            <input v-model="editForm.sort_order" class="form-input" type="number" placeholder="数字越小越靠前" />
+          </view>
         </view>
         <view class="form-row">
           <text class="form-label">置顶</text>
@@ -109,14 +121,28 @@
         <view class="modal-btn" @click="save">保存</view>
       </view>
     </view>
+
+    <ConfirmDialog
+      v-model:visible="confirmVisible"
+      title="删除确认"
+      :content="`确认删除公告「${confirmItem?.title}」？`"
+      desc="删除后不可恢复"
+      confirm-text="删除"
+      tone="danger"
+      @confirm="doRemove"
+    />
   </view>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import { adminApi } from '@/admin/adminApi';
 import { formatDate } from '@/common/constants';
+import SearchBar from '@/components/SearchBar.vue';
+import Pagination from '@/components/Pagination.vue';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
+import StateView from '@/components/StateView.vue';
 
 const list = ref([]);
 const loading = ref(false);
@@ -127,6 +153,9 @@ const keywordInput = ref('');
 const status = ref('');
 const editItem = ref(null);
 const editForm = ref({});
+const errors = reactive({ title: '' });
+const confirmVisible = ref(false);
+const confirmItem = ref(null);
 
 const mediaOptions = [
   { label: '文字', value: 'text' },
@@ -167,7 +196,8 @@ async function fetchList(p = 1) {
 
 onShow(() => fetchList(1));
 
-function applyFilter() { fetchList(1); }
+function onSearch() { fetchList(1); }
+function onClear() { fetchList(1); }
 function selectStatus(s) { status.value = s; fetchList(1); }
 function goPage(p) {
   if (p < 1 || p > pageCount.value || p === page.value) return;
@@ -177,6 +207,7 @@ function goPage(p) {
 function openNew() {
   editItem.value = { id: null };
   editForm.value = { title: '', content: '', media_type: 'text', media_url: '', link_url: '', start_at: '', end_at: '', sort_order: '0', is_top: 0 };
+  errors.title = '';
 }
 function openEdit(item) {
   editItem.value = item;
@@ -191,8 +222,19 @@ function openEdit(item) {
     sort_order: String(item.sort_order ?? 0),
     is_top: item.is_top ? 1 : 0,
   };
+  errors.title = '';
+}
+function validateField(field) {
+  if (field === 'title') {
+    errors.title = editForm.value.title && editForm.value.title.trim() ? '' : '标题不能为空';
+  }
 }
 async function save() {
+  validateField('title');
+  if (errors.title) {
+    uni.showToast({ title: errors.title, icon: 'none' });
+    return;
+  }
   const body = {
     title: editForm.value.title,
     content: editForm.value.content,
@@ -239,26 +281,25 @@ async function toggleStatus(item) {
     uni.showToast({ title: e.message, icon: 'none' });
   }
 }
-function remove(item) {
-  uni.showModal({
-    title: '提示',
-    content: `确认删除公告「${item.title}」？`,
-    success: async (res) => {
-      if (!res.confirm) return;
-      try {
-        await adminApi.deleteAnnouncement(item.id);
-        uni.showToast({ title: '已删除', icon: 'success' });
-        fetchList(page.value);
-      } catch (e) {
-        uni.showToast({ title: e.message, icon: 'none' });
-      }
-    },
-  });
+function confirmRemove(item) {
+  confirmItem.value = item;
+  confirmVisible.value = true;
+}
+async function doRemove() {
+  if (!confirmItem.value) return;
+  try {
+    await adminApi.deleteAnnouncement(confirmItem.value.id);
+    uni.showToast({ title: '已删除', icon: 'success' });
+    confirmItem.value = null;
+    fetchList(page.value);
+  } catch (e) {
+    uni.showToast({ title: e.message, icon: 'none' });
+  }
 }
 </script>
 
 <style lang="scss" scoped>
-.admin-list-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx; }
+.admin-list-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx 140rpx; }
 .page-head { display: flex; justify-content: space-between; align-items: center; padding: 16rpx 0; }
 .page-title { font-size: 32rpx; font-weight: 700; color: #1A1A1A; }
 .head-actions { display: flex; align-items: center; gap: 16rpx; }
@@ -274,23 +315,20 @@ function remove(item) {
 .card-item__actions { display: flex; justify-content: flex-end; margin-top: 12rpx; gap: 16rpx; }
 .act-btn { padding: 8rpx 28rpx; border-radius: 32rpx; border: 1px solid #048C47; color: #048C47; font-size: 24rpx; }
 .act-btn.danger { border-color: #E54848; color: #E54848; }
-.pager { display: flex; align-items: center; justify-content: center; padding: 16rpx 0; }
-.pager-btn { padding: 8rpx 28rpx; border: 1px solid #DDD; border-radius: 8rpx; font-size: 26rpx; color: #333; background: #fff; }
-.pager-btn.disabled { color: #C0C0C0; border-color: #EEE; background: #F7F8F9; }
-.pager-info { margin: 0 24rpx; font-size: 26rpx; color: #333; }
-.pager-total { text-align: center; font-size: 24rpx; color: #B0B0B0; padding-bottom: 16rpx; }
 .modal-mask { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 999; display: flex; align-items: flex-end; }
 .modal-box { width: 100%; background: #fff; border-radius: 24rpx 24rpx 0 0; padding: 32rpx 32rpx calc(32rpx + env(safe-area-inset-bottom)); max-height: 85vh; overflow-y: auto; }
 .modal-title { font-size: 32rpx; font-weight: 600; color: #1A1A1A; margin-bottom: 24rpx; text-align: center; }
-.form-row { display: flex; align-items: center; padding: 12rpx 0; }
-.form-label { width: 150rpx; font-size: 26rpx; color: #7A7A7A; flex-shrink: 0; }
-.form-input { flex: 1; height: 72rpx; background: #F7F8F9; border-radius: 12rpx; padding: 0 20rpx; font-size: 26rpx; }
+.form-row { display: flex; align-items: flex-start; padding: 12rpx 0; }
+.form-label { width: 150rpx; font-size: 26rpx; color: #7A7A7A; flex-shrink: 0; line-height: 72rpx; }
+.form-field { flex: 1; }
+.form-input { width: 100%; height: 72rpx; background: #F7F8F9; border-radius: 12rpx; padding: 0 20rpx; font-size: 26rpx; box-sizing: border-box; border: 1px solid transparent; }
+.form-input--error { border-color: #E54848; background: #FEF2F2; }
+.form-error { display: block; font-size: 22rpx; color: #E54848; margin-top: 8rpx; padding-left: 8rpx; }
 .form-textarea { flex: 1; min-height: 120rpx; background: #F7F8F9; border-radius: 12rpx; padding: 16rpx 20rpx; font-size: 26rpx; }
 .select-value { height: 72rpx; line-height: 72rpx; background: #F7F8F9; border-radius: 12rpx; padding: 0 20rpx; font-size: 26rpx; color: #333; flex: 1; }
 .media-preview { width: 100%; height: 240rpx; border-radius: 12rpx; margin-top: 12rpx; }
 .filter-bar { margin-bottom: 16rpx; }
-.filter-input { height: 72rpx; background: #fff; border-radius: 36rpx; padding: 0 24rpx; font-size: 26rpx; margin-bottom: 16rpx; }
-.filter-tabs { display: flex; flex-wrap: wrap; }
+.filter-tabs { display: flex; flex-wrap: wrap; margin-top: 16rpx; }
 .filter-tab { padding: 8rpx 24rpx; margin-right: 16rpx; margin-bottom: 12rpx; border-radius: 28rpx; font-size: 24rpx; color: #7A7A7A; background: #fff; }
 .filter-tab.active { color: #fff; background: #048C47; }
 .modal-btn { margin-top: 32rpx; height: 80rpx; line-height: 80rpx; text-align: center; background: #048C47; color: #fff; border-radius: 40rpx; font-size: 28rpx; }

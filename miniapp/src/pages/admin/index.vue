@@ -14,6 +14,15 @@
         <text class="menu-label">{{ item.label }}</text>
       </view>
     </view>
+
+    <ConfirmDialog
+      v-model:visible="logoutVisible"
+      title="退出登录"
+      content="确认退出当前登录？"
+      confirm-text="退出"
+      tone="warning"
+      @confirm="doLogout"
+    />
   </view>
 </template>
 
@@ -21,6 +30,9 @@
 import { ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import { getAdminUser, clearAdminAuth, getAdminToken } from '@/admin/adminApi';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
+
+const logoutVisible = ref(false);
 
 const adminUser = ref(null);
 
@@ -59,16 +71,11 @@ function go(path) {
 }
 
 function handleLogout() {
-  uni.showModal({
-    title: '提示',
-    content: '确认退出登录？',
-    success: (res) => {
-      if (res.confirm) {
-        clearAdminAuth();
-        uni.reLaunch({ url: '/pages/admin/login' });
-      }
-    },
-  });
+  logoutVisible.value = true;
+}
+function doLogout() {
+  clearAdminAuth();
+  uni.reLaunch({ url: '/pages/admin/login' });
 }
 </script>
 
