@@ -92,6 +92,15 @@ router.post('/', audit('admin_user', 'create'), async (req, res) => {
 router.put('/:id', audit('admin_user', 'edit'), async (req, res) => {
   try {
     const { name, phone, status, password } = req.body || {};
+    if (status !== undefined && status === 'inactive') {
+      const target = await queryOne('SELECT status FROM admin_users WHERE id = ?', [req.params.id]);
+      if (target && target.status === 'active') {
+        const [countResult] = await query('SELECT COUNT(*) as total FROM admin_users WHERE status = "active"');
+        if (countResult.total <= 1) {
+          return res.json({ code: 400, message: '至少保留一个启用状态的管理员' });
+        }
+      }
+    }
     const data = {};
     if (name !== undefined) data.name = name;
     if (phone !== undefined) data.phone = phone;

@@ -65,6 +65,9 @@
           </view>
         </view>
         <view v-if="item.descriptionPublic" class="card-summary">{{ item.descriptionPublic }}</view>
+        <view v-if="newShareCount(item) > 0" class="new-share-tip">
+          {{ newShareCount(item) }} 条新共享跟进
+        </view>
         <view class="heat-bar">
           <text class="heat-item heat-buy">{{ item.purchaseCount || 0 }}人已购</text>
           <text v-if="(item.totalShares || 0) > 0" class="heat-item heat-share">{{ item.totalShares }}条真实进度</text>
@@ -143,6 +146,17 @@ async function fetchList(p = 1, reset = false) {
 async function reload() {
   loading.value = true;
   await fetchList(1, true);
+}
+
+function newShareCount(item) {
+  if (!item.isPurchased) return 0;
+  let viewed = 0;
+  try {
+    viewed = parseInt(uni.getStorageSync(`viewedShares_${item.id}`) || '0', 10) || 0;
+  } catch (e) {
+    viewed = 0;
+  }
+  return Math.max(0, (item.totalShares || 0) - viewed);
 }
 
 function selectCategory(value) {
@@ -358,6 +372,16 @@ onReachBottom(() => {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
+}
+
+.new-share-tip {
+  display: inline-block;
+  margin-top: 12rpx;
+  padding: 4rpx 14rpx;
+  font-size: 22rpx;
+  color: #E54848;
+  background: #FDECEC;
+  border-radius: 8rpx;
 }
 
 .heat-bar {

@@ -96,12 +96,17 @@
       <!-- 图纸附件 -->
       <view class="section-card">
         <view class="section-title">项目图纸（最多9个）</view>
-        <view class="uploader-grid">
-          <view v-for="(file, idx) in form.files" :key="idx" class="uploader-item">
-            <image :src="absUrl(file.url)" class="uploader-preview" mode="aspectFill" @click="previewFile(idx)" />
-            <view class="uploader-remove" @click="removeFile(idx)">×</view>
+<view class="uploader-grid">
+        <view v-for="(file, idx) in form.files" :key="idx" class="uploader-item" @click="previewFile(idx)">
+          <image v-if="isImageUrl(absUrl(file.url))" :src="absUrl(file.url)" class="uploader-preview" mode="aspectFill" />
+          <view v-else class="file-card">
+            <text class="file-card__icon">FILE</text>
+            <text class="file-card__name">{{ file.name || '文件' }}</text>
+            <text v-if="file.size" class="file-card__size">{{ (file.size / 1024).toFixed(1) }}KB</text>
           </view>
-          <view v-if="form.files.length < 9" class="uploader-add" :class="{ uploading }" @click="chooseFiles">
+          <view class="uploader-remove" @click.stop="removeFile(idx)">×</view>
+        </view>
+        <view v-if="form.files.length < 9" class="uploader-add" :class="{ uploading }" @click="chooseFiles">
             <text class="add-symbol">{{ uploading ? '...' : '+' }}</text>
             <text class="add-text">{{ uploading ? '上传中' : '上传' }}</text>
           </view>
@@ -262,34 +267,52 @@ function confirmCategory() {
 
 function chooseFiles() {
   if (uploading.value) return;
-  uni.chooseImage({
-    count: MAX_FILES - form.files.length,
+  const remain = MAX_FILES - form.files.length;
+  // #ifdef MP-WEIXIN
+  wx.chooseMessageFile({
+    count: remain,
+    type: 'all',
     success: (res) => {
-      uploadFiles(res.tempFilePaths);
+      uploadFiles(res.tempFiles);
     },
   });
+  // #endif
+  // #ifndef MP-WEIXIN
+  uni.chooseFile({
+    count: remain,
+    success: (res) => {
+      uploadFiles(res.tempFiles || (res.tempFilePaths || []).map((p) => ({ path: p })));
+    },
+  });
+  // #endif
 }
 
-async function uploadFiles(paths) {
-  if (!paths.length) return;
-  if (form.files.length + paths.length > MAX_FILES) {
+async function uploadFiles(files) {
+  if (!files || !files.length) return;
+  if (form.files.length + files.length > MAX_FILES) {
     return toast(`最多上传 ${MAX_FILES} 个文件`);
+  }
+  for (const f of files) {
+    if (f.size && f.size > MAX_SIZE) {
+      return toast(`文件超过 5MB 限制：${f.name || '文件'}`);
+    }
   }
   uploading.value = true;
   const token = getToken();
   try {
-    for (const filePath of paths) {
+    for (const f of files) {
       await new Promise((resolve) => {
         uni.uploadFile({
           url: API_BASE + '/upload',
-          filePath,
+          filePath: f.path,
           name: 'file',
           header: token ? { Authorization: `Bearer ${token}` } : {},
           success: (uploadRes) => {
             try {
               const json = JSON.parse(uploadRes.data);
               if (json.code === 0) {
-                form.files.push(json.data);
+                const item = json.data || {};
+                form.files.push({ ...item, name: item.name || f.name || '', size: item.size || f.size || 0 });
               } else {
                 toast(json.message || '上传失败');
               }
@@ -320,9 +343,28 @@ function absUrl(url) {
   return UPLOAD_BASE + url;
 }
 
+function isImageUrl(url) {
+  return /\.(jpe?g|png|gif|webp)$/i.test(url || '');
+}
+
 function previewFile(idx) {
-  const urls = form.files.map((f) => absUrl(f.url));
-  uni.previewImage({ urls, current: urls[idx] });
+  const f = form.files[idx];
+  const url = absUrl(f.url);
+  if (isImageUrl(url)) {
+    const urls = form.files.filter((x) => isImageUrl(absUrl(x.url))).map((x) => absUrl(x.url));
+    uni.previewImage({ urls, current: url });
+  } else {
+    // 非图片：用系统文档打开器查看
+    uni.downloadFile({
+      url,
+      success: (res) => {
+        if (res.statusCode === 200) {
+          uni.openDocument({ filePath: res.tempFilePath, showMenu: true });
+        }
+      },
+      fail: () => toast('文件下载失败'),
+    });
+  }
 }
 
 async function handlePublish() {
@@ -572,6 +614,45 @@ async function handlePublish() {
 .uploader-preview {
   width: 100%;
   height: 100%;
+}
+
+.file-card {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #F8FAF9;
+  padding: 12rpx;
+  box-sizing: border-box;
+}
+
+.file-card__icon {
+  font-size: 20rpx;
+  color: #048C47;
+  background: #E4F7EC;
+  border-radius: 8rpx;
+  padding: 2rpx 8rpx;
+  margin-bottom: 8rpx;
+}
+
+.file-card__name {
+  font-size: 20rpx;
+  color: #1A1A1A;
+  text-align: center;
+  line-height: 1.3;
+  word-break: break-all;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.file-card__size {
+  font-size: 18rpx;
+  color: #B0B0B0;
+  margin-top: 4rpx;
 }
 
 .uploader-remove {

@@ -47,7 +47,7 @@ const saving = ref(false);
 const draft = ref({});
 const groups = ref([]);
 
-const PERCENT_KEYS = ['platform_commission_rate', 'invalid_threshold', 'invalid_penalty_rate', 'similarity_threshold', 'credit_review_threshold', 'credit_ban_threshold'];
+const PERCENT_KEYS = ['platform_commission_rate', 'invalid_threshold', 'invalid_penalty_rate', 'similarity_threshold'];
 
 const GROUP_DEF = [
   {
@@ -98,7 +98,55 @@ const GROUP_DEF = [
       { key: 'pay_points_to_yuan', label: '1积分=多少元', type: 'number', desc: '可填小数' },
       { key: 'pay_order_ttl', label: '订单过期(秒)', type: 'number' },
       { key: 'pay_site_base_url', label: '站点域名', type: 'text', desc: '支付成功跳转、回调通知基于此域名' },
-      { key: 'pay_wechat_enabled', label: '微信支付-启用', type: 'boolean' },
+    ],
+  },
+  {
+    title: '微信支付',
+    fields: [
+      { key: 'pay_wechat_enabled', label: '启用', type: 'boolean' },
+      { key: 'pay_wechat_appid', label: 'AppID', type: 'text' },
+      { key: 'pay_wechat_mchid', label: '商户号', type: 'text' },
+      { key: 'pay_wechat_apiv3key', label: 'APIv3密钥', type: 'text' },
+      { key: 'pay_wechat_serialno', label: '证书序列号', type: 'text' },
+      { key: 'pay_wechat_private_key_path', label: '私钥文件路径', type: 'text' },
+      { key: 'pay_wechat_notify_url', label: '回调通知URL', type: 'text' },
+    ],
+  },
+  {
+    title: '支付宝',
+    fields: [
+      { key: 'pay_alipay_enabled', label: '启用', type: 'boolean' },
+      { key: 'pay_alipay_appid', label: 'AppID', type: 'text' },
+      { key: 'pay_alipay_notify_url', label: '回调通知URL', type: 'text' },
+      { key: 'pay_alipay_private_key', label: '应用私钥', type: 'text' },
+      { key: 'pay_alipay_public_key', label: '支付宝公钥', type: 'text' },
+    ],
+  },
+  {
+    title: 'Stripe',
+    fields: [
+      { key: 'pay_stripe_enabled', label: '启用', type: 'boolean' },
+      { key: 'pay_stripe_secret_key', label: 'Secret Key', type: 'text' },
+      { key: 'pay_stripe_webhook_secret', label: 'Webhook Secret', type: 'text' },
+    ],
+  },
+  {
+    title: 'Waffo Pancake',
+    fields: [
+      { key: 'pay_waffo_enabled', label: '启用', type: 'boolean' },
+      { key: 'pay_waffo_merchant_id', label: 'Merchant ID', type: 'text', desc: 'MER_...' },
+      { key: 'pay_waffo_store_id', label: 'Store ID', type: 'text', desc: 'STO_...' },
+      { key: 'pay_waffo_private_key', label: 'RSA私钥(PEM/Base64)', type: 'text', desc: '-----BEGIN PRIVATE KEY-----' },
+      { key: 'pay_waffo_product_id', label: '商品ID(留空自动创建)', type: 'text', desc: 'PROD_...' },
+      { key: 'pay_waffo_currency', label: '币种', type: 'text', desc: '如 USD' },
+      {
+        key: 'pay_waffo_environment', label: '环境', type: 'select',
+        options: [
+          { value: 'test', label: 'test' },
+          { value: 'prod', label: 'prod' },
+        ],
+      },
+      { key: 'pay_waffo_success_url', label: '支付成功跳转URL', type: 'text' },
     ],
   },
 ];

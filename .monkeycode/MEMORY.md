@@ -37,3 +37,14 @@
 - 说明:
   - 商机发布/编辑/CRM投稿统一校验 `price` 为正整数，下限 10、上限由 `system_configs` 的 `opportunity_price_min/max` 配置（seed 默认 10~200）。
   - 手动录入 CRM 的商机为 `inactive` 状态（不可公开购买），经 `POST /api/crm/:id/publish` 定价后置 `active` 公开。
+
+## 前端同源整合（方案A）
+- 日期: 2026-08-30
+- 上下文: 用户确认方案A：以 miniapp（uni-app）为唯一前端，废弃 client（React）双版本（主动记录）
+- 类别: 环境配置 / 构建与测试
+- 说明:
+  - `miniapp` 一份代码同时编译 H5 与微信小程序，条件编译 `#ifdef MP-WEIXIN` / `#ifndef MP-WEIXIN` 区分平台（payment.js 渠道过滤、onBannerTap 链接处理）。
+  - `client`（React，端口 5173）将下线，主预览切到 miniapp H5（端口 5174）。
+  - miniapp 测试：`cd /workspace/miniapp && NODE_PATH=$(npm root -g) npx vitest run`。测试依赖（vitest/jsdom/@vue/test-utils）全局安装在 `/usr/local/lib/node_modules`，在 `miniapp/node_modules` 下用符号链接指向全局；`@vue/test-utils` 必须在项目本地安装以避免与项目 vue 3.5.41 双实例冲突（全局自带 vue 3.5.42 会报 `reading 'ce'`）。
+  - 投稿人姓名匿名：后端 `server/constants.js` 的 `anonymizeName()` 确定性哈希取单字，前台 API 返回匿名昵称；后台 admin 接口保留实名。前端直接展示后端值，不要再套 maskName 二次脱敏。
+  - miniapp 分页约定：列表接口用服务端分页（page/pageSize + total），后端 rankings 接口已补 total 字段；不要一次性 pageSize:50 拉全量。

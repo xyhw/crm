@@ -109,6 +109,29 @@ async function submitEdit() {
     const n = Number(v);
     return Number.isNaN(n) ? d : n;
   };
+  const checks = [
+    ['购买折扣', num(editForm.value.purchase_discount), 0, 1],
+    ['分佣加成', num(editForm.value.commission_bonus), 0, 1],
+    ['购买率阈值', num(editForm.value.purchase_rate_threshold), 0, 100],
+    ['失效率阈值', num(editForm.value.invalid_rate_threshold), 0, 100],
+    ['有用率阈值', num(editForm.value.helpful_rate_threshold), 0, 100],
+    ['活跃度阈值', num(editForm.value.activity_threshold), 0, null],
+    ['无效标记权重', num(editForm.value.mark_weight), 1, 3],
+  ];
+  for (const [label, v, min, max] of checks) {
+    if (Number.isNaN(v)) {
+      uni.showToast({ title: `${label}格式不正确`, icon: 'none' });
+      return;
+    }
+    if (min !== null && v < min) {
+      uni.showToast({ title: `${label}不能小于${min}`, icon: 'none' });
+      return;
+    }
+    if (max !== null && v > max) {
+      uni.showToast({ title: `${label}不能大于${max}`, icon: 'none' });
+      return;
+    }
+  }
   const body = {
     purchaseDiscount: num(editForm.value.purchase_discount),
     commissionBonus: num(editForm.value.commission_bonus),
