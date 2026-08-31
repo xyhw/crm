@@ -50,6 +50,7 @@ function onMask() {
   align-items: center;
   justify-content: center;
   z-index: 999;
+  animation: confirm-fade-in 200ms ease-out;
 }
 
 .confirm-box {
@@ -57,6 +58,17 @@ function onMask() {
   background: #fff;
   border-radius: 20rpx;
   overflow: hidden;
+  animation: confirm-scale-in 200ms cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+@keyframes confirm-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes confirm-scale-in {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .confirm-title {
@@ -90,7 +102,7 @@ function onMask() {
 .confirm-btn {
   flex: 1;
   text-align: center;
-  padding: 28rpx 0;
+  padding: 30rpx 0;
   font-size: 30rpx;
 }
 
@@ -100,7 +112,7 @@ function onMask() {
 }
 
 .confirm-btn--ok {
-  color: #048C47;
+  color: #037539;
   font-weight: 600;
 }
 

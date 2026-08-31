@@ -37,8 +37,8 @@ const logoutVisible = ref(false);
 const adminUser = ref(null);
 
 const menus = [
-  { path: '/pages/admin/dashboard', icon: '板', label: '仪表盘', color: '#048C47' },
-  { path: '/pages/admin/opportunities', icon: '商', label: '商机管理', color: '#048C47' },
+  { path: '/pages/admin/dashboard', icon: '板', label: '仪表盘', color: '#037539' },
+  { path: '/pages/admin/opportunities', icon: '商', label: '商机管理', color: '#037539' },
   { path: '/pages/admin/opportunities/import', icon: '导', label: '批量导入', color: '#6B4DE6' },
   { path: '/pages/admin/users', icon: '户', label: '用户管理', color: '#1B7FE0' },
   { path: '/pages/admin/orders', icon: '单', label: '订单管理', color: '#E8920A' },
@@ -81,7 +81,8 @@ function doLogout() {
 
 <style lang="scss" scoped>
 .admin-page {
-  min-height: 100vh;
+  touch-action: manipulation;
+  min-height: 100dvh;
   background: #F2F4F5;
 }
 .admin-header {

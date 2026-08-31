@@ -61,21 +61,22 @@ onShow(async () => {
 </script>
 
 <style lang="scss" scoped>
-.finance-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx; }
+.finance-page { touch-action: manipulation;
+  min-height: 100dvh; background: #F2F4F5; padding: 16rpx 24rpx; }
 .stat-grid { display: flex; flex-wrap: wrap; justify-content: space-between; }
 .stat-card { width: 47%; background: #fff; border-radius: 16rpx; padding: 24rpx 0; margin-bottom: 16rpx; display: flex; flex-direction: column; align-items: center; }
-.stat-value { font-size: 34rpx; font-weight: 700; color: #048C47; }
-.stat-label { font-size: 22rpx; color: #7A7A7A; margin-top: 8rpx; }
+.stat-value { font-size: 34rpx; font-weight: 700; color: #037539; }
+.stat-label { font-size: 22rpx; color: #555555; margin-top: 8rpx; }
 .section { margin-bottom: 8rpx; }
 .section-title { font-size: 28rpx; font-weight: 700; color: #1A1A1A; padding: 24rpx 0 16rpx; }
 .inner-grid { display: flex; flex-wrap: wrap; justify-content: space-between; }
 .mini-card { width: 47%; background: #fff; border-radius: 16rpx; padding: 24rpx 0; margin-bottom: 16rpx; display: flex; flex-direction: column; align-items: center; }
 .mini-value { font-size: 30rpx; font-weight: 700; color: #1A1A1A; }
-.mini-label { font-size: 22rpx; color: #7A7A7A; margin-top: 8rpx; }
+.mini-label { font-size: 22rpx; color: #555555; margin-top: 8rpx; }
 .trend-card { background: #fff; border-radius: 16rpx; padding: 24rpx; }
 .trend-row { display: flex; overflow-x: auto; }
 .trend-item { display: flex; flex-direction: column; align-items: center; min-width: 110rpx; margin-right: 12rpx; }
 .trend-date { font-size: 20rpx; color: #999; }
 .trend-count { font-size: 26rpx; font-weight: 600; color: #1A1A1A; margin-top: 4rpx; }
-.trend-amount { font-size: 20rpx; color: #048C47; margin-top: 2rpx; }
+.trend-amount { font-size: 20rpx; color: #037539; margin-top: 2rpx; }
 </style>

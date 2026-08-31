@@ -119,7 +119,7 @@ defineEmits(['retry', 'action']);
   margin-top: 32rpx;
   padding: 16rpx 56rpx;
   border-radius: 999rpx;
-  background: #048c47;
+  background: #037539;
   color: #ffffff;
   font-size: 26rpx;
 }

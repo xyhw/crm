@@ -10,13 +10,16 @@
           placeholder="用户名"
           placeholder-class="input-ph"
         />
-        <input
-          v-model="password"
-          class="login-input"
-          type="password"
-          placeholder="密码"
-          placeholder-class="input-ph"
-        />
+        <view class="password-wrap">
+          <input
+            v-model="password"
+            class="login-input"
+            :type="passwordVisible ? 'text' : 'password'"
+            placeholder="密码"
+            placeholder-class="input-ph"
+          />
+          <text class="password-toggle" @click="passwordVisible = !passwordVisible">{{ passwordVisible ? '隐藏' : '显示' }}</text>
+        </view>
         <view class="login-btn" :class="{ disabled: loading }" @click="handleLogin">
           {{ loading ? '登录中...' : '登录' }}
         </view>
@@ -32,6 +35,7 @@ import { adminApi, setAdminAuth } from '@/admin/adminApi';
 
 const username = ref('');
 const password = ref('');
+const passwordVisible = ref(false);
 const loading = ref(false);
 
 async function handleLogin() {
@@ -55,7 +59,7 @@ async function handleLogin() {
 
 <style lang="scss" scoped>
 .admin-login {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -87,16 +91,16 @@ async function handleLogin() {
   padding: 0 24rpx;
   font-size: 28rpx;
   margin-bottom: 24rpx;
-  border: 1px solid #EEEEEE;
+  border: 1px solid #DDDEEE;
 }
 .input-ph {
-  color: #B0B0B0;
+  color: #666666;
 }
 .login-btn {
   height: 88rpx;
   line-height: 88rpx;
   text-align: center;
-  background: #048C47;
+  background: #037539;
   color: #ffffff;
   font-size: 30rpx;
   border-radius: 12rpx;
@@ -108,7 +112,9 @@ async function handleLogin() {
 .login-tip {
   text-align: center;
   font-size: 24rpx;
-  color: #B0B0B0;
+  color: #666666;
   margin-top: 32rpx;
 }
+.password-wrap { position: relative; }
+.password-toggle { position: absolute; right: 20rpx; top: 50%; transform: translateY(-50%); font-size: 24rpx; color: #037539; padding: 12rpx; line-height: 1; }
 </style>

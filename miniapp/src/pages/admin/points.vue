@@ -104,16 +104,17 @@ function goPage(p) {
 </script>
 
 <style lang="scss" scoped>
-.admin-list-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx 140rpx; }
+.admin-list-page { touch-action: manipulation;
+  min-height: 100dvh; background: #F2F4F5; padding: 16rpx 24rpx 140rpx; }
 .filter-bar { margin-bottom: 16rpx; }
 .filter-tabs { display: flex; flex-wrap: wrap; margin-top: 16rpx; }
-.filter-tab { padding: 8rpx 24rpx; margin-right: 16rpx; margin-bottom: 12rpx; border-radius: 28rpx; font-size: 24rpx; color: #7A7A7A; background: #fff; }
-.filter-tab.active { color: #fff; background: #048C47; }
+.filter-tab { min-height: 72rpx; line-height: 72rpx; padding: 0 24rpx; margin-right: 16rpx; margin-bottom: 12rpx; border-radius: 28rpx; font-size: 24rpx; color: #555555; background: #fff; }
+.filter-tab.active { color: #fff; background: #037539; }
 .card-item { background: #fff; border-radius: 16rpx; padding: 24rpx; margin-bottom: 16rpx; }
 .card-item__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12rpx; }
 .card-item__title { font-size: 30rpx; font-weight: 600; color: #1A1A1A; flex: 1; margin-right: 16rpx; }
 .delta-tag { font-size: 30rpx; font-weight: 700; }
-.tone-verified { color: #048C47; }
+.tone-verified { color: #037539; }
 .tone-hot { color: #E54848; }
-.card-item__info { display: flex; justify-content: space-between; font-size: 24rpx; color: #7A7A7A; margin-bottom: 8rpx; }
+.card-item__info { display: flex; justify-content: space-between; font-size: 24rpx; color: #555555; margin-bottom: 8rpx; }
 </style>

@@ -52,10 +52,10 @@ function switchTab(path) {
 }
 .tabbar-label {
   font-size: 16px;
-  color: #7A7A7A;
+  color: #555555;
 }
 .tabbar-item.active .tabbar-label {
-  color: #048C47;
+  color: #037539;
   font-weight: 500;
 }
 </style>

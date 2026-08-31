@@ -16,12 +16,13 @@
     </view>
 
     <!-- 编辑弹层 -->
-    <view v-if="editing" class="modal-mask" @click="closeEdit">
+    <view v-if="editing" class="modal-mask" @click="tryCloseEdit">
       <view class="modal-box" @click.stop>
         <view class="modal-title">编辑{{ editing.label }}</view>
+        <view class="modal-close" @click.stop="tryCloseEdit">×</view>
         <view class="form-row">
           <text class="form-label">标题</text>
-          <input v-model="editForm.title" class="form-input" placeholder="协议标题" />
+          <input v-model="editForm.title" class="form-input" placeholder="协议标题" @input="formDirty = true" />
         </view>
 
         <view v-for="(sec, i) in editForm.sections" :key="i" class="section-edit">
@@ -29,12 +30,15 @@
             <text class="section-edit__label">章节 {{ i + 1 }}</text>
             <text class="remove-btn" @click="removeSection(i)">删除</text>
           </view>
-          <input v-model="sec.h" class="form-input" placeholder="章节标题（如：一、服务内容）" />
+          <text class="form-helper">小标题：用于目录或快速定位（建议简短）</text>
+          <input v-model="sec.h" class="form-input" placeholder="章节标题（如：一、服务内容）" @input="formDirty = true" />
+          <text class="form-helper">正文：支持纯文本，多段落用空行分隔</text>
           <textarea
             v-model="sec.p"
             class="form-textarea"
             placeholder="章节正文"
             auto-height
+            @input="formDirty = true"
           />
         </view>
 
@@ -63,6 +67,7 @@ const AGREEMENT_TYPES = [
 const rows = ref([]);
 const editing = ref(null);
 const editForm = ref({ title: '', sections: [] });
+const formDirty = ref(false);
 
 function parseAgreement(raw) {
   if (typeof raw !== 'string') return raw;
@@ -118,6 +123,7 @@ async function openEdit(row) {
       title: content.title,
       sections: content.sections.map((s) => ({ h: s.h || '', p: s.p || '' })),
     };
+    formDirty.value = false;
   } catch (e) {
     uni.showToast({ title: e.message, icon: 'none' });
   }
@@ -126,11 +132,29 @@ async function openEdit(row) {
 function closeEdit() {
   editing.value = null;
 }
+function tryCloseEdit() {
+  if (formDirty.value) {
+    uni.showModal({
+      title: '提示',
+      content: '表单有未保存的修改，确认关闭？',
+      success: (res) => {
+        if (res.confirm) {
+          formDirty.value = false;
+          editing.value = null;
+        }
+      },
+    });
+  } else {
+    editing.value = null;
+  }
+}
 function addSection() {
   editForm.value.sections.push({ h: '', p: '' });
+  formDirty.value = true;
 }
 function removeSection(i) {
   editForm.value.sections.splice(i, 1);
+  formDirty.value = true;
 }
 
 async function save() {
@@ -156,6 +180,7 @@ async function save() {
     };
     await adminApi.updateConfig({ [`agreement_${editing.value.key}`]: payload });
     uni.showToast({ title: '协议已保存', icon: 'success' });
+    formDirty.value = false;
     editing.value = null;
     fetchData();
   } catch (e) {
@@ -165,27 +190,34 @@ async function save() {
 </script>
 
 <style lang="scss" scoped>
-.agreement-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx; }
+.agreement-page { min-height: 100dvh; background: #F2F4F5; padding: 16rpx 24rpx; }
 .card-item { background: #fff; border-radius: 16rpx; padding: 24rpx; margin-bottom: 16rpx; }
 .card-item__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12rpx; }
 .card-item__title { font-size: 30rpx; font-weight: 600; color: #1A1A1A; }
 .head-actions { display: flex; align-items: center; gap: 16rpx; }
-.badge { font-size: 20rpx; padding: 2rpx 12rpx; border-radius: 8rpx; color: #048C47; background: #E4F7EC; }
-.badge.none { color: #B0B0B0; background: #F2F4F5; }
-.edit-btn { font-size: 24rpx; color: #048C47; padding: 6rpx 20rpx; border: 1px solid #048C47; border-radius: 28rpx; }
-.card-item__info { display: flex; justify-content: space-between; font-size: 24rpx; color: #7A7A7A; }
+.badge { font-size: 20rpx; padding: 2rpx 12rpx; border-radius: 8rpx; color: #037539; background: #E4F7EC; }
+.badge.none { color: #666666; background: #F2F4F5; }
+.edit-btn { font-size: 24rpx; color: #037539; padding: 6rpx 20rpx; border: 1px solid #037539; border-radius: 28rpx; }
+.card-item__info { display: flex; justify-content: space-between; font-size: 24rpx; color: #555555; }
 .modal-mask { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 999; display: flex; align-items: flex-end; }
-.modal-box { width: 100%; background: #fff; border-radius: 24rpx 24rpx 0 0; padding: 32rpx 32rpx calc(32rpx + env(safe-area-inset-bottom)); max-height: 85vh; overflow-y: auto; }
+.modal-box { width: 100%; background: #fff; border-radius: 24rpx 24rpx 0 0; padding: 32rpx 32rpx calc(32rpx + env(safe-area-inset-bottom)); max-height: 85vh; overflow-y: auto; position: relative; }
 .modal-title { font-size: 32rpx; font-weight: 600; color: #1A1A1A; margin-bottom: 24rpx; text-align: center; }
 .form-row { display: flex; align-items: center; padding: 12rpx 0; }
-.form-label { width: 140rpx; font-size: 26rpx; color: #7A7A7A; flex-shrink: 0; }
+.form-label { width: 140rpx; font-size: 26rpx; color: #555555; flex-shrink: 0; }
 .form-input { flex: 1; height: 72rpx; background: #F7F8F9; border-radius: 12rpx; padding: 0 20rpx; font-size: 26rpx; }
+.form-input:focus { border-color: #037539; background: #fff; }
 .section-edit { background: #F7F8F9; border-radius: 12rpx; padding: 20rpx; margin-top: 16rpx; }
 .section-edit__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12rpx; }
 .section-edit__label { font-size: 26rpx; font-weight: 600; color: #333; }
 .remove-btn { font-size: 24rpx; color: #E54848; }
 .section-edit .form-input { background: #fff; margin-bottom: 12rpx; }
 .form-textarea { width: 100%; min-height: 120rpx; background: #fff; border-radius: 12rpx; padding: 16rpx 20rpx; font-size: 26rpx; box-sizing: border-box; }
-.add-btn { margin-top: 24rpx; height: 72rpx; line-height: 72rpx; text-align: center; border: 1px dashed #048C47; color: #048C47; border-radius: 12rpx; font-size: 26rpx; }
-.modal-btn { margin-top: 32rpx; height: 80rpx; line-height: 80rpx; text-align: center; background: #048C47; color: #fff; border-radius: 40rpx; font-size: 28rpx; }
+.form-helper { display: block; font-size: 22rpx; color: #888; margin: 4rpx 0 8rpx; padding-left: 4rpx; }
+.add-btn { margin-top: 24rpx; height: 72rpx; line-height: 72rpx; text-align: center; border: 1px dashed #037539; color: #037539; border-radius: 12rpx; font-size: 26rpx; }
+.modal-btn { margin-top: 32rpx; height: 88rpx; line-height: 88rpx; text-align: center; background: #037539; color: #fff; border-radius: 40rpx; font-size: 28rpx; }
+.modal-mask { animation: mask-fade-in 200ms ease-out; }
+.modal-box { animation: sheet-slide-up 250ms cubic-bezier(0.32, 0.72, 0, 1); }
+.modal-close { position: absolute; top: 16rpx; right: 24rpx; width: 56rpx; height: 56rpx; line-height: 56rpx; text-align: center; font-size: 36rpx; color: #999; z-index: 1; }
+@keyframes mask-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheet-slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
 </style>

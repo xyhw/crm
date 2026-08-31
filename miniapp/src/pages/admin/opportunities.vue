@@ -46,6 +46,7 @@
     <view v-if="detail" class="modal-mask" @click="detail = null">
       <view class="modal-box" @click.stop>
         <view class="modal-title">{{ detail.title }}</view>
+        <view class="modal-close" @click.stop="detail = null">×</view>
         <view class="modal-row"><text class="modal-label">城市</text><text>{{ detail.city }}</text></view>
         <view class="modal-row"><text class="modal-label">酒店</text><text>{{ detail.hotel_name }}</text></view>
         <view class="modal-row"><text class="modal-label">分类</text><text>{{ detail.category_name }}</text></view>
@@ -184,7 +185,8 @@ async function doToggle() {
 
 <style lang="scss" scoped>
 .admin-list-page {
-  min-height: 100vh;
+  touch-action: manipulation;
+  min-height: 100dvh;
   background: #F2F4F5;
   padding: 16rpx 24rpx 140rpx;
 }
@@ -196,17 +198,17 @@ async function doToggle() {
   flex-wrap: wrap;
 }
 .filter-tab {
-  padding: 8rpx 24rpx;
+  min-height: 88rpx; line-height: 72rpx; padding: 0 24rpx;
   margin-right: 16rpx;
   margin-bottom: 12rpx;
   border-radius: 28rpx;
   font-size: 24rpx;
-  color: #7A7A7A;
+  color: #555555;
   background: #ffffff;
 }
 .filter-tab.active {
   color: #ffffff;
-  background: #048C47;
+  background: #037539;
 }
 .card-item {
   background: #ffffff;
@@ -231,11 +233,11 @@ async function doToggle() {
   font-size: 20rpx;
   padding: 2rpx 12rpx;
   border-radius: 8rpx;
-  color: #7A7A7A;
+  color: #555555;
   background: #F2F4F5;
 }
 .tone-verified {
-  color: #048C47;
+  color: #037539;
   background: #E4F7EC;
 }
 .tone-hot {
@@ -246,7 +248,7 @@ async function doToggle() {
   display: flex;
   justify-content: space-between;
   font-size: 24rpx;
-  color: #7A7A7A;
+  color: #555555;
   margin-bottom: 8rpx;
 }
 .card-item__actions {
@@ -257,8 +259,8 @@ async function doToggle() {
 .act-btn {
   padding: 8rpx 32rpx;
   border-radius: 32rpx;
-  border: 1px solid #048C47;
-  color: #048C47;
+  border: 1px solid #037539;
+  color: #037539;
   font-size: 24rpx;
 }
 .act-btn.danger {
@@ -280,6 +282,7 @@ async function doToggle() {
   padding: 32rpx 32rpx calc(32rpx + env(safe-area-inset-bottom));
   max-height: 80vh;
   overflow-y: auto;
+  position: relative;
 }
 .modal-title {
   font-size: 32rpx;
@@ -297,7 +300,7 @@ async function doToggle() {
 }
 .modal-label {
   width: 160rpx;
-  color: #7A7A7A;
+  color: #555555;
   flex-shrink: 0;
 }
 .mark-section {
@@ -318,14 +321,14 @@ async function doToggle() {
   font-size: 24rpx;
   color: #333;
   padding: 8rpx 0;
-  border-bottom: 1px solid #EEEEEE;
+  border-bottom: 1px solid #DDDEEE;
 }
 .mark-item:last-child {
   border-bottom: none;
 }
 .mark-user {
   width: 160rpx;
-  color: #048C47;
+  color: #037539;
   flex-shrink: 0;
 }
 .mark-reason {
@@ -336,7 +339,7 @@ async function doToggle() {
 }
 .mark-time {
   margin-left: 16rpx;
-  color: #B0B0B0;
+  color: #666666;
   flex-shrink: 0;
 }
 .modal-btn {
@@ -344,9 +347,14 @@ async function doToggle() {
   height: 80rpx;
   line-height: 80rpx;
   text-align: center;
-  background: #048C47;
+  background: #037539;
   color: #fff;
   border-radius: 40rpx;
   font-size: 28rpx;
 }
+.modal-mask { animation: mask-fade-in 200ms ease-out; }
+.modal-box { animation: sheet-slide-up 250ms cubic-bezier(0.32, 0.72, 0, 1); }
+.modal-close { position: absolute; top: 16rpx; right: 24rpx; width: 56rpx; height: 56rpx; line-height: 56rpx; text-align: center; font-size: 36rpx; color: #999; z-index: 1; }
+@keyframes mask-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheet-slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
 </style>

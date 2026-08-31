@@ -12,7 +12,7 @@
           <switch
             v-if="f.type === 'boolean'"
             :checked="draft[f.key] === true"
-            color="#048C47"
+            color="#037539"
             @change="draft[f.key] = $event.detail.value"
           />
           <picker
@@ -67,18 +67,18 @@ const GROUP_DEF = [
   {
     title: '分成与审核配置',
     fields: [
-      { key: 'platform_commission_rate', label: '平台抽成比例(%)', type: 'number', desc: '0-100' },
-      { key: 'similarity_threshold', label: '相似度判定阈值(%)', type: 'number', desc: '0-100' },
+      { key: 'platform_commission_rate', label: '平台抽成比例(%)', type: 'number', desc: '0-100；每笔交易平台收取的分成比例' },
+      { key: 'similarity_threshold', label: '相似度判定阈值(%)', type: 'number', desc: '0-100；超过该值视为重复商机' },
     ],
   },
   {
     title: '信用与无效配置',
     fields: [
-      { key: 'invalid_threshold', label: '无效判定阈值(%)', type: 'number', desc: '0-100' },
-      { key: 'invalid_penalty_rate', label: '无效惩罚信用分', type: 'number' },
-      { key: 'invalid_ban_threshold', label: '无效累计封禁次数', type: 'number' },
-      { key: 'credit_review_threshold', label: '投稿审核信用阈值', type: 'number', desc: '0-100' },
-      { key: 'credit_ban_threshold', label: '封禁信用阈值', type: 'number', desc: '0-100' },
+      { key: 'invalid_threshold', label: '无效判定阈值(%)', type: 'number', desc: '0-100；超过该值被自动标记为无效' },
+      { key: 'invalid_penalty_rate', label: '无效惩罚信用分', type: 'number', desc: '每次被判定无效扣除的信用分' },
+      { key: 'invalid_ban_threshold', label: '无效累计封禁次数', type: 'number', desc: '累计无效次数达到该值自动封禁账号' },
+      { key: 'credit_review_threshold', label: '投稿审核信用阈值', type: 'number', desc: '0-100；低于该值的投稿需人工审核' },
+      { key: 'credit_ban_threshold', label: '封禁信用阈值', type: 'number', desc: '0-100；低于该值自动封禁账号' },
     ],
   },
   {
@@ -217,16 +217,18 @@ async function saveAll() {
 </script>
 
 <style lang="scss" scoped>
-.config-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx; }
+.config-page { touch-action: manipulation;
+  min-height: 100dvh; background: #F2F4F5; padding: 16rpx 24rpx; }
 .section { margin-bottom: 8rpx; }
 .section-title { font-size: 28rpx; font-weight: 700; color: #1A1A1A; padding: 24rpx 0 16rpx; }
 .card-item { background: #fff; border-radius: 16rpx; padding: 24rpx; margin-bottom: 16rpx; }
 .field-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
 .field-label { font-size: 28rpx; font-weight: 600; color: #1A1A1A; }
-.field-key { font-size: 22rpx; color: #B0B0B0; }
-.field-desc { font-size: 22rpx; color: #B0B0B0; margin-top: 12rpx; }
+.field-key { font-size: 22rpx; color: #666666; }
+.field-desc { font-size: 22rpx; color: #666666; margin-top: 12rpx; }
 .form-input { height: 72rpx; background: #F7F8F9; border-radius: 12rpx; padding: 0 20rpx; font-size: 26rpx; }
+.form-input:focus { border-color: #037539; background: #fff; }
 .select-value { height: 72rpx; line-height: 72rpx; background: #F7F8F9; border-radius: 12rpx; padding: 0 20rpx; font-size: 26rpx; color: #333; }
-.save-btn { margin-top: 16rpx; height: 88rpx; line-height: 88rpx; text-align: center; background: #048C47; color: #fff; border-radius: 12rpx; font-size: 30rpx; margin-bottom: 40rpx; }
+.save-btn { margin-top: 16rpx; height: 88rpx; line-height: 88rpx; text-align: center; background: #037539; color: #fff; border-radius: 12rpx; font-size: 30rpx; margin-bottom: 40rpx; }
 .save-btn.disabled { opacity: 0.6; }
 </style>

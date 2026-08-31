@@ -54,30 +54,33 @@
     <Pagination :page="page" :page-count="pageCount" :total="total" @change="goPage" />
 
     <!-- 编辑弹层 -->
-    <view v-if="editItem" class="modal-mask" @click="editItem = null">
+    <view v-if="editItem" class="modal-mask" @click="tryCloseEdit">
       <view class="modal-box" @click.stop>
         <view class="modal-title">{{ editItem.id ? '编辑 Banner' : '新建 Banner' }}</view>
+        <view class="modal-close" @click.stop="tryCloseEdit">×</view>
         <view class="form-row">
-          <text class="form-label">标题</text>
+          <text class="form-label">标题<text class="required-mark">*</text></text>
           <view class="form-field">
             <input
               v-model="editForm.title"
               class="form-input"
               :class="{ 'form-input--error': errors.title }"
               placeholder="标题"
+              @input="formDirty = true"
               @blur="validateField('title')"
             />
             <text v-if="errors.title" class="form-error">{{ errors.title }}</text>
           </view>
         </view>
         <view class="form-row">
-          <text class="form-label">图片URL</text>
+          <text class="form-label">图片URL<text class="required-mark">*</text></text>
           <view class="form-field">
             <input
               v-model="editForm.image_url"
               class="form-input"
               :class="{ 'form-input--error': errors.image_url }"
               placeholder="图片地址"
+              @input="formDirty = true"
               @blur="validateField('image_url')"
             />
             <text v-if="errors.image_url" class="form-error">{{ errors.image_url }}</text>
@@ -87,34 +90,36 @@
         <view class="form-row">
           <text class="form-label">链接</text>
           <view class="form-field">
-            <input v-model="editForm.link_url" class="form-input" placeholder="跳转链接" />
+            <input v-model="editForm.link_url" class="form-input" placeholder="跳转链接" @input="formDirty = true" />
           </view>
         </view>
         <view class="form-row">
           <text class="form-label">排序</text>
           <view class="form-field">
-            <input v-model="editForm.sort_order" class="form-input" type="number" placeholder="数字越小越靠前" />
+            <input v-model="editForm.sort_order" class="form-input" type="number" placeholder="数字越小越靠前" @input="formDirty = true" />
           </view>
         </view>
         <view class="form-row">
           <text class="form-label">状态</text>
-          <picker :range="formStatusOptions.map(o => o.label)" :value="editForm.status === 'inactive' ? 1 : 0" @change="editForm.status = formStatusOptions[$event.detail.value].value">
+          <picker :range="formStatusOptions.map(o => o.label)" :value="editForm.status === 'inactive' ? 1 : 0" @change="onStatusChange">
             <view class="select-value">{{ editForm.status === 'active' ? '启用' : '停用' }}</view>
           </picker>
         </view>
         <view class="form-row">
           <text class="form-label">生效时间</text>
           <view class="form-field">
-            <input v-model="editForm.start_at" class="form-input" placeholder="YYYY-MM-DD HH:mm:ss，可空" />
+            <input v-model="editForm.start_at" class="form-input" placeholder="YYYY-MM-DD HH:mm:ss，可空" @input="formDirty = true" />
+            <text class="form-helper">留空表示不限制生效开始时间</text>
           </view>
         </view>
         <view class="form-row">
           <text class="form-label">失效时间</text>
           <view class="form-field">
-            <input v-model="editForm.end_at" class="form-input" placeholder="YYYY-MM-DD HH:mm:ss，可空" />
+            <input v-model="editForm.end_at" class="form-input" placeholder="YYYY-MM-DD HH:mm:ss，可空" @input="formDirty = true" />
+            <text class="form-helper">留空表示不限制失效时间</text>
           </view>
         </view>
-        <view class="modal-btn" @click="save">保存</view>
+        <view class="modal-btn" :class="{ disabled: saving }" @click="save">{{ saving ? '保存中...' : '保存' }}</view>
       </view>
     </view>
 
@@ -152,6 +157,8 @@ const editForm = ref({});
 const errors = reactive({ title: '', image_url: '' });
 const confirmVisible = ref(false);
 const confirmItem = ref(null);
+const saving = ref(false);
+const formDirty = ref(false);
 
 const statusOptions = [
   { label: '全部', value: '' },
@@ -199,6 +206,7 @@ function openNew() {
   editForm.value = { title: '', image_url: '', link_url: '', sort_order: '0', status: 'active', start_at: '', end_at: '' };
   errors.title = '';
   errors.image_url = '';
+  formDirty.value = false;
 }
 function openEdit(item) {
   editItem.value = item;
@@ -213,6 +221,11 @@ function openEdit(item) {
   };
   errors.title = '';
   errors.image_url = '';
+  formDirty.value = false;
+}
+function onStatusChange(e) {
+  editForm.value.status = formStatusOptions[e.detail.value].value;
+  formDirty.value = true;
 }
 function validateField(field) {
   if (field === 'title') {
@@ -246,6 +259,7 @@ async function save() {
     uni.showToast({ title: '图片URL不能为空', icon: 'none' });
     return;
   }
+  saving.value = true;
   try {
     if (editItem.value.id) {
       await adminApi.updateBanner(editItem.value.id, body);
@@ -253,10 +267,29 @@ async function save() {
       await adminApi.createBanner(body);
     }
     uni.showToast({ title: '保存成功', icon: 'success' });
+    formDirty.value = false;
     editItem.value = null;
     fetchList(page.value);
   } catch (e) {
     uni.showToast({ title: e.message, icon: 'none' });
+  } finally {
+    saving.value = false;
+  }
+}
+function tryCloseEdit() {
+  if (formDirty.value) {
+    uni.showModal({
+      title: '提示',
+      content: '表单有未保存的修改，确认关闭？',
+      success: (res) => {
+        if (res.confirm) {
+          formDirty.value = false;
+          editItem.value = null;
+        }
+      },
+    });
+  } else {
+    editItem.value = null;
   }
 }
 async function toggleStatus(item) {
@@ -277,7 +310,7 @@ async function doRemove() {
   if (!confirmItem.value) return;
   try {
     await adminApi.deleteBanner(confirmItem.value.id);
-    uni.showToast({ title: '已删除', icon: 'success' });
+    uni.showToast({ title: '已删除', icon: 'success', duration: 2000 });
     confirmItem.value = null;
     fetchList(page.value);
   } catch (e) {
@@ -287,16 +320,17 @@ async function doRemove() {
 </script>
 
 <style lang="scss" scoped>
-.admin-list-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx 140rpx; }
+.admin-list-page { touch-action: manipulation;
+  min-height: 100dvh; background: #F2F4F5; padding: 16rpx 24rpx 140rpx; }
 .page-head { display: flex; justify-content: space-between; align-items: center; padding: 16rpx 0; }
 .page-title { font-size: 32rpx; font-weight: 700; color: #1A1A1A; }
 .head-actions { display: flex; align-items: center; gap: 16rpx; }
-.refresh-btn { font-size: 24rpx; color: #666; padding: 6rpx 16rpx; border: 1px solid #ccc; border-radius: 28rpx; }
-.add-btn { font-size: 24rpx; color: #048C47; padding: 6rpx 24rpx; border: 1px solid #048C47; border-radius: 28rpx; }
+.refresh-btn { font-size: 24rpx; color: #666; min-height: 88rpx; line-height: 88rpx; padding: 0 20rpx; border: 1px solid #999; border-radius: 28rpx; }
+.add-btn { font-size: 24rpx; color: #037539; min-height: 88rpx; line-height: 88rpx; padding: 0 24rpx; border: 1px solid #037539; border-radius: 28rpx; }
 .filter-bar { margin-bottom: 16rpx; }
 .filter-tabs { display: flex; flex-wrap: wrap; margin-top: 16rpx; }
-.filter-tab { padding: 8rpx 24rpx; margin-right: 16rpx; margin-bottom: 12rpx; border-radius: 28rpx; font-size: 24rpx; color: #7A7A7A; background: #fff; }
-.filter-tab.active { color: #fff; background: #048C47; }
+.filter-tab { min-height: 72rpx; line-height: 72rpx; padding: 0 24rpx; margin-right: 16rpx; margin-bottom: 12rpx; border-radius: 28rpx; font-size: 24rpx; color: #555555; background: #fff; }
+.filter-tab.active { color: #fff; background: #037539; }
 .form-preview { width: 100%; height: 240rpx; border-radius: 12rpx; margin-top: 12rpx; }
 .select-value { height: 72rpx; line-height: 72rpx; background: #F7F8F9; border-radius: 12rpx; padding: 0 20rpx; font-size: 26rpx; color: #333; flex: 1; }
 .card-item { background: #fff; border-radius: 16rpx; padding: 24rpx; margin-bottom: 16rpx; }
@@ -305,22 +339,31 @@ async function doRemove() {
 .banner-body { flex: 1; min-width: 0; }
 .card-item__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8rpx; }
 .card-item__title { font-size: 28rpx; font-weight: 600; color: #1A1A1A; flex: 1; margin-right: 12rpx; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.status-tag { font-size: 20rpx; padding: 2rpx 12rpx; border-radius: 8rpx; color: #7A7A7A; background: #F2F4F5; flex-shrink: 0; }
-.tone-verified { color: #048C47; background: #E4F7EC; }
+.status-tag { font-size: 20rpx; padding: 2rpx 12rpx; border-radius: 8rpx; color: #555555; background: #F2F4F5; flex-shrink: 0; }
+.tone-verified { color: #037539; background: #E4F7EC; }
 .tone-hot { color: #E54848; background: #FDECEC; }
-.card-item__info { display: flex; justify-content: space-between; font-size: 24rpx; color: #7A7A7A; margin-bottom: 6rpx; }
+.card-item__info { display: flex; justify-content: space-between; font-size: 24rpx; color: #555555; margin-bottom: 6rpx; }
 .card-item__info text:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 16rpx; }
 .card-item__actions { display: flex; justify-content: flex-end; margin-top: 12rpx; gap: 16rpx; }
-.act-btn { padding: 8rpx 28rpx; border-radius: 32rpx; border: 1px solid #048C47; color: #048C47; font-size: 24rpx; }
+.act-btn { min-height: 88rpx; line-height: 88rpx; padding: 0 24rpx; border-radius: 32rpx; border: 1px solid #037539; color: #037539; font-size: 24rpx; }
 .act-btn.danger { border-color: #E54848; color: #E54848; }
 .modal-mask { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 999; display: flex; align-items: flex-end; }
-.modal-box { width: 100%; background: #fff; border-radius: 24rpx 24rpx 0 0; padding: 32rpx 32rpx calc(32rpx + env(safe-area-inset-bottom)); max-height: 85vh; overflow-y: auto; }
+.modal-box { width: 100%; background: #fff; border-radius: 24rpx 24rpx 0 0; padding: 32rpx 32rpx calc(32rpx + env(safe-area-inset-bottom)); max-height: 85vh; overflow-y: auto; position: relative; }
 .modal-title { font-size: 32rpx; font-weight: 600; color: #1A1A1A; margin-bottom: 24rpx; text-align: center; }
 .form-row { display: flex; align-items: flex-start; padding: 12rpx 0; }
-.form-label { width: 150rpx; font-size: 26rpx; color: #7A7A7A; flex-shrink: 0; line-height: 72rpx; }
+.form-label { width: 150rpx; font-size: 26rpx; color: #555555; flex-shrink: 0; line-height: 72rpx; }
 .form-field { flex: 1; }
 .form-input { width: 100%; height: 72rpx; background: #F7F8F9; border-radius: 12rpx; padding: 0 20rpx; font-size: 26rpx; box-sizing: border-box; border: 1px solid transparent; }
+.form-input:focus { border-color: #037539; background: #fff; }
 .form-input--error { border-color: #E54848; background: #FEF2F2; }
 .form-error { display: block; font-size: 22rpx; color: #E54848; margin-top: 8rpx; padding-left: 8rpx; }
-.modal-btn { margin-top: 32rpx; height: 80rpx; line-height: 80rpx; text-align: center; background: #048C47; color: #fff; border-radius: 40rpx; font-size: 28rpx; }
+.form-helper { display: block; font-size: 22rpx; color: #888; margin-top: 6rpx; padding-left: 8rpx; }
+.modal-btn { margin-top: 32rpx; height: 88rpx; line-height: 88rpx; text-align: center; background: #037539; color: #fff; border-radius: 40rpx; font-size: 28rpx; }
+.modal-btn.disabled { opacity: 0.6; }
+.required-mark { color: #E54848; margin-left: 4rpx; }
+.modal-mask { animation: mask-fade-in 200ms ease-out; }
+.modal-box { animation: sheet-slide-up 250ms cubic-bezier(0.32, 0.72, 0, 1); }
+.modal-close { position: absolute; top: 16rpx; right: 24rpx; width: 56rpx; height: 56rpx; line-height: 56rpx; text-align: center; font-size: 36rpx; color: #999; z-index: 1; }
+@keyframes mask-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheet-slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
 </style>

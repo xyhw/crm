@@ -21,8 +21,8 @@ const stats = ref(null);
 const loading = ref(true);
 
 const statCards = [
-  { title: '用户总数', key: 'totalUsers', color: '#048C47' },
-  { title: '商机总数', key: 'totalOpportunities', color: '#048C47' },
+  { title: '用户总数', key: 'totalUsers', color: '#037539' },
+  { title: '商机总数', key: 'totalOpportunities', color: '#037539' },
   { title: '订单总数', key: 'totalOrders', color: '#E8920A' },
   { title: '积分总量', key: 'totalPoints', color: '#E54848' },
 ];
@@ -43,7 +43,7 @@ onShow(load);
 
 <style lang="scss" scoped>
 .dash-page {
-  min-height: 100vh;
+  min-height: 100dvh;
   background: #F2F4F5;
   padding: 24rpx;
 }
@@ -63,7 +63,7 @@ onShow(load);
 }
 .stat-title {
   font-size: 26rpx;
-  color: #7A7A7A;
+  color: #555555;
   margin-bottom: 16rpx;
 }
 .stat-value {

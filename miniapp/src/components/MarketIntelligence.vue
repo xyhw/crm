@@ -221,11 +221,11 @@ async function handleReport() {
   width: 56rpx;
   font-size: 30rpx;
   font-weight: 700;
-  color: #B0B0B0;
+  color: #666666;
 }
 
 .mi-share-item.own .mi-share-rank {
-  color: #048C47;
+  color: #037539;
 }
 
 .mi-share-main {
@@ -252,7 +252,7 @@ async function handleReport() {
 
 .mi-share-time {
   font-size: 22rpx;
-  color: #B0B0B0;
+  color: #666666;
   margin-left: 12rpx;
 }
 
@@ -281,21 +281,21 @@ async function handleReport() {
 }
 
 .mi-report-btn.reported {
-  color: #B0B0B0;
+  color: #666666;
   border-color: #E0E0E0;
 }
 
 .mi-like-btn {
   padding: 8rpx 16rpx;
   font-size: 22rpx;
-  color: #7A7A7A;
+  color: #555555;
   background: #F2F4F5;
   border-radius: 24rpx;
 }
 
 .mi-like-btn.liked {
   color: #ffffff;
-  background: #048C47;
+  background: #037539;
 }
 
 .mi-like-btn.disabled {
@@ -310,28 +310,28 @@ async function handleReport() {
 }
 
 .page-btn {
-  padding: 8rpx 24rpx;
+  min-height: 72rpx; line-height: 72rpx; padding: 0 24rpx;
   font-size: 24rpx;
-  color: #048C47;
+  color: #037539;
   background: #E4F7EC;
   border-radius: 24rpx;
 }
 
 .page-btn.disabled {
-  color: #B0B0B0;
+  color: #666666;
   background: #F2F4F5;
 }
 
 .page-info {
   margin: 0 24rpx;
   font-size: 24rpx;
-  color: #7A7A7A;
+  color: #555555;
 }
 
 .mi-empty {
   text-align: center;
   padding: 40rpx 0;
-  color: #B0B0B0;
+  color: #666666;
   font-size: 26rpx;
 }
 
@@ -379,13 +379,13 @@ async function handleReport() {
   margin: 0 16rpx 16rpx 0;
   border-radius: 32rpx;
   font-size: 26rpx;
-  color: #7A7A7A;
+  color: #555555;
   background: #F2F4F5;
 }
 
 .reason-chip.active {
   color: #ffffff;
-  background: #048C47;
+  background: #037539;
 }
 
 .reason-input {
@@ -401,7 +401,7 @@ async function handleReport() {
 
 .dialog-tip {
   font-size: 22rpx;
-  color: #B0B0B0;
+  color: #666666;
   margin-top: 8rpx;
 }
 
@@ -427,7 +427,7 @@ async function handleReport() {
 }
 
 .modal-btn--primary {
-  background: #048C47;
+  background: #037539;
   color: #ffffff;
 }
 

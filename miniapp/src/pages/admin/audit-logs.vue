@@ -140,16 +140,17 @@ function goPage(p) {
 </script>
 
 <style lang="scss" scoped>
-.admin-list-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx 140rpx; }
+.admin-list-page { touch-action: manipulation;
+  min-height: 100dvh; background: #F2F4F5; padding: 16rpx 24rpx 140rpx; }
 .filter-bar { margin-bottom: 16rpx; }
 .filter-scroll { white-space: nowrap; }
 .filter-tabs { display: inline-flex; padding: 4rpx 0; }
-.filter-tab { padding: 8rpx 24rpx; margin-right: 16rpx; border-radius: 28rpx; font-size: 24rpx; color: #7A7A7A; background: #fff; display: inline-block; }
-.filter-tab.active { color: #fff; background: #048C47; }
+.filter-tab { min-height: 72rpx; line-height: 72rpx; padding: 0 24rpx; margin-right: 16rpx; border-radius: 28rpx; font-size: 24rpx; color: #555555; background: #fff; display: inline-block; }
+.filter-tab.active { color: #fff; background: #037539; }
 .card-item { background: #fff; border-radius: 16rpx; padding: 24rpx; margin-bottom: 16rpx; }
 .card-item__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12rpx; }
 .card-item__title { font-size: 30rpx; font-weight: 600; color: #1A1A1A; }
-.status-tag { font-size: 20rpx; padding: 2rpx 12rpx; border-radius: 8rpx; color: #048C47; background: #E4F7EC; }
-.card-item__info { display: flex; justify-content: space-between; font-size: 24rpx; color: #7A7A7A; margin-bottom: 8rpx; }
+.status-tag { font-size: 20rpx; padding: 2rpx 12rpx; border-radius: 8rpx; color: #037539; background: #E4F7EC; }
+.card-item__info { display: flex; justify-content: space-between; font-size: 24rpx; color: #555555; margin-bottom: 8rpx; }
 .card-item__detail { font-size: 24rpx; color: #555; background: #F7F8F9; border-radius: 8rpx; padding: 12rpx; margin-bottom: 8rpx; }
 </style>

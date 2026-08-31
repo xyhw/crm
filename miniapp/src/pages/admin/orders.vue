@@ -46,6 +46,7 @@
     <view v-if="detail" class="modal-mask" @click="detail = null">
       <view class="modal-box" @click.stop>
         <view class="modal-title">订单 #{{ detail.order_no }}</view>
+        <view class="modal-close" @click.stop="detail = null">×</view>
         <view class="modal-row"><text class="modal-label">商机</text><text>{{ detail.opportunity_title }}</text></view>
         <view class="modal-row"><text class="modal-label">买家</text><text>{{ detail.buyer_name }}</text></view>
         <view class="modal-row"><text class="modal-label">卖家</text><text>{{ detail.seller_name }}</text></view>
@@ -135,23 +136,29 @@ function openDetail(item) {
 </script>
 
 <style lang="scss" scoped>
-.admin-list-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx 140rpx; }
+.admin-list-page { touch-action: manipulation;
+  min-height: 100dvh; background: #F2F4F5; padding: 16rpx 24rpx 140rpx; }
 .filter-bar { margin-bottom: 16rpx; }
 .filter-tabs { display: flex; flex-wrap: wrap; margin-top: 16rpx; }
-.filter-tab { padding: 8rpx 24rpx; margin-right: 16rpx; margin-bottom: 12rpx; border-radius: 28rpx; font-size: 24rpx; color: #7A7A7A; background: #fff; }
-.filter-tab.active { color: #fff; background: #048C47; }
+.filter-tab { min-height: 72rpx; line-height: 72rpx; padding: 0 24rpx; margin-right: 16rpx; margin-bottom: 12rpx; border-radius: 28rpx; font-size: 24rpx; color: #555555; background: #fff; }
+.filter-tab.active { color: #fff; background: #037539; }
 .card-item { background: #fff; border-radius: 16rpx; padding: 24rpx; margin-bottom: 16rpx; }
 .card-item__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12rpx; }
 .card-item__title { font-size: 30rpx; font-weight: 600; color: #1A1A1A; flex: 1; margin-right: 16rpx; }
-.status-tag { font-size: 20rpx; padding: 2rpx 12rpx; border-radius: 8rpx; color: #7A7A7A; background: #F2F4F5; }
-.tone-verified { color: #048C47; background: #E4F7EC; }
+.status-tag { font-size: 20rpx; padding: 2rpx 12rpx; border-radius: 8rpx; color: #555555; background: #F2F4F5; }
+.tone-verified { color: #037539; background: #E4F7EC; }
 .tone-hot { color: #E54848; background: #FDECEC; }
 .tone-warn { color: #B8841B; background: #FDF4DE; }
-.card-item__info { display: flex; justify-content: space-between; font-size: 24rpx; color: #7A7A7A; margin-bottom: 8rpx; }
+.card-item__info { display: flex; justify-content: space-between; font-size: 24rpx; color: #555555; margin-bottom: 8rpx; }
 .modal-mask { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 999; display: flex; align-items: flex-end; }
-.modal-box { width: 100%; background: #fff; border-radius: 24rpx 24rpx 0 0; padding: 32rpx 32rpx calc(32rpx + env(safe-area-inset-bottom)); max-height: 80vh; overflow-y: auto; }
+.modal-box { width: 100%; background: #fff; border-radius: 24rpx 24rpx 0 0; padding: 32rpx 32rpx calc(32rpx + env(safe-area-inset-bottom)); max-height: 80vh; overflow-y: auto; position: relative; }
 .modal-title { font-size: 32rpx; font-weight: 600; color: #1A1A1A; margin-bottom: 24rpx; text-align: center; }
 .modal-row { display: flex; padding: 12rpx 0; font-size: 26rpx; color: #333; border-bottom: 1px solid #F5F5F5; }
-.modal-label { width: 160rpx; color: #7A7A7A; flex-shrink: 0; }
-.modal-btn { margin-top: 32rpx; height: 80rpx; line-height: 80rpx; text-align: center; background: #048C47; color: #fff; border-radius: 40rpx; font-size: 28rpx; }
+.modal-label { width: 160rpx; color: #555555; flex-shrink: 0; }
+.modal-btn { margin-top: 32rpx; height: 88rpx; line-height: 88rpx; text-align: center; background: #037539; color: #fff; border-radius: 40rpx; font-size: 28rpx; }
+.modal-mask { animation: mask-fade-in 200ms ease-out; }
+.modal-box { animation: sheet-slide-up 250ms cubic-bezier(0.32, 0.72, 0, 1); }
+.modal-close { position: absolute; top: 16rpx; right: 24rpx; width: 56rpx; height: 56rpx; line-height: 56rpx; text-align: center; font-size: 36rpx; color: #999; z-index: 1; }
+@keyframes mask-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheet-slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
 </style>

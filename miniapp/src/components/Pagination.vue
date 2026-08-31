@@ -74,17 +74,17 @@ function go(p) {
 }
 
 .pagination__btn {
-  padding: 10rpx 24rpx;
+  min-height: 88rpx; line-height: 88rpx; padding: 0 24rpx;
   border-radius: 8rpx;
-  border: 1px solid #048C47;
-  color: #048C47;
+  border: 1px solid #037539;
+  color: #037539;
   font-size: 24rpx;
   flex-shrink: 0;
 }
 
 .pagination__btn.disabled {
   border-color: #e0e0e0;
-  color: #ccc;
+  color: #999;
 }
 
 .pagination__nums {
@@ -105,13 +105,13 @@ function go(p) {
 }
 
 .pagination__num.active {
-  background: #048C47;
+  background: #037539;
   color: #fff;
   font-weight: 600;
 }
 
 .pagination__ellipsis {
-  color: #ccc;
+  color: #999;
   padding: 0 4rpx;
   font-size: 26rpx;
 }

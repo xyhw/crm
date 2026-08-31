@@ -90,11 +90,11 @@ onShow(async () => {
 </script>
 
 <style lang="scss" scoped>
-.stats-page { min-height: 100vh; background: #F2F4F5; padding: 16rpx 24rpx; }
+.stats-page { min-height: 100dvh; background: #F2F4F5; padding: 16rpx 24rpx; }
 .stat-grid { display: flex; flex-wrap: wrap; justify-content: space-between; }
 .stat-card { width: 31%; background: #fff; border-radius: 16rpx; padding: 24rpx 0; margin-bottom: 16rpx; display: flex; flex-direction: column; align-items: center; }
-.stat-value { font-size: 36rpx; font-weight: 700; color: #048C47; }
-.stat-label { font-size: 22rpx; color: #7A7A7A; margin-top: 8rpx; }
+.stat-value { font-size: 36rpx; font-weight: 700; color: #037539; }
+.stat-label { font-size: 22rpx; color: #555555; margin-top: 8rpx; }
 .section { margin-bottom: 8rpx; }
 .section-title { font-size: 28rpx; font-weight: 700; color: #1A1A1A; padding: 24rpx 0 16rpx; }
 .trend-card, .dist-card { background: #fff; border-radius: 16rpx; padding: 24rpx; margin-bottom: 16rpx; }

@@ -49,9 +49,10 @@
     <Pagination :page="page" :page-count="pageCount" :total="total" @change="goPage" />
 
     <!-- 编辑用户 -->
-    <view v-if="editUser" class="modal-mask" @click="editUser = null">
+    <view v-if="editUser" class="modal-mask" @click="tryCloseEdit">
       <view class="modal-box" @click.stop>
         <view class="modal-title">编辑用户</view>
+        <view class="modal-close" @click.stop="tryCloseEdit">×</view>
         <view class="form-row">
           <text class="form-label">昵称</text>
           <view class="form-field">
@@ -60,6 +61,7 @@
               class="form-input"
               :class="{ 'form-input--error': errors.nickname }"
               placeholder="昵称"
+              @input="formDirty = true"
               @blur="validateField('nickname')"
             />
             <text v-if="errors.nickname" class="form-error">{{ errors.nickname }}</text>
@@ -68,7 +70,7 @@
         <view class="form-row">
           <text class="form-label">公司</text>
           <view class="form-field">
-            <input v-model="editForm.company" class="form-input" placeholder="公司" />
+            <input v-model="editForm.company" class="form-input" placeholder="公司" @input="formDirty = true" />
           </view>
         </view>
         <view class="modal-btn" @click="submitEdit">保存</view>
@@ -76,9 +78,10 @@
     </view>
 
     <!-- 调整积分/信用 -->
-    <view v-if="adjustUser" class="modal-mask" @click="adjustUser = null">
+    <view v-if="adjustUser" class="modal-mask" @click="tryCloseAdjust">
       <view class="modal-box" @click.stop>
         <view class="modal-title">调整{{ adjustType === 'points' ? '积分' : '信用分' }} - {{ adjustUser.nickname || adjustUser.phone }}</view>
+        <view class="modal-close" @click.stop="tryCloseAdjust">×</view>
         <view class="form-row">
           <text class="form-label">调整数值</text>
           <view class="form-field">
@@ -88,6 +91,7 @@
               :class="{ 'form-input--error': errors.delta }"
               type="number"
               placeholder="正数增加/负数减少"
+              @input="formDirty = true"
               @blur="validateField('delta')"
             />
             <text v-if="errors.delta" class="form-error">{{ errors.delta }}</text>
@@ -96,7 +100,7 @@
         <view class="form-row">
           <text class="form-label">调整原因</text>
           <view class="form-field">
-            <input v-model="adjustForm.reason" class="form-input" :placeholder="adjustType === 'points' ? '例如：活动奖励' : '例如：违规扣除'" />
+            <input v-model="adjustForm.reason" class="form-input" :placeholder="adjustType === 'points' ? '例如：活动奖励' : '例如：违规扣除'" @input="formDirty = true" />
           </view>
         </view>
         <view class="modal-btn" @click="submitAdjust">提交</view>
@@ -140,6 +144,7 @@ const adjustForm = ref({ delta: '', reason: '' });
 const errors = reactive({ nickname: '', delta: '' });
 const confirmDisableVisible = ref(false);
 const confirmDisableItem = ref(null);
+const formDirty = ref(false);
 
 const statusOptions = [
   { label: '全部', value: '' },
@@ -183,6 +188,7 @@ function openEdit(item) {
   editUser.value = item;
   editForm.value = { nickname: item.nickname || '', company: item.company || '' };
   errors.nickname = '';
+  formDirty.value = false;
 }
 function validateField(field) {
   if (field === 'nickname') {
@@ -201,10 +207,27 @@ async function submitEdit() {
   try {
     await adminApi.updateUser(editUser.value.id, editForm.value);
     uni.showToast({ title: '更新成功', icon: 'success' });
+    formDirty.value = false;
     editUser.value = null;
     fetchList(page.value);
   } catch (e) {
     uni.showToast({ title: e.message, icon: 'none' });
+  }
+}
+function tryCloseEdit() {
+  if (formDirty.value) {
+    uni.showModal({
+      title: '提示',
+      content: '表单有未保存的修改，确认关闭？',
+      success: (res) => {
+        if (res.confirm) {
+          formDirty.value = false;
+          editUser.value = null;
+        }
+      },
+    });
+  } else {
+    editUser.value = null;
   }
 }
 
@@ -213,6 +236,7 @@ function openAdjust(item, type) {
   adjustUser.value = item;
   adjustForm.value = { delta: '', reason: '' };
   errors.delta = '';
+  formDirty.value = false;
 }
 async function submitAdjust() {
   validateField('delta');
@@ -232,10 +256,27 @@ async function submitAdjust() {
       await adminApi.adjustCredit(adjustUser.value.id, body);
     }
     uni.showToast({ title: '调整成功', icon: 'success' });
+    formDirty.value = false;
     adjustUser.value = null;
     fetchList(page.value);
   } catch (e) {
     uni.showToast({ title: e.message, icon: 'none' });
+  }
+}
+function tryCloseAdjust() {
+  if (formDirty.value) {
+    uni.showModal({
+      title: '提示',
+      content: '表单有未保存的修改，确认关闭？',
+      success: (res) => {
+        if (res.confirm) {
+          formDirty.value = false;
+          adjustUser.value = null;
+        }
+      },
+    });
+  } else {
+    adjustUser.value = null;
   }
 }
 
@@ -260,22 +301,23 @@ async function doToggleStatus() {
 
 <style lang="scss" scoped>
 .admin-list-page {
-  min-height: 100vh;
+  touch-action: manipulation;
+  min-height: 100dvh;
   background: #F2F4F5;
   padding: 16rpx 24rpx 140rpx;
 }
 .filter-bar { margin-bottom: 16rpx; }
 .filter-tabs { display: flex; flex-wrap: wrap; margin-top: 16rpx; }
 .filter-tab {
-  padding: 8rpx 24rpx;
+  min-height: 88rpx; line-height: 72rpx; padding: 0 24rpx;
   margin-right: 16rpx;
   margin-bottom: 12rpx;
   border-radius: 28rpx;
   font-size: 24rpx;
-  color: #7A7A7A;
+  color: #555555;
   background: #fff;
 }
-.filter-tab.active { color: #fff; background: #048C47; }
+.filter-tab.active { color: #fff; background: #037539; }
 .card-item {
   background: #fff;
   border-radius: 16rpx;
@@ -289,27 +331,33 @@ async function doToggleStatus() {
   margin-bottom: 12rpx;
 }
 .card-item__title { font-size: 30rpx; font-weight: 600; color: #1A1A1A; flex: 1; margin-right: 16rpx; }
-.status-tag { font-size: 20rpx; padding: 2rpx 12rpx; border-radius: 8rpx; color: #7A7A7A; background: #F2F4F5; }
-.tone-verified { color: #048C47; background: #E4F7EC; }
+.status-tag { font-size: 20rpx; padding: 2rpx 12rpx; border-radius: 8rpx; color: #555555; background: #F2F4F5; }
+.tone-verified { color: #037539; background: #E4F7EC; }
 .tone-hot { color: #E54848; background: #FDECEC; }
-.card-item__info { display: flex; justify-content: space-between; font-size: 24rpx; color: #7A7A7A; margin-bottom: 8rpx; }
+.card-item__info { display: flex; justify-content: space-between; font-size: 24rpx; color: #555555; margin-bottom: 8rpx; }
 .card-item__actions { display: flex; justify-content: flex-end; margin-top: 12rpx; gap: 16rpx; }
 .act-btn {
-  padding: 8rpx 28rpx;
+  min-height: 88rpx; line-height: 88rpx; padding: 0 24rpx;
   border-radius: 32rpx;
-  border: 1px solid #048C47;
-  color: #048C47;
+  border: 1px solid #037539;
+  color: #037539;
   font-size: 24rpx;
 }
 .act-btn.danger { border-color: #E54848; color: #E54848; }
 .modal-mask { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 999; display: flex; align-items: flex-end; }
-.modal-box { width: 100%; background: #fff; border-radius: 24rpx 24rpx 0 0; padding: 32rpx 32rpx calc(32rpx + env(safe-area-inset-bottom)); max-height: 80vh; overflow-y: auto; }
+.modal-box { width: 100%; background: #fff; border-radius: 24rpx 24rpx 0 0; padding: 32rpx 32rpx calc(32rpx + env(safe-area-inset-bottom)); max-height: 80vh; overflow-y: auto; position: relative; }
 .modal-title { font-size: 32rpx; font-weight: 600; color: #1A1A1A; margin-bottom: 24rpx; text-align: center; }
 .form-row { display: flex; align-items: flex-start; padding: 12rpx 0; }
-.form-label { width: 160rpx; font-size: 26rpx; color: #7A7A7A; flex-shrink: 0; line-height: 72rpx; }
+.form-label { width: 160rpx; font-size: 26rpx; color: #555555; flex-shrink: 0; line-height: 72rpx; }
 .form-field { flex: 1; }
 .form-input { width: 100%; height: 72rpx; background: #F7F8F9; border-radius: 12rpx; padding: 0 20rpx; font-size: 26rpx; box-sizing: border-box; border: 1px solid transparent; }
+.form-input:focus { border-color: #037539; background: #fff; }
 .form-input--error { border-color: #E54848; background: #FEF2F2; }
 .form-error { display: block; font-size: 22rpx; color: #E54848; margin-top: 8rpx; padding-left: 8rpx; }
-.modal-btn { margin-top: 32rpx; height: 80rpx; line-height: 80rpx; text-align: center; background: #048C47; color: #fff; border-radius: 40rpx; font-size: 28rpx; }
+.modal-btn { margin-top: 32rpx; height: 88rpx; line-height: 88rpx; text-align: center; background: #037539; color: #fff; border-radius: 40rpx; font-size: 28rpx; }
+.modal-mask { animation: mask-fade-in 200ms ease-out; }
+.modal-box { animation: sheet-slide-up 250ms cubic-bezier(0.32, 0.72, 0, 1); }
+.modal-close { position: absolute; top: 16rpx; right: 24rpx; width: 56rpx; height: 56rpx; line-height: 56rpx; text-align: center; font-size: 36rpx; color: #999; z-index: 1; }
+@keyframes mask-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheet-slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
 </style>
