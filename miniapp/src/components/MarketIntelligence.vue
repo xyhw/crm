@@ -1,6 +1,6 @@
 <template>
   <view v-if="intelligence && intelligence.totalShares > 0" class="mi-block">
-    <view class="mi-summary">已有 {{ intelligence.totalShares }} 位购买者共享进度</view>
+    <view class="mi-summary">已有 {{ intelligence.totalShares }} 位购买者同步了进展</view>
 
     <view v-if="hasDistribution" class="mi-status-row">
       <text
@@ -13,7 +13,7 @@
     </view>
 
     <view v-if="visible.length" class="mi-board">
-      <view class="mi-board-title">共享进展</view>
+      <view class="mi-board-title">同行进展</view>
       <view
         v-for="(s, idx) in visible"
         :key="s.shareId"
@@ -54,12 +54,12 @@
       </view>
     </view>
 
-    <view v-if="!hasDistribution && !visible.length" class="mi-empty">暂无共享进度</view>
+    <view v-if="!hasDistribution && !visible.length" class="mi-empty">暂无人同步进展</view>
 
     <!-- 举报弹窗 -->
     <view v-if="reporting !== null" class="modal-mask" @click.self="reporting = null">
       <view class="modal">
-        <view class="modal-title">举报无效情报</view>
+        <view class="modal-title">举报无效进展</view>
         <view class="dialog-body">
           <view class="dialog-label">举报原因：</view>
           <view class="reason-chips">
@@ -79,7 +79,7 @@
             placeholder="补充说明（选填）"
             :maxlength="200"
           />
-          <view class="dialog-tip">多次被举报的情报将自动下架。</view>
+          <view class="dialog-tip">多次被举报的进展将自动下架。</view>
         </view>
         <view class="modal-actions">
           <view class="modal-btn" @click="reporting = null">取消</view>

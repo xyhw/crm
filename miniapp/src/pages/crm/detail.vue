@@ -82,7 +82,7 @@
         </view>
       </view>
 
-      <!-- 共享进度 / 跟进记录 Tab -->
+      <!-- 同步进展 / 跟进记录 Tab -->
       <view class="section-card tabs-card">
         <view class="tabs-header">
           <view
@@ -90,7 +90,7 @@
             :class="{ active: activeTab === 'progress' }"
             @click="activeTab = 'progress'"
           >
-            共享进度
+            同步进展
           </view>
           <view
             class="tab-item"
@@ -101,14 +101,14 @@
           </view>
         </view>
 
-        <!-- 共享进度 -->
+        <!-- 同步进展 -->
         <view v-if="activeTab === 'progress'">
           <MarketIntelligence
             v-if="detail.marketIntelligence && detail.marketIntelligence.totalShares > 0"
             :intelligence="detail.marketIntelligence"
             @changed="fetchDetail"
           />
-          <view v-else class="empty-tip">暂无人共享进度</view>
+          <view v-else class="empty-tip">暂无人同步进展</view>
         </view>
 
         <!-- 跟进记录 -->
@@ -131,7 +131,7 @@
                 class="follow-item-share"
                 @click="shareFromFollowUp(fu)"
               >
-                共享为进度
+                同步进展
               </view>
             </view>
             <view v-if="followUpTotalPages > 1" class="mi-pagination">
@@ -146,7 +146,7 @@
       <!-- 操作按钮 -->
       <view class="action-bar">
         <view class="action-btn action-btn--primary" @click="openFollowUp">新增跟进</view>
-        <view class="action-btn" @click="goShare">共享进度</view>
+        <view class="action-btn" @click="goShare">同步进展</view>
       </view>
 
       <!-- 新增跟进弹窗 -->

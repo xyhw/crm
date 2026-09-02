@@ -79,7 +79,7 @@ router.get('/:id', authRequired, async (req, res) => {
       [req.params.id]
     );
 
-    // 获取市场情报（共享进度榜；投稿人全匿名，不返回昵称）
+    // 获取市场情报（同行进展；投稿人全匿名，不返回昵称）
     let marketIntelligence = null;
     if (crm.opportunity_id) {
       const shares = await query(
@@ -94,7 +94,7 @@ router.get('/:id', authRequired, async (req, res) => {
         statusCounts[s.status] = (statusCounts[s.status] || 0) + 1;
       });
 
-      // 当前用户点赞过的共享
+      // 当前用户点赞过的进展同步
       let myLikedShares = new Set();
       const likes = await query(
         `SELECT m.share_id FROM follow_up_helpful_marks m
@@ -104,7 +104,7 @@ router.get('/:id', authRequired, async (req, res) => {
       );
       myLikedShares = new Set(likes.map((l) => l.share_id));
 
-      // 当前用户举报过的共享
+      // 当前用户举报过的进展同步
       let myReportedShares = new Set();
       const reports = await query(
         `SELECT m.share_id FROM follow_up_share_invalid_marks m

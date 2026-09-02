@@ -66,13 +66,13 @@
           <text class="form-helper">每条无效标记的扣分权重，取值 1-3</text>
         </view>
         <view class="form-row">
-          <text class="form-label">进度分享免审</text>
+          <text class="form-label">进展同步免审</text>
           <switch
             :checked="!!editForm.free_audit"
             color="#037539"
             @change="onFreeAuditChange"
           />
-          <text class="form-helper">开启后该等级的进度分享可跳过人工审核</text>
+          <text class="form-helper">开启后该等级的进展同步可跳过人工审核</text>
         </view>
         <view class="modal-btn" :class="{ disabled: saving }" @click="submitEdit">{{ saving ? '保存中...' : '保存' }}</view>
       </view>

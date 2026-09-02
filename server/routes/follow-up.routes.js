@@ -75,13 +75,13 @@ router.get('/:crmOpportunityId', authRequired, async (req, res) => {
   }
 });
 
-// 共享进度
+// 同步进展
 router.post('/share', authRequired, async (req, res) => {
   try {
     const { followUpId, opportunityId, status, summary } = req.body || {};
 
     if (!opportunityId || !status) {
-      return res.json({ code: 400, message: '请完善共享信息' });
+      return res.json({ code: 400, message: '请完善进展信息' });
     }
 
     // 检查是否已购买
@@ -90,7 +90,7 @@ router.post('/share', authRequired, async (req, res) => {
       [req.userId, opportunityId]
     );
     if (!purchase) {
-      return res.json({ code: 400, message: '只有购买者才能共享进度' });
+      return res.json({ code: 400, message: '只有购买者才能同步进展' });
     }
 
     // 检查用户等级，决定是否免审
@@ -125,7 +125,7 @@ router.post('/share', authRequired, async (req, res) => {
           );
           await conn.execute(
             `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-             VALUES (?, ?, ?, 'reward', '进度分享奖励')`,
+             VALUES (?, ?, ?, 'reward', '进展同步奖励')`,
             [req.userId, rewardPoints, account[0].balance]
           );
         });
@@ -135,11 +135,11 @@ router.post('/share', authRequired, async (req, res) => {
     res.json({
       code: 0,
       data: { id: share.id, auditStatus: share.audit_status },
-      message: freeAudit ? '分享成功' : '分享成功，等待审核',
+      message: freeAudit ? '已同步' : '已提交，等待审核',
     });
   } catch (err) {
     console.error('Share follow-up error:', err);
-    res.status(500).json({ code: 500, message: '分享失败' });
+    res.status(500).json({ code: 500, message: '同步失败' });
   }
 });
 
@@ -152,18 +152,18 @@ router.post('/helpful', authRequired, async (req, res) => {
       return res.json({ code: 400, message: '参数错误' });
     }
 
-    // 获取分享者及对应商机
+    // 获取进展提交者及对应商机
     const share = await queryOne(
       'SELECT user_id, opportunity_id FROM follow_up_shares WHERE id = ? AND audit_status = "approved"',
       [shareId]
     );
     if (!share) {
-      return res.json({ code: 404, message: '进度分享不存在或未审核通过' });
+      return res.json({ code: 404, message: '进展不存在或未审核通过' });
     }
 
     // 不能给自己标记有用
     if (share.user_id === req.userId) {
-      return res.json({ code: 403, message: '不能给自己的进度分享标记有用' });
+      return res.json({ code: 403, message: '不能给自己的进展标记有用' });
     }
 
     // 标记者必须购买过同一条商机
@@ -197,7 +197,7 @@ router.post('/helpful', authRequired, async (req, res) => {
         [shareId]
       );
 
-      // 给分享者奖励积分
+      // 给提交者奖励积分
       const [rewardConfig] = await conn.execute(
         "SELECT config_value FROM system_configs WHERE config_key = 'helpful_reward_points'"
       );
@@ -214,19 +214,19 @@ router.post('/helpful', authRequired, async (req, res) => {
         );
         await conn.execute(
           `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-           VALUES (?, ?, ?, 'reward', '进度分享被标记有用')`,
+           VALUES (?, ?, ?, 'reward', '进展被标记有用')`,
           [share.user_id, rewardPoints, account[0].balance]
         );
       }
 
-      // 信用分 +1（需求 5.7：共享进度分享被标记有用）
+      // 信用分 +1（需求 5.7：进展被标记有用）
       await conn.execute(
         'UPDATE users SET credit_score = LEAST(100, credit_score + 1) WHERE id = ?',
         [share.user_id]
       );
       await conn.execute(
         `INSERT INTO user_credits (user_id, credit_score, change_amount, change_reason, source_type)
-         SELECT ?, credit_score, 1, '共享进度分享被标记有用', 'helpful_mark' FROM users WHERE id = ?`,
+         SELECT ?, credit_score, 1, '进展被标记有用', 'helpful_mark' FROM users WHERE id = ?`,
         [share.user_id, share.user_id]
       );
     });
@@ -238,7 +238,7 @@ router.post('/helpful', authRequired, async (req, res) => {
   }
 });
 
-// 标记共享信息无效（举报），达阈值自动下架
+// 标记进展无效（举报），达阈值自动下架
 router.post('/report', authRequired, async (req, res) => {
   try {
     const { shareId, reason, reasonText } = req.body || {};
@@ -247,18 +247,18 @@ router.post('/report', authRequired, async (req, res) => {
       return res.json({ code: 400, message: '参数错误' });
     }
 
-    // 获取分享者及对应商机
+    // 获取进展提交者及对应商机
     const share = await queryOne(
       'SELECT user_id, opportunity_id FROM follow_up_shares WHERE id = ? AND audit_status = "approved"',
       [shareId]
     );
     if (!share) {
-      return res.json({ code: 404, message: '进度分享不存在或未审核通过' });
+      return res.json({ code: 404, message: '进展不存在或未审核通过' });
     }
 
     // 不能举报自己
     if (share.user_id === req.userId) {
-      return res.json({ code: 403, message: '不能举报自己的分享' });
+      return res.json({ code: 403, message: '不能举报自己的进展' });
     }
 
     // 举报者必须购买过同一条商机
@@ -311,21 +311,21 @@ router.post('/report', authRequired, async (req, res) => {
           [shareId]
         );
 
-        // 扣分享者信用分并记录
+        // 扣提交者信用分并记录
         await conn.execute(
           'UPDATE users SET credit_score = GREATEST(0, credit_score - 5) WHERE id = ?',
           [share.user_id]
         );
         await conn.execute(
           `INSERT INTO user_credits (user_id, credit_score, change_amount, change_reason, source_type)
-           SELECT ?, credit_score, -5, '共享情报被判无效', 'invalid_mark' FROM users WHERE id = ?`,
+           SELECT ?, credit_score, -5, '同步的进展被判无效', 'invalid_mark' FROM users WHERE id = ?`,
           [share.user_id, share.user_id]
         );
 
-        // 通知分享者
+        // 通知提交者
         await conn.execute(
           `INSERT INTO notifications (user_id, type, title, content, related_type, related_id)
-           VALUES (?, 'system', '共享情报被判无效', '你共享的一条进度情报因多次被举报已下架', 'follow_up_share', ?)`,
+           VALUES (?, 'system', '进展被判无效', '你同步的一条进展因多次被举报已下架', 'follow_up_share', ?)`,
           [share.user_id, shareId]
         );
       }

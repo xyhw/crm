@@ -122,12 +122,12 @@
         <view class="section-content">{{ detail.descriptionFull }}</view>
       </view>
 
-      <!-- 共享进度榜 -->
+      <!-- 同行进展 -->
       <view
         v-if="detail.marketIntelligence && detail.marketIntelligence.totalShares > 0"
         class="info-section"
       >
-        <view class="section-title">共享进度</view>
+        <view class="section-title">同行进展</view>
         <MarketIntelligence
           :intelligence="detail.marketIntelligence"
           @changed="reload"
@@ -161,7 +161,7 @@
             {{ detail.isPublisher ? '查看跟进分布' : '进入CRM' }}
           </view>
           <view v-if="detail.isPurchased && detail.crmId" class="action-btn" @click="goAddFollowUp">新增跟进</view>
-          <view v-if="detail.isPurchased && detail.crmId" class="action-btn" @click="goShare">共享进度</view>
+          <view v-if="detail.isPurchased && detail.crmId" class="action-btn" @click="goShare">同步进展</view>
           <view v-if="detail.isPurchased" class="action-btn action-btn--warn" @click="showInvalid = true">标记无效</view>
         </view>
       </template>

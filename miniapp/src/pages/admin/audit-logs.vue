@@ -93,7 +93,7 @@ const targetOptions = [
   { label: '商机', value: 'opportunities' },
   { label: '用户', value: 'users' },
   { label: '订单', value: 'orders' },
-  { label: '进度分享', value: 'follow_up_shares' },
+  { label: '进展同步', value: 'follow_up_shares' },
   { label: '等级', value: 'member_levels' },
   { label: '配置', value: 'system_configs' },
   { label: '角色', value: 'role' },

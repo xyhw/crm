@@ -223,7 +223,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
       [opportunity.id]
     );
 
-    // 获取市场情报（已审核的进度分享，按点赞数排序做进度榜；投稿人全匿名，不返回昵称）
+    // 获取市场情报（已审核的进展同步，按点赞数排序做同行进展；投稿人全匿名，不返回昵称）
     const shares = await query(
       `SELECT s.id, s.status, s.summary, s.helpful_count, s.report_count, s.created_at, s.user_id
        FROM follow_up_shares s
@@ -238,7 +238,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
       statusCounts[s.status] = (statusCounts[s.status] || 0) + 1;
     });
 
-    // 当前用户点赞过的共享（用于回显点赞状态，防重复点赞）
+    // 当前用户点赞过的进展同步（用于回显点赞状态，防重复点赞）
     let myLikedShares = new Set();
     if (req.userId && isPurchased) {
       const likes = await query(
@@ -250,7 +250,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
       myLikedShares = new Set(likes.map(l => l.share_id));
     }
 
-    // 当前用户举报过的共享（用于回显举报状态，防重复举报）
+    // 当前用户举报过的进展同步（用于回显举报状态，防重复举报）
     let myReportedShares = new Set();
     if (req.userId && isPurchased) {
       const reports = await query(

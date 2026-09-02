@@ -1,7 +1,7 @@
 <template>
   <view class="share-page">
     <view class="form-card">
-      <view v-if="fromFollowUp" class="from-follow-tip">已带入跟进记录的状态和内容，确认或修改后共享</view>
+      <view v-if="fromFollowUp" class="from-follow-tip">已带入跟进记录的状态和内容，确认或修改后同步</view>
       <view class="dialog-label">当前进展阶段</view>
       <view class="status-chips">
         <view
@@ -22,12 +22,12 @@
         :maxlength="200"
       />
 
-      <view class="dialog-tip">共享后将以匿名形式展示在该商机的进度情报中，供同一条商机的其他购买者参考，请勿填写联系方式等隐私信息。</view>
-      <view class="dialog-reward">共享通过审核 +2 积分，进度被点赞再 +1 积分</view>
+      <view class="dialog-tip">同步后将以匿名形式展示在该商机的进展中，供同一条商机的其他购买者参考，请勿填写联系方式等隐私信息。</view>
+      <view class="dialog-reward">同步通过审核 +2 积分，被点赞再 +1 积分</view>
     </view>
 
     <view class="submit-btn" :class="{ disabled: submitting }" @click="handleShare">
-      {{ submitting ? '提交中...' : '共享进度' }}
+      {{ submitting ? '提交中...' : '同步进展' }}
     </view>
   </view>
 </template>
@@ -75,7 +75,7 @@ async function handleShare() {
       status: form.status,
       summary: form.summary.trim(),
     });
-    uni.showToast({ title: '共享成功', icon: 'none' });
+    uni.showToast({ title: '已同步', icon: 'none' });
     setTimeout(() => {
       if (crmId.value) {
         uni.redirectTo({ url: `/pages/crm/detail?id=${crmId.value}` });
@@ -84,7 +84,7 @@ async function handleShare() {
       }
     }, 800);
   } catch (e) {
-    uni.showToast({ title: e.message || '共享失败', icon: 'none' });
+    uni.showToast({ title: e.message || '同步失败', icon: 'none' });
   } finally {
     submitting.value = false;
   }

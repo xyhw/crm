@@ -38,7 +38,7 @@ router.get('/', optionalAuth, setCache(300, { staleWhileRevalidate: 600 }), asyn
         ),
       ]);
     } else if (type === 'contributor') {
-      // 贡献榜：按进度分享被标记有用数排序
+      // 贡献榜：按进展被标记有用数排序
       [list, [{ total }]] = await Promise.all([
         query(
           `SELECT u.id, u.nickname, u.avatar, SUM(s.helpful_count) as helpful_count
