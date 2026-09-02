@@ -145,8 +145,13 @@
 
       <!-- 操作按钮 -->
       <view class="action-bar">
-        <view class="action-btn action-btn--primary" @click="openFollowUp">新增跟进</view>
-        <view class="action-btn" @click="goShare">同步进展</view>
+        <view class="action-btn action-btn--primary" @click="openFollowUp">
+          <text class="action-btn__main">新增跟进</text>
+        </view>
+        <view class="action-btn" @click="goShare">
+          <text class="action-btn__main">同步进展</text>
+          <text class="action-btn__sub">审核通过 +2 积分</text>
+        </view>
       </view>
 
       <!-- 新增跟进弹窗 -->
@@ -583,14 +588,29 @@ function shareFromFollowUp(fu) {
 
 .action-btn {
   flex: 1;
-  height: 84rpx;
-  line-height: 84rpx;
-  text-align: center;
+  min-height: 84rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10rpx 0;
   border-radius: 42rpx;
   font-size: 30rpx;
   color: #048C47;
   border: 1px solid #048C47;
   margin-left: 16rpx;
+}
+
+.action-btn__main {
+  font-size: 30rpx;
+  line-height: 1.3;
+}
+
+.action-btn__sub {
+  font-size: 20rpx;
+  line-height: 1.3;
+  margin-top: 2rpx;
+  opacity: 0.7;
 }
 
 .action-btn:first-child {
