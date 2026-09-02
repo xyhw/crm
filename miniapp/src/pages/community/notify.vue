@@ -10,7 +10,7 @@
         @click="switchType(t.name)"
       >
         <text>{{ t.title }}</text>
-        <text v-if="t.name === '' && unreadCount > 0" class="notify-badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</text>
+        <text v-if="tabUnread(t) > 0" class="notify-badge">{{ tabUnread(t) > 99 ? '99+' : tabUnread(t) }}</text>
       </view>
     </view>
 
@@ -59,11 +59,17 @@ const type = ref('');
 const list = ref([]);
 const loading = ref(true);
 const unreadCount = ref(0);
+const unreadByType = ref({});
 const page = ref(1);
 const total = ref(0);
 const pageSize = 6;
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize)));
+
+function tabUnread(t) {
+  if (!t.name) return unreadCount.value;
+  return unreadByType.value[t.name] || 0;
+}
 
 onShow(() => {
   page.value = 1;
@@ -84,6 +90,7 @@ async function fetchList() {
     list.value = res?.list || [];
     total.value = res?.total ?? list.value.length;
     unreadCount.value = res?.unreadCount || 0;
+    unreadByType.value = res?.unreadByType || {};
   } catch (e) {
     list.value = [];
     uni.showToast({ title: e.message || '加载失败', icon: 'none' });
@@ -94,9 +101,18 @@ async function fetchList() {
 
 async function handleRead(id) {
   try {
+    const target = list.value.find((n) => n.id === id);
     await api.markNotificationRead(id);
-    list.value = list.value.map((n) => (n.id === id ? { ...n, is_read: 1 } : n));
-    unreadCount.value = Math.max(0, unreadCount.value - 1);
+    if (target && !target.is_read) {
+      list.value = list.value.map((n) => (n.id === id ? { ...n, is_read: 1 } : n));
+      unreadCount.value = Math.max(0, unreadCount.value - 1);
+      if (target.type) {
+        unreadByType.value = {
+          ...unreadByType.value,
+          [target.type]: Math.max(0, (unreadByType.value[target.type] || 0) - 1),
+        };
+      }
+    }
   } catch (e) {
     uni.showToast({ title: e.message || '操作失败', icon: 'none' });
   }
@@ -106,6 +122,7 @@ async function handleReadAll() {
   try {
     await api.markAllRead();
     unreadCount.value = 0;
+    unreadByType.value = {};
     list.value = list.value.map((n) => ({ ...n, is_read: 1 }));
     uni.showToast({ title: '已全部标记已读', icon: 'none' });
   } catch (e) {

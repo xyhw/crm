@@ -28,17 +28,25 @@ router.get('/', authRequired, async (req, res) => {
       [req.userId]
     );
 
-    const [unreadResult] = await query(
-      'SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0',
+    // 按分类统计未读数，供 tab 角标展示
+    const unreadRows = await query(
+      'SELECT type, COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0 GROUP BY type',
       [req.userId]
     );
+    const unreadByType = {};
+    let unreadCount = 0;
+    unreadRows.forEach((r) => {
+      unreadByType[r.type] = r.count;
+      unreadCount += r.count;
+    });
 
     res.json({
       code: 0,
       data: {
         list,
         total: countResult.total,
-        unreadCount: unreadResult.count,
+        unreadCount,
+        unreadByType,
         page: Number(page),
         pageSize: Number(pageSize),
       },
