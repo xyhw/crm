@@ -30,6 +30,19 @@ router.get('/', authRequired, async (req, res) => {
 
     const reminders = await query(sql, params);
 
+    // 聚合三个分类的提醒数量，供 tab 角标展示
+    const [countRow] = await query(
+      `SELECT
+        SUM(DATE(fu.next_follow_date) = CURDATE()) as today,
+        SUM(fu.next_follow_date < CURDATE()) as overdue,
+        SUM(fu.next_follow_date > CURDATE()
+          AND fu.next_follow_date <= DATE_ADD(CURDATE(), INTERVAL 7 DAY)) as upcoming
+       FROM follow_ups fu
+       JOIN crm_opportunities co ON fu.crm_opportunity_id = co.id
+       WHERE co.user_id = ?`,
+      [req.userId]
+    );
+
     res.json({
       code: 0,
       data: {
@@ -44,6 +57,11 @@ router.get('/', authRequired, async (req, res) => {
           contentPrivate: r.content_private,
           createdAt: r.created_at,
         })),
+        counts: {
+          today: Number(countRow?.today || 0),
+          overdue: Number(countRow?.overdue || 0),
+          upcoming: Number(countRow?.upcoming || 0),
+        },
       },
     });
   } catch (error) {

@@ -148,17 +148,17 @@ function categoryLabel(o) {
 async function fetchHome() {
   listLoading.value = true;
   try {
-    const [ordersRes, statsRes, notifRes, todayRes, overdueRes] = await Promise.all([
+    const [ordersRes, statsRes, notifRes, remindRes] = await Promise.all([
       api.opportunities({ status: 'active', pageSize: 5, sort: 'newest' }),
       api.myStats().catch(() => null),
       api.notifications({ pageSize: 1 }).catch(() => ({})),
       api.reminders({ type: 'today' }).catch(() => ({})),
-      api.reminders({ type: 'overdue' }).catch(() => ({})),
     ]);
     latestList.value = ordersRes?.list || [];
     stats.value = statsRes;
     unreadCount.value = notifRes?.unreadCount || 0;
-    followCount.value = (todayRes?.list || []).length + (overdueRes?.list || []).length;
+    const c = remindRes?.counts || {};
+    followCount.value = (c.today || 0) + (c.overdue || 0);
   } catch (e) {
     // 静默失败，展示空态
   } finally {

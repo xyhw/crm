@@ -9,7 +9,8 @@
         :class="{ active: tab === t.name }"
         @click="switchTab(t.name)"
       >
-        {{ t.title }}
+        <text>{{ t.title }}</text>
+        <text v-if="tabCount(t.name) > 0" class="rmd-badge">{{ tabCount(t.name) > 99 ? '99+' : tabCount(t.name) }}</text>
       </view>
     </view>
 
@@ -57,9 +58,14 @@ const tabs = [
 
 const tab = ref('today');
 const reminders = ref([]);
+const counts = ref({ today: 0, overdue: 0, upcoming: 0 });
 const loading = ref(true);
 const page = ref(1);
 const pageSize = 6;
+
+function tabCount(name) {
+  return counts.value[name] || 0;
+}
 
 onShow(() => {
   fetchList();
@@ -78,6 +84,7 @@ async function fetchList() {
   try {
     const res = await api.reminders({ type: tab.value });
     reminders.value = res?.list || [];
+    counts.value = res?.counts || { today: 0, overdue: 0, upcoming: 0 };
   } catch (e) {
     reminders.value = [];
     uni.showToast({ title: e.message || '加载失败', icon: 'none' });
@@ -122,6 +129,8 @@ function changePage(p) {
 
 .rmd-tab {
   position: relative;
+  display: flex;
+  align-items: center;
   padding: 24rpx 32rpx;
   font-size: 28rpx;
   color: #7A7A7A;
@@ -142,6 +151,19 @@ function changePage(p) {
   height: 6rpx;
   border-radius: 3rpx;
   background: #048C47;
+}
+
+.rmd-badge {
+  margin-left: 8rpx;
+  min-width: 32rpx;
+  height: 32rpx;
+  line-height: 32rpx;
+  padding: 0 8rpx;
+  border-radius: 16rpx;
+  background: #E54848;
+  color: #ffffff;
+  font-size: 20rpx;
+  text-align: center;
 }
 
 .empty {
