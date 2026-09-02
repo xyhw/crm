@@ -26,7 +26,6 @@ router.post('/', async (req, res) => {
       try {
         const result = await adapter.parseNotifyResult(headers, rawBody);
         if (!result.orderNo) {
-          console.warn('[waffo] webhook missing orderNo, raw=', JSON.stringify(result.raw).slice(0, 300));
           return;
         }
         await settleRechargeOrder(result.orderNo, {
@@ -34,7 +33,6 @@ router.post('/', async (req, res) => {
           paidAt: result.paidAt,
           rawNotify: result.raw,
         });
-        console.log(`[waffo] order ${result.orderNo} settled`);
       } catch (err) {
         console.error('[waffo] webhook settle error:', err.message);
       }

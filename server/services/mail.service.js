@@ -9,7 +9,6 @@ export async function sendResetCodeEmail(email, code) {
     return sendViaSmtp(email, code);
   }
 
-  console.log(`[mail][dev] 发送验证码到 ${email}: ${code}`);
   return true;
 }
 

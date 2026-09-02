@@ -18,7 +18,7 @@ export const config = {
   db: {
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'hof_user',
-    password: process.env.DB_PASS || 'hof_pass_2026',
+    password: readSecret('DB_PASS', 'hof_pass_2026'),
     database: process.env.DB_NAME || 'hotel_order_follow',
     charset: 'utf8mb4',
   },
