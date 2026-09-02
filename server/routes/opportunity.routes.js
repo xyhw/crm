@@ -3,7 +3,6 @@ import { query, queryOne, insert, update, transaction } from '../db.js';
 import { authRequired, optionalAuth } from '../auth.js';
 import { getMarkWeight } from '../services/level.service.js';
 import { detectSimilar } from '../services/similarity.service.js';
-import { anonymizeName } from '../constants.js';
 
 const router = Router();
 
@@ -143,7 +142,7 @@ router.get('/', optionalAuth, async (req, res) => {
         status: item.status,
         purchaseCount: item.purchase_count,
         viewCount: item.view_count,
-        publisherName: anonymizeName(item.publisher_name),
+        publisherName: '匿名投稿人',
         createdAt: item.created_at,
         totalShares: item.total_shares || 0,
         latestShareAt: item.latest_share_at,
@@ -224,11 +223,10 @@ router.get('/:id', optionalAuth, async (req, res) => {
       [opportunity.id]
     );
 
-    // 获取市场情报（已审核的进度分享，按点赞数排序做进度榜）
+    // 获取市场情报（已审核的进度分享，按点赞数排序做进度榜；投稿人全匿名，不返回昵称）
     const shares = await query(
-      `SELECT s.id, s.status, s.summary, s.helpful_count, s.report_count, s.created_at, s.user_id, u.nickname
+      `SELECT s.id, s.status, s.summary, s.helpful_count, s.report_count, s.created_at, s.user_id
        FROM follow_up_shares s
-       LEFT JOIN users u ON s.user_id = u.id
        WHERE s.opportunity_id = ? AND s.audit_status = 'approved'
        ORDER BY s.helpful_count DESC, s.created_at DESC`,
       [opportunity.id]
@@ -277,8 +275,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
       purchaseCount: opportunity.purchase_count,
       viewCount: finalViewCount,
       invalidMarkCount: opportunity.invalid_mark_count,
-      publisherName: anonymizeName(opportunity.publisher_name),
-      publisherCompany: opportunity.publisher_company,
+      publisherName: '匿名投稿人',
       tags: tags.map(t => ({ id: t.id, name: t.name })),
       createdAt: opportunity.created_at,
     };
@@ -307,7 +304,6 @@ router.get('/:id', optionalAuth, async (req, res) => {
           summary: s.summary,
           helpfulCount: s.helpful_count,
           createdAt: s.created_at,
-          nickname: anonymizeName(s.nickname),
           isOwn: req.userId === s.user_id,
           isLiked: myLikedShares.has(s.id),
           reportCount: s.report_count || 0,

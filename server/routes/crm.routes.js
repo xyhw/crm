@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { query, queryOne, insert, update } from '../db.js';
 import { authRequired } from '../auth.js';
-import { anonymizeName } from '../constants.js';
 
 const router = Router();
 
@@ -80,13 +79,12 @@ router.get('/:id', authRequired, async (req, res) => {
       [req.params.id]
     );
 
-    // 获取市场情报（共享进度榜）
+    // 获取市场情报（共享进度榜；投稿人全匿名，不返回昵称）
     let marketIntelligence = null;
     if (crm.opportunity_id) {
       const shares = await query(
-        `SELECT s.id, s.status, s.summary, s.helpful_count, s.report_count, s.created_at, s.user_id, u.nickname
+        `SELECT s.id, s.status, s.summary, s.helpful_count, s.report_count, s.created_at, s.user_id
          FROM follow_up_shares s
-         LEFT JOIN users u ON s.user_id = u.id
          WHERE s.opportunity_id = ? AND s.audit_status = 'approved'
          ORDER BY s.helpful_count DESC, s.created_at DESC`,
         [crm.opportunity_id]
@@ -125,7 +123,6 @@ router.get('/:id', authRequired, async (req, res) => {
           summary: s.summary,
           helpfulCount: s.helpful_count,
           createdAt: s.created_at,
-          nickname: anonymizeName(s.nickname),
           isOwn: req.userId === s.user_id,
           isLiked: myLikedShares.has(s.id),
           reportCount: s.report_count || 0,

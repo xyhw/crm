@@ -24,7 +24,7 @@
         <view class="mi-share-main">
           <view class="mi-share-row">
             <text class="mi-share-status" :style="statusStyleOf(s.status)">{{ followUpStatusLabel(s.status) }}</text>
-            <text class="mi-share-user">{{ s.isOwn ? '我' : s.nickname }}</text>
+            <text class="mi-share-user">{{ s.isOwn ? '我' : '匿名购买者' }}</text>
             <text class="mi-share-time">{{ timeAgo(s.createdAt) }}</text>
           </view>
           <view v-if="s.summary" class="mi-share-summary">{{ s.summary }}</view>
