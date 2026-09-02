@@ -233,7 +233,7 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { onLoad } from '@dcloudio/uni-app';
+import { onLoad, onShareAppMessage } from '@dcloudio/uni-app';
 import { api } from '@/api/index';
 import { useUserStore } from '@/store/user';
 import { UPLOAD_BASE } from '@/common/config';
@@ -708,16 +708,20 @@ function goShare() {
 
 .action-group {
   display: flex;
-  flex-wrap: wrap;
+  gap: 12rpx;
 }
 
 .action-btn {
-  padding: 16rpx 32rpx;
-  margin: 4rpx 12rpx 4rpx 0;
+  flex: 1;
+  min-width: 0;
+  padding: 16rpx 0;
+  margin: 0;
   border-radius: 36rpx;
   font-size: 26rpx;
+  text-align: center;
   color: #048C47;
   border: 1px solid #048C47;
+  box-sizing: border-box;
 }
 
 .action-btn--primary {
