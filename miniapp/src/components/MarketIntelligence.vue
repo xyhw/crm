@@ -1,6 +1,6 @@
 <template>
   <view v-if="intelligence && intelligence.totalShares > 0" class="mi-block">
-    <view class="mi-summary">{{ intelligence.totalShares }} 位购买者共享了进度</view>
+    <view class="mi-summary">已有 {{ intelligence.totalShares }} 位购买者共享进度</view>
 
     <view v-if="hasDistribution" class="mi-status-row">
       <text
@@ -13,7 +13,7 @@
     </view>
 
     <view v-if="visible.length" class="mi-board">
-      <view class="mi-board-title">共享进度榜</view>
+      <view class="mi-board-title">共享进展</view>
       <view
         v-for="(s, idx) in visible"
         :key="s.shareId"

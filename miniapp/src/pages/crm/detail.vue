@@ -126,6 +126,13 @@
               <view v-if="fu.next_follow_date" class="follow-item-remind">
                 下次跟进：{{ formatDate(fu.next_follow_date) }}
               </view>
+              <view
+                v-if="detail.opportunity_id"
+                class="follow-item-share"
+                @click="shareFromFollowUp(fu)"
+              >
+                共享为进度
+              </view>
             </view>
             <view v-if="followUpTotalPages > 1" class="mi-pagination">
               <view class="page-btn" :class="{ disabled: followUpPage <= 1 }" @click="pageFollowUp(-1)">上一页</view>
@@ -337,6 +344,12 @@ function goShare() {
     url: `/pages/followup/share?opportunityId=${detail.value.opportunity_id}&crmId=${id.value}`,
   });
 }
+
+function shareFromFollowUp(fu) {
+  uni.navigateTo({
+    url: `/pages/followup/share?opportunityId=${detail.value.opportunity_id}&crmId=${id.value}&followUpId=${fu.id}&status=${fu.status}&summary=${encodeURIComponent(fu.content_private || '')}`,
+  });
+}
 </script>
 
 <style lang="scss" scoped>
@@ -516,6 +529,16 @@ function goShare() {
   font-size: 24rpx;
   color: #E8920A;
   margin-top: 8rpx;
+}
+
+.follow-item-share {
+  display: inline-block;
+  margin-top: 12rpx;
+  padding: 6rpx 24rpx;
+  border-radius: 24rpx;
+  font-size: 22rpx;
+  color: #048C47;
+  background: rgba(4, 140, 71, 0.08);
 }
 
 .mi-pagination {

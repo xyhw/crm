@@ -1,7 +1,8 @@
 <template>
   <view class="share-page">
     <view class="form-card">
-      <view class="dialog-label">选择进度状态：</view>
+      <view v-if="fromFollowUp" class="from-follow-tip">已带入跟进记录的状态和内容，确认或修改后共享</view>
+      <view class="dialog-label">当前进展阶段</view>
       <view class="status-chips">
         <view
           v-for="s in FOLLOW_UP_STATUS"
@@ -17,12 +18,12 @@
       <textarea
         v-model="form.summary"
         class="share-input"
-        placeholder="一句话描述进度（匿名展示）"
+        placeholder="简要描述最新进展，例如：已上门洽谈，房东意向较强（匿名展示）"
         :maxlength="200"
       />
 
-      <view class="dialog-tip">您共享的进度将匿名展示在共享进度榜，帮助其他购买者判断商机价值。</view>
-      <view class="dialog-reward">奖励规则：共享通过审核 +2 积分；情报被点赞 +1 积分</view>
+      <view class="dialog-tip">共享后将以匿名形式展示在该商机的进度情报中，供同一条商机的其他购买者参考，请勿填写联系方式等隐私信息。</view>
+      <view class="dialog-reward">共享通过审核 +2 积分，进度被点赞再 +1 积分</view>
     </view>
 
     <view class="submit-btn" :class="{ disabled: submitting }" @click="handleShare">
@@ -39,6 +40,8 @@ import { FOLLOW_UP_STATUS } from '@/common/constants';
 
 const opportunityId = ref('');
 const crmId = ref('');
+const followUpId = ref('');
+const fromFollowUp = ref(false);
 const submitting = ref(false);
 const form = reactive({
   status: 'call_no_answer',
@@ -48,22 +51,31 @@ const form = reactive({
 onLoad((options) => {
   opportunityId.value = options.opportunityId || '';
   crmId.value = options.crmId || '';
+  followUpId.value = options.followUpId || '';
+  if (options.status && FOLLOW_UP_STATUS.some((s) => s.value === options.status)) {
+    form.status = options.status;
+  }
+  if (options.summary) {
+    form.summary = decodeURIComponent(options.summary);
+    fromFollowUp.value = true;
+  }
 });
 
 async function handleShare() {
   if (!form.summary.trim()) {
-    uni.showToast({ title: '请填写进度情报', icon: 'none' });
+    uni.showToast({ title: '请简要描述最新进展', icon: 'none' });
     return;
   }
   if (submitting.value) return;
   submitting.value = true;
   try {
     await api.shareFollowUp({
+      followUpId: followUpId.value ? Number(followUpId.value) : undefined,
       opportunityId: Number(opportunityId.value),
       status: form.status,
       summary: form.summary.trim(),
     });
-    uni.showToast({ title: '分享成功', icon: 'none' });
+    uni.showToast({ title: '共享成功', icon: 'none' });
     setTimeout(() => {
       if (crmId.value) {
         uni.redirectTo({ url: `/pages/crm/detail?id=${crmId.value}` });
@@ -72,7 +84,7 @@ async function handleShare() {
       }
     }, 800);
   } catch (e) {
-    uni.showToast({ title: e.message || '分享失败', icon: 'none' });
+    uni.showToast({ title: e.message || '共享失败', icon: 'none' });
   } finally {
     submitting.value = false;
   }
@@ -94,6 +106,15 @@ async function handleShare() {
 .dialog-label {
   font-size: 28rpx;
   color: #1A1A1A;
+}
+
+.from-follow-tip {
+  font-size: 24rpx;
+  color: #048C47;
+  background: rgba(4, 140, 71, 0.08);
+  border-radius: 8rpx;
+  padding: 12rpx 16rpx;
+  margin-bottom: 16rpx;
 }
 
 .status-chips {
