@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { query, queryOne, insert, update, transaction } from '../db.js';
 import { authRequired, optionalAuth } from '../auth.js';
-import { getMarkWeight } from '../services/level.service.js';
 import { detectSimilar } from '../services/similarity.service.js';
 
 const router = Router();
@@ -12,12 +11,19 @@ router.get('/', optionalAuth, async (req, res) => {
     const { category, keyword, status = 'active', page = 1, pageSize = 10, sort = 'newest', mine } = req.query;
     const statusProvided = req.query.status !== undefined;
     
-    let sql = `SELECT o.*, c.name as category_name, c.icon as category_icon, u.nickname as publisher_name,
-              (SELECT COUNT(*) FROM follow_up_shares WHERE opportunity_id = o.id AND audit_status = 'approved') as total_shares,
-              (SELECT MAX(created_at) FROM follow_up_shares WHERE opportunity_id = o.id AND audit_status = 'approved') as latest_share_at
+    let sql = `SELECT o.id, o.title, o.category_id, o.city, o.brand, o.hotel_name, o.price, o.status,
+              o.purchase_count, o.view_count, o.created_at, o.user_id,
+              o.address, o.stage, o.description_full, o.contact_name, o.contact_phone, o.wechat,
+              c.name as category_name, c.icon as category_icon,
+              fs.total_shares, fs.latest_share_at
               FROM opportunities o
               LEFT JOIN opportunity_categories c ON o.category_id = c.id
-              LEFT JOIN users u ON o.user_id = u.id
+              LEFT JOIN (
+                SELECT opportunity_id, COUNT(*) as total_shares, MAX(created_at) as latest_share_at
+                FROM follow_up_shares
+                WHERE audit_status = 'approved'
+                GROUP BY opportunity_id
+              ) fs ON fs.opportunity_id = o.id
               WHERE 1=1`;
     const params = [];
 
@@ -179,11 +185,9 @@ router.get('/', optionalAuth, async (req, res) => {
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const opportunity = await queryOne(
-      `SELECT o.*, c.name as category_name, c.icon as category_icon, 
-              u.nickname as publisher_name, u.company as publisher_company
+      `SELECT o.*, c.name as category_name, c.icon as category_icon
        FROM opportunities o 
        LEFT JOIN opportunity_categories c ON o.category_id = c.id 
-       LEFT JOIN users u ON o.user_id = u.id 
        WHERE o.id = ? AND o.deleted_at IS NULL`,
       [req.params.id]
     );
@@ -192,45 +196,46 @@ router.get('/:id', optionalAuth, async (req, res) => {
       return res.json({ code: 404, message: '商机不存在' });
     }
 
-    // 增加浏览量
-    await update('opportunities', { view_count: opportunity.view_count + 1 }, 'id = ?', [opportunity.id]);
-    const finalViewCount = opportunity.view_count + 1;
+    // 增加浏览量（原子自增，避免读-改-写竞态，异步执行不阻塞响应）
+    query('UPDATE opportunities SET view_count = view_count + 1 WHERE id = ?', [opportunity.id]).catch(() => {});
+    const finalViewCount = (opportunity.view_count || 0) + 1;
 
-    // 检查购买态
-    let isPurchased = false;
-    let crmId = null;
+    // 并行获取：购买态、标签、市场情报（互不依赖，均只依赖 opportunity.id 与 req.userId）
+    const isPublisher = req.userId === opportunity.user_id;
+    let purchaseQuery = Promise.resolve(null);
     if (req.userId) {
-      const purchase = await queryOne(
+      purchaseQuery = queryOne(
         'SELECT id FROM orders WHERE user_id = ? AND opportunity_id = ? AND status = "paid"',
         [req.userId, opportunity.id]
       );
-      isPurchased = !!purchase;
-      if (isPurchased) {
-        const crm = await queryOne(
-          'SELECT id FROM crm_opportunities WHERE user_id = ? AND opportunity_id = ?',
-          [req.userId, opportunity.id]
-        );
-        crmId = crm?.id || null;
-      }
     }
-    const isPublisher = req.userId === opportunity.user_id;
-
-    // 获取标签
-    const tags = await query(
-      `SELECT t.id, t.name FROM opportunity_tags t 
-       JOIN opportunity_tag_relations r ON t.id = r.tag_id 
-       WHERE r.opportunity_id = ?`,
-      [opportunity.id]
-    );
-
-    // 获取市场情报（已审核的进展同步，按点赞数排序做同行进展；投稿人全匿名，不返回昵称）
-    const shares = await query(
-      `SELECT s.id, s.status, s.summary, s.helpful_count, s.report_count, s.created_at, s.user_id
-       FROM follow_up_shares s
-       WHERE s.opportunity_id = ? AND s.audit_status = 'approved'
-       ORDER BY s.helpful_count DESC, s.created_at DESC`,
-      [opportunity.id]
-    );
+    const [tagsP, sharesP, purchase] = await Promise.all([
+      query(
+        `SELECT t.id, t.name FROM opportunity_tags t 
+         JOIN opportunity_tag_relations r ON t.id = r.tag_id 
+         WHERE r.opportunity_id = ?`,
+        [opportunity.id]
+      ),
+      query(
+        `SELECT s.id, s.status, s.summary, s.helpful_count, s.report_count, s.created_at, s.user_id
+         FROM follow_up_shares s
+         WHERE s.opportunity_id = ? AND s.audit_status = 'approved'
+         ORDER BY s.helpful_count DESC, s.created_at DESC`,
+        [opportunity.id]
+      ),
+      purchaseQuery,
+    ]);
+    const tags = tagsP;
+    const shares = sharesP;
+    const isPurchased = req.userId ? !!purchase : false;
+    let crmId = null;
+    if (isPurchased) {
+      const crm = await queryOne(
+        'SELECT id FROM crm_opportunities WHERE user_id = ? AND opportunity_id = ?',
+        [req.userId, opportunity.id]
+      );
+      crmId = crm?.id || null;
+    }
 
     // 统计进度分布
     const statusCounts = {};
@@ -238,27 +243,25 @@ router.get('/:id', optionalAuth, async (req, res) => {
       statusCounts[s.status] = (statusCounts[s.status] || 0) + 1;
     });
 
-    // 当前用户点赞过的进展同步（用于回显点赞状态，防重复点赞）
+    // 当前用户点赞/举报过的进展同步（用于回显状态，防重复操作）；均依赖 isPurchased，并行执行
     let myLikedShares = new Set();
-    if (req.userId && isPurchased) {
-      const likes = await query(
-        `SELECT m.share_id FROM follow_up_helpful_marks m
-         JOIN follow_up_shares s ON m.share_id = s.id
-         WHERE m.user_id = ? AND s.opportunity_id = ?`,
-        [req.userId, opportunity.id]
-      );
-      myLikedShares = new Set(likes.map(l => l.share_id));
-    }
-
-    // 当前用户举报过的进展同步（用于回显举报状态，防重复举报）
     let myReportedShares = new Set();
     if (req.userId && isPurchased) {
-      const reports = await query(
-        `SELECT m.share_id FROM follow_up_share_invalid_marks m
-         JOIN follow_up_shares s ON m.share_id = s.id
-         WHERE m.user_id = ? AND s.opportunity_id = ?`,
-        [req.userId, opportunity.id]
-      );
+      const [likes, reports] = await Promise.all([
+        query(
+          `SELECT m.share_id FROM follow_up_helpful_marks m
+           JOIN follow_up_shares s ON m.share_id = s.id
+           WHERE m.user_id = ? AND s.opportunity_id = ?`,
+          [req.userId, opportunity.id]
+        ),
+        query(
+          `SELECT m.share_id FROM follow_up_share_invalid_marks m
+           JOIN follow_up_shares s ON m.share_id = s.id
+           WHERE m.user_id = ? AND s.opportunity_id = ?`,
+          [req.userId, opportunity.id]
+        ),
+      ]);
+      myLikedShares = new Set(likes.map(l => l.share_id));
       myReportedShares = new Set(reports.map(r => r.share_id));
     }
 

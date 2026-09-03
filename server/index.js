@@ -20,6 +20,7 @@ import { migrateSecurityGuards } from './migrations/013_security_guards.js';
 import { migrateWechatBinding } from './migrations/014_wechat_binding.js';
 import { migrateOpportunityTagsSortOrder } from './migrations/015_opportunity_tags_sort_order.js';
 import { migrateOrdersRefundedRepurchase } from './migrations/016_orders_refunded_repurchase.js';
+import { migrateP2Indexes } from './migrations/017_perf_indexes.js';
 import { ensureAndLoadPaymentConfig } from './services/payment/config-loader.js';
 import { seedDatabase } from './seeds/seed.js';
 import { closePool } from './db.js';
@@ -234,6 +235,10 @@ async function start() {
     await migrateOpportunityTagsSortOrder();
     await migrateOrdersRefundedRepurchase();
     console.log('[server] opportunity_tags.sort_order ready');
+
+    // P2 性能索引（幂等）
+    await migrateP2Indexes();
+    console.log('[server] P2 performance indexes applied');
 
     // 种子数据
     await seedDatabase();
