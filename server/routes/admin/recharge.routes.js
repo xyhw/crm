@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { query, queryOne } from '../../db.js';
-import { getAdapter, settleRechargeOrder } from '../../services/payment/index.js';
+import { getAdapter, settleRechargeOrder, refundRechargeOrder } from '../../services/payment/index.js';
 import { recordLog } from '../../services/audit-log.service.js';
 
 const router = Router();
@@ -103,6 +103,22 @@ router.get('/summary', async (req, res) => {
            WHERE pl.source_type = 'recharge' AND pl.source_id = po.id
          )`
     );
+    // 退款为人工登记：核对 refunded 订单是否都写了 refund 流水
+    const [refund] = await query(
+      `SELECT COUNT(*) AS orders,
+              COALESCE(SUM(po.refund_amount), 0) AS refundPrice,
+              COALESCE(SUM(po.amount), 0) AS points
+       FROM payment_orders po WHERE po.status = 'refunded'`
+    );
+    const [refundMissing] = await query(
+      `SELECT COUNT(*) AS orders, COALESCE(SUM(po.amount), 0) AS points
+       FROM payment_orders po
+       WHERE po.status = 'refunded'
+         AND NOT EXISTS (
+           SELECT 1 FROM points_logs pl
+           WHERE pl.source_type = 'refund' AND pl.source_id = po.id
+         )`
+    );
     const paid = byStatus.find((r) => r.status === 'paid');
     const paidPoints = Number(paid?.points || 0);
     const ledgerPoints = Number(ledger?.points || 0);
@@ -113,6 +129,13 @@ router.get('/summary', async (req, res) => {
         byStatus,
         byChannel,
         today: today[0] || { orders: 0, price: 0, points: 0 },
+        refund: {
+          orders: Number(refund?.orders || 0),
+          refundPrice: Number(refund?.refundPrice || 0),
+          points: Number(refund?.points || 0),
+          missingLedgerOrders: Number(refundMissing?.orders || 0),
+          missingLedgerPoints: Number(refundMissing?.points || 0),
+        },
         reconcile: {
           paidOrderPoints: paidPoints,
           ledgerRechargePoints: ledgerPoints,
@@ -185,6 +208,59 @@ router.post('/:orderNo/sync', async (req, res) => {
     if (err.code === 404) return res.json({ code: 404, message: err.message });
     console.error('Admin recharge sync error:', err);
     res.status(500).json({ code: 500, message: err.message || '查单补账失败' });
+  }
+});
+
+/**
+ * 退款记账（人工操作）。系统不调用渠道退款接口：
+ * 运营先在渠道后台完成退款，再在此登记，扣回积分并留痕。
+ */
+router.post('/:orderNo/refund', async (req, res) => {
+  const { orderNo } = req.params;
+  const { reason, channelRefundNo } = req.body || {};
+  try {
+    if (!reason || String(reason).trim().length < 2) {
+      return res.json({ code: 400, message: '请填写退款原因（至少 2 个字）' });
+    }
+    const result = await refundRechargeOrder(orderNo, {
+      reason: String(reason).trim(),
+      operatorId: req.adminId,
+      channelRefundNo: channelRefundNo ? String(channelRefundNo).trim() : null,
+    });
+    if (result.already) {
+      return res.json({ code: 0, data: result, message: '该订单已登记退款' });
+    }
+    await recordLog(
+      req.adminId,
+      'recharge_refund',
+      'payment_order',
+      result.orderId,
+      {
+        orderNo: result.orderNo,
+        userId: result.userId,
+        points: result.points,
+        refundAmount: result.refundAmount,
+        balanceBefore: result.balanceBefore,
+        balanceAfter: result.balanceAfter,
+        shortfall: result.shortfall,
+        channelRefundNo: channelRefundNo || null,
+        reason: String(reason).trim(),
+      },
+      req.ip
+    );
+    res.json({
+      code: 0,
+      data: result,
+      message: result.shortfall > 0
+        ? `已登记退款，用户余额不足 ${result.shortfall} 积分，余额已扣为负值`
+        : '已登记退款并扣回积分',
+    });
+  } catch (err) {
+    if (err.code === 404 || err.code === 400) {
+      return res.json({ code: err.code, message: err.message });
+    }
+    console.error('Admin recharge refund error:', err);
+    res.status(500).json({ code: 500, message: err.message || '退款记账失败' });
   }
 });
 

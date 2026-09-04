@@ -16,6 +16,7 @@ export const analyticsLabels = {
   category: { create: '创建分类', edit: '编辑分类', delete: '删除分类' },
   tag: { create: '创建标签', edit: '编辑标签', delete: '删除标签' },
   order: { adjust: '订单调整' },
+  payment_order: { recharge_sync: '充值查单补账', recharge_refund: '充值退款登记' },
 };
 
 export async function recordLog(adminId, action, targetType, targetId, detail = null, ip = null) {

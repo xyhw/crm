@@ -73,6 +73,7 @@ const ACTION_LABELS = {
   view: '查看', edit: '编辑', delete: '删除', create: '创建',
   approved: '审核通过', rejected: '审核驳回', ban: '封禁', unban: '解封',
   import: '批量导入', adjust_points: '调整积分', adjust_credits: '调整信用分',
+  recharge_sync: '充值查单补账', recharge_refund: '充值退款登记',
 };
 
 const actionOptions = [
@@ -86,6 +87,7 @@ const actionOptions = [
   { label: '审核驳回', value: 'rejected' },
   { label: '调整积分', value: 'adjust_points' },
   { label: '调整信用分', value: 'adjust_credits' },
+  { label: '充值退款登记', value: 'recharge_refund' },
 ];
 
 const targetOptions = [
@@ -98,6 +100,7 @@ const targetOptions = [
   { label: '配置', value: 'system_configs' },
   { label: '角色', value: 'role' },
   { label: '管理员', value: 'admin_user' },
+  { label: '充值订单', value: 'payment_order' },
 ];
 
 const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize)));

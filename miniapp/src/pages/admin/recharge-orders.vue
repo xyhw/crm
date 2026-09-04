@@ -26,6 +26,11 @@
         <text v-else-if="hasLedgerGap">，差额 {{ summary.reconcile.diff }}，请核查</text>
         <text v-else>，一致</text>
       </view>
+      <view v-if="summary.refund && summary.refund.orders" class="reconcile" :class="{ warn: hasRefundGap }">
+        退款：{{ summary.refund.orders }} 笔 / {{ fen(summary.refund.refundPrice) }} / 扣回 {{ summary.refund.points }} 积分
+        <text v-if="summary.refund.missingLedgerOrders">，{{ summary.refund.missingLedgerOrders }} 笔未冲销，请核查</text>
+        <text v-else>，已冲销</text>
+      </view>
     </view>
 
     <view class="filter-bar">
@@ -73,15 +78,60 @@
         <view class="card-item__info" v-if="item.pay_channel_order_no">
           <text class="mono">渠道单号 {{ item.pay_channel_order_no }}</text>
         </view>
-        <view class="card-item__actions" v-if="item.status === 'pending'">
-          <view class="action-btn" :class="{ disabled: syncing === item.order_no }" @click="doSync(item)">
-            {{ syncing === item.order_no ? '查单中' : '查单补账' }}
-          </view>
+        <view class="card-item__info" v-if="item.status === 'refunded'">
+          <text class="mono">退款 {{ fen(item.refund_amount) }} · {{ formatDateTime(item.refunded_at) }}</text>
+        </view>
+        <view class="card-item__actions" v-if="item.status === 'pending' || item.status === 'paid'">
+          <view
+            v-if="item.status === 'pending'"
+            class="action-btn"
+            :class="{ disabled: syncing === item.order_no }"
+            @click="doSync(item)"
+          >{{ syncing === item.order_no ? '查单中' : '查单补账' }}</view>
+          <view
+            v-if="item.status === 'paid'"
+            class="action-btn action-btn--danger"
+            @click="openRefund(item)"
+          >登记退款</view>
         </view>
       </view>
     </StateView>
 
     <Pagination :page="page" :page-count="pageCount" :total="total" @change="goPage" />
+
+    <view v-if="refundTarget" class="modal-mask" @click="closeRefund">
+      <view class="modal-box" @click.stop>
+        <view class="modal-title">登记退款</view>
+        <view class="modal-tip">
+          系统不会调用渠道退款接口。请先在渠道后台完成退款，再在此登记。
+        </view>
+        <view class="modal-order">
+          {{ refundTarget.order_no }} · {{ refundTarget.amount }} 积分 · {{ fen(refundTarget.price) }}
+        </view>
+        <textarea
+          v-model="refundReason"
+          class="modal-input"
+          placeholder="退款原因（必填，至少 2 个字）"
+          maxlength="180"
+          :disabled="refunding"
+        />
+        <input
+          v-model="refundChannelNo"
+          class="modal-line-input"
+          placeholder="渠道退款单号（选填）"
+          :disabled="refunding"
+        />
+        <view class="modal-warn">
+          将扣回 {{ refundTarget.amount }} 积分；余额不足时会扣为负值，需用户补足后才能继续消费。
+        </view>
+        <view class="modal-actions">
+          <view class="modal-btn modal-btn--cancel" @click="closeRefund">取消</view>
+          <view class="modal-btn modal-btn--danger" :class="{ disabled: refunding }" @click="doRefund">
+            {{ refunding ? '提交中' : '确认登记' }}
+          </view>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -98,6 +148,10 @@ const list = ref([]);
 const summary = ref(null);
 const loading = ref(false);
 const syncing = ref('');
+const refundTarget = ref(null);
+const refundReason = ref('');
+const refundChannelNo = ref('');
+const refunding = ref(false);
 const total = ref(0);
 const page = ref(1);
 const pageSize = 20;
@@ -143,6 +197,8 @@ const hasLedgerGap = computed(() => {
   if (!r) return false;
   return Number(r.diff) !== 0 || Number(r.missingLedgerOrders) > 0;
 });
+
+const hasRefundGap = computed(() => Number(summary.value?.refund?.missingLedgerOrders || 0) > 0);
 
 function statusLabel(v) { return STATUS_LABEL[v] || v || '-'; }
 function channelLabel(v) { return CHANNEL_LABEL[v] || v || '-'; }
@@ -208,6 +264,43 @@ async function doSync(item) {
     syncing.value = '';
   }
 }
+
+function openRefund(item) {
+  refundTarget.value = item;
+  refundReason.value = '';
+  refundChannelNo.value = '';
+}
+
+function closeRefund() {
+  if (refunding.value) return;
+  refundTarget.value = null;
+}
+
+async function doRefund() {
+  if (refunding.value || !refundTarget.value) return;
+  const reason = refundReason.value.trim();
+  if (reason.length < 2) {
+    uni.showToast({ title: '请填写退款原因', icon: 'none' });
+    return;
+  }
+  refunding.value = true;
+  try {
+    const res = await adminApi.refundRechargeOrder(refundTarget.value.order_no, {
+      reason,
+      channelRefundNo: refundChannelNo.value.trim() || undefined,
+    });
+    refundTarget.value = null;
+    uni.showToast({
+      title: res?.shortfall > 0 ? `已登记，余额不足 ${res.shortfall}` : '已登记退款',
+      icon: 'none',
+    });
+    await Promise.all([fetchSummary(), fetchList(page.value)]);
+  } catch (e) {
+    uni.showToast({ title: e.message || '退款登记失败', icon: 'none' });
+  } finally {
+    refunding.value = false;
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -238,4 +331,18 @@ async function doSync(item) {
 .card-item__actions { display: flex; justify-content: flex-end; margin-top: 12rpx; }
 .action-btn { min-height: 64rpx; line-height: 64rpx; padding: 0 28rpx; border-radius: 32rpx; font-size: 24rpx; color: #fff; background: #037539; }
 .action-btn.disabled { background: #A8C9B6; }
+.action-btn--danger { background: #E54848; }
+.modal-mask { position: fixed; left: 0; top: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 100; }
+.modal-box { width: 600rpx; background: #fff; border-radius: 20rpx; padding: 32rpx; }
+.modal-title { font-size: 32rpx; font-weight: 700; color: #1A1A1A; margin-bottom: 16rpx; }
+.modal-tip { font-size: 22rpx; color: #E8920A; line-height: 1.5; margin-bottom: 16rpx; }
+.modal-order { font-size: 24rpx; color: #555555; background: #F2F4F5; border-radius: 12rpx; padding: 16rpx; margin-bottom: 16rpx; }
+.modal-input { width: 100%; box-sizing: border-box; height: 160rpx; border: 2rpx solid #E5E5E5; border-radius: 12rpx; padding: 16rpx; font-size: 26rpx; color: #1A1A1A; margin-bottom: 16rpx; }
+.modal-line-input { width: 100%; box-sizing: border-box; height: 80rpx; border: 2rpx solid #E5E5E5; border-radius: 12rpx; padding: 0 16rpx; font-size: 26rpx; color: #1A1A1A; margin-bottom: 16rpx; }
+.modal-warn { font-size: 22rpx; color: #E54848; line-height: 1.5; margin-bottom: 24rpx; }
+.modal-actions { display: flex; }
+.modal-btn { flex: 1; min-height: 80rpx; line-height: 80rpx; text-align: center; border-radius: 40rpx; font-size: 28rpx; }
+.modal-btn--cancel { color: #555555; background: #F2F4F5; margin-right: 20rpx; }
+.modal-btn--danger { color: #fff; background: #E54848; }
+.modal-btn--danger.disabled { background: #F0A3A3; }
 </style>

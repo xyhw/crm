@@ -137,6 +137,81 @@ export async function settleRechargeOrder(orderNo, { payChannelOrderNo, paidAt, 
   });
 }
 
+/**
+ * 充值退款记账（人工操作，不调用渠道退款接口）。
+ * 退款动作本身由运营在渠道后台完成，此处只登记结果：
+ * 订单转 refunded、扣回充值积分、写 refund 流水。整单退款，幂等。
+ * 余额允许被扣成负数，避免"充值-消费-退款"套利，缺口在响应中回报。
+ */
+export async function refundRechargeOrder(orderNo, { reason, operatorId, channelRefundNo } = {}) {
+  return transaction(async (conn) => {
+    const [rows] = await conn.execute(
+      'SELECT * FROM payment_orders WHERE order_no = ? FOR UPDATE',
+      [orderNo]
+    );
+    const order = rows[0];
+    if (!order) {
+      const err = new Error(`订单不存在: ${orderNo}`);
+      err.code = 404;
+      throw err;
+    }
+    if (order.status === 'refunded') {
+      return { orderNo, orderId: order.id, already: true, userId: order.user_id, points: order.amount };
+    }
+    if (order.status !== 'paid') {
+      const err = new Error(`仅已支付订单可退款记账，当前状态: ${order.status}`);
+      err.code = 400;
+      throw err;
+    }
+
+    await conn.execute(
+      `UPDATE payment_orders
+       SET status = 'refunded', refund_amount = ?, refunded_at = NOW(),
+           pay_channel_order_no = COALESCE(?, pay_channel_order_no)
+       WHERE order_no = ?`,
+      [order.price, channelRefundNo || null, orderNo]
+    );
+
+    const [balRows] = await conn.execute(
+      'SELECT balance FROM points_accounts WHERE user_id = ? FOR UPDATE',
+      [order.user_id]
+    );
+    const balanceBefore = Number(balRows[0]?.balance || 0);
+    const shortfall = Math.max(0, order.amount - balanceBefore);
+
+    await conn.execute(
+      `UPDATE points_accounts
+       SET balance = balance - ?, total_recharged = GREATEST(0, total_recharged - ?)
+       WHERE user_id = ?`,
+      [order.amount, order.amount, order.user_id]
+    );
+
+    const [acct] = await conn.execute(
+      'SELECT balance FROM points_accounts WHERE user_id = ?',
+      [order.user_id]
+    );
+    const title = `充值退款${reason ? `：${String(reason).slice(0, 180)}` : ''}`;
+    await conn.execute(
+      `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title, source_id)
+       VALUES (?, ?, ?, 'refund', ?, ?)`,
+      [order.user_id, -order.amount, acct[0].balance, title, order.id]
+    );
+
+    return {
+      orderNo,
+      orderId: order.id,
+      already: false,
+      userId: order.user_id,
+      points: order.amount,
+      refundAmount: order.price,
+      balanceBefore,
+      balanceAfter: Number(acct[0].balance),
+      shortfall,
+      operatorId: operatorId || null,
+    };
+  });
+}
+
 /** 查询订单（含主动对账：渠道侧查单） */
 export async function getOrderForUser(orderNo, userId) {
   const order = await queryOne(
