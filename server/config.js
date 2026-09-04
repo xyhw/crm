@@ -35,12 +35,17 @@ export const config = {
     // mock 渠道是否自动完成支付（开发默认 true）
     mockAutoPay: process.env.PAY_MOCK_AUTOPAY !== 'false',
     wechat: {
-      appId: process.env.PAY_WECHAT_APPID || '',
+      appId: process.env.PAY_WECHAT_APPID || process.env.WX_MINIAPP_APPID || '',
       mchId: process.env.PAY_WECHAT_MCHID || '',
       apiV3Key: process.env.PAY_WECHAT_APIV3KEY || '',
       serialNo: process.env.PAY_WECHAT_SERIALNO || '',
       privateKeyPath: process.env.PAY_WECHAT_PRIVATE_KEY_PATH || '',
       notifyUrl: process.env.PAY_WECHAT_NOTIFY_URL || '',
+      offerId: process.env.PAY_WECHAT_OFFER_ID || '',
+      appKey: process.env.PAY_WECHAT_APPKEY || '',
+      productMap: process.env.PAY_WECHAT_PRODUCT_MAP || '',
+      env: parseInt(process.env.PAY_WECHAT_ENV || '0', 10),
+      pushToken: process.env.PAY_WECHAT_PUSH_TOKEN || '',
     },
     alipay: {
       appId: process.env.PAY_ALIPAY_APPID || '',

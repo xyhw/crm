@@ -87,7 +87,7 @@ WX_MINIAPP_SECRET=your-app-secret-here
 | `POST /api/auth/bind-wechat` | 手机号已注册则绑定老账号，否则建新号（含注册赠送与邀请奖励） |
 | `POST /api/auth/phone` | getPhoneNumber 动态 code 换真实手机号 |
 
-支付渠道行为：小程序端只展示 mock 与微信支付两个渠道（redirect 型收银台如 waffo 在小程序内无法拉起，已在 `common/payment.js` 过滤）。真实微信支付需配置商户号系列环境变量，见 DEPLOY-CHECKLIST.md 第 3 节。
+支付渠道行为：小程序端只展示 mock 与微信虚拟支付两个渠道（redirect 型收银台如 waffo 在小程序内无法拉起，已在 `common/payment.js` 过滤）。真实收款走个人主体虚拟支付（`wx.requestVirtualPayment`），见 DEPLOY-CHECKLIST.md 第 3 节。
 
 ## 四、微信公众平台设置
 

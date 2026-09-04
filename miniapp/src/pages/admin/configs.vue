@@ -88,7 +88,7 @@ const GROUP_DEF = [
         key: 'pay_default_channel', label: '默认支付渠道', type: 'select',
         options: [
           { value: 'mock', label: '模拟支付(开发)' },
-          { value: 'wechat', label: '微信支付' },
+          { value: 'wechat', label: '微信虚拟支付' },
           { value: 'alipay', label: '支付宝' },
           { value: 'stripe', label: 'Stripe' },
           { value: 'waffo', label: 'Waffo Pancake' },
@@ -101,15 +101,16 @@ const GROUP_DEF = [
     ],
   },
   {
-    title: '微信支付',
+    title: '微信虚拟支付（个人主体道具直购）',
     fields: [
       { key: 'pay_wechat_enabled', label: '启用', type: 'boolean' },
-      { key: 'pay_wechat_appid', label: 'AppID', type: 'text' },
-      { key: 'pay_wechat_mchid', label: '商户号', type: 'text' },
-      { key: 'pay_wechat_apiv3key', label: 'APIv3密钥', type: 'text' },
-      { key: 'pay_wechat_serialno', label: '证书序列号', type: 'text' },
-      { key: 'pay_wechat_private_key_path', label: '私钥文件路径', type: 'text' },
-      { key: 'pay_wechat_notify_url', label: '回调通知URL', type: 'text' },
+      { key: 'pay_wechat_appid', label: 'AppID', type: 'text', desc: '小程序 AppID，与 WX_MINIAPP_APPID 一致' },
+      { key: 'pay_wechat_offer_id', label: 'OfferID', type: 'text', desc: 'MP后台 虚拟支付 → 基本配置' },
+      { key: 'pay_wechat_appkey', label: '现网AppKey', type: 'text', desc: 'MP后台 虚拟支付 → 基本配置' },
+      { key: 'pay_wechat_product_map', label: '道具映射JSON', type: 'text', desc: '如 {"50":"prod_50","100":"prod_100"}，键为积分数，值须与道具管理中已发布道具ID一致' },
+      { key: 'pay_wechat_env', label: '环境(0现网/1沙箱)', type: 'number' },
+      { key: 'pay_wechat_push_token', label: '消息推送Token', type: 'text', desc: 'MP后台发货推送 URL 验证用' },
+      { key: 'pay_wechat_notify_url', label: '发货推送URL', type: 'text', desc: 'https://域名/api/points/recharge/notify/wechat' },
     ],
   },
   {

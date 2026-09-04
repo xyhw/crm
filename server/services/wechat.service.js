@@ -65,7 +65,7 @@ export async function code2Session(code) {
 // access_token 内存缓存（单实例部署足够；多实例需升级到 Redis）
 let accessTokenCache = { token: '', expiresAt: 0 };
 
-async function getAccessToken() {
+export async function getAccessToken() {
   if (accessTokenCache.token && Date.now() < accessTokenCache.expiresAt) {
     return accessTokenCache.token;
   }

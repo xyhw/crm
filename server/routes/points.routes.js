@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { query, queryOne, insert, transaction } from '../db.js';
 import { authRequired } from '../auth.js';
 import { config } from '../config.js';
+import { code2Session } from '../services/wechat.service.js';
 import {
   createRechargeOrder,
   settleRechargeOrder,
@@ -81,11 +82,28 @@ router.get('/logs', authRequired, async (req, res) => {
 // 创建充值订单（发起支付）
 router.post('/recharge', authRequired, async (req, res) => {
   try {
-    const { amount, channel } = req.body || {};
+    const { amount, channel, code } = req.body || {};
+    const chosen = channel || config.payment.defaultChannel;
+    let sessionKey;
+    let openid;
+    if (chosen === 'wechat') {
+      const user = await queryOne('SELECT wechat_openid FROM users WHERE id = ?', [req.userId]);
+      if (!code) {
+        return res.json({ code: 400, message: '请先完成微信登录后再充值' });
+      }
+      const session = await code2Session(code);
+      sessionKey = session.session_key;
+      openid = session.openid || user?.wechat_openid;
+      if (user?.wechat_openid && session.openid && user.wechat_openid !== session.openid) {
+        return res.json({ code: 400, message: '当前微信与账号绑定不一致，请使用绑定的微信登录' });
+      }
+    }
     const result = await createRechargeOrder({
       userId: req.userId,
       amount: Number(amount),
-      channel: channel || config.payment.defaultChannel,
+      channel: chosen,
+      sessionKey,
+      openid,
     });
     res.json({ code: 0, data: result, message: '订单已创建，请完成支付' });
   } catch (err) {
@@ -114,7 +132,12 @@ router.get('/recharge/order/:orderNo', authRequired, async (req, res) => {
     if (order.status === 'pending') {
       try {
         const adapter = getAdapter(order.channel);
-        const result = await adapter.queryOrder({ orderNo: order.order_no, payChannelOrderNo: order.pay_channel_order_no });
+        const user = await queryOne('SELECT wechat_openid FROM users WHERE id = ?', [req.userId]);
+        const result = await adapter.queryOrder({
+          orderNo: order.order_no,
+          payChannelOrderNo: order.pay_channel_order_no,
+          openid: user?.wechat_openid,
+        });
         if (result.status === 'paid') {
           await settleRechargeOrder(order.order_no, {
             payChannelOrderNo: order.pay_channel_order_no,

@@ -20,15 +20,23 @@
    - uploadFile/downloadFile 合法域名：同上
    - 域名须 ICP 备案且为 HTTPS。
 
-## 3. 支付商户号（启用真实支付时必填）
+## 3. 微信虚拟支付（个人主体，启用真实收款时必填）
 
-| 环境变量 | 说明 |
+开通条件：个人主体 + 中国大陆居民身份证 + 服务类目含「工具」+ 已完成认证、备案。月支付限额 10 万元。
+
+| 环境变量 / 后台配置 | 说明 |
 |---------|------|
-| `PAY_WECHAT_APPID` / `PAY_WECHAT_MCHID` / `PAY_WECHAT_SERIALNO` / `PAY_WECHAT_APIV` | 微信支付商户号三件套 + API 版本 |
-| `PAY_WECHAT_PRIVATE_KEY_PATH` | 商户 API 私钥文件路径 |
-| `PAY_WECHAT_NOTIFY_URL` | 回调地址：`https://<域名>/api/points/recharge/notify/wechat` |
+| `PAY_WECHAT_APPID` | 小程序 AppID（可与 `WX_MINIAPP_APPID` 相同） |
+| `PAY_WECHAT_OFFER_ID` | MP 后台「虚拟支付 → 基本配置」OfferID |
+| `PAY_WECHAT_APPKEY` | 现网 AppKey（支付签名密钥，勿提交仓库） |
+| `PAY_WECHAT_PRODUCT_MAP` | JSON，积分数→已发布道具 ID，如 `{"50":"prod_50","100":"prod_100"}`。道具价格（分）须等于 积分 × `PAY_POINTS_TO_YUAN` × 100 |
+| `PAY_WECHAT_ENV` | `0` 现网 / `1` 沙箱 |
+| `PAY_WECHAT_PUSH_TOKEN` | 消息推送 Token，用于发货推送 URL 验证 |
+| `PAY_WECHAT_NOTIFY_URL` | `https://<域名>/api/points/recharge/notify/wechat`，填到 MP 后台发货推送配置 |
 
-测试环境支付走 mock 渠道（`PAY_DEFAULT_CHANNEL=mock`）；生产建议 `wechat`，H5 收银台渠道可用 `waffo` 系列（已配齐）。小程序端自动过滤 redirect 渠道，仅展示 mock/微信支付。
+费率与结算：Android 等 1%、T+3；iOS 12%、约 45-60 天（用户向 App Store 申请退款）。iOS 需配置小程序简称，微信客户端 ≥ 8.0.68。
+
+测试环境走 mock（`PAY_DEFAULT_CHANNEL=mock`）；生产开启 `pay_wechat_enabled` 并将默认渠道设为 `wechat`。
 
 ## 4. 构建与发布
 
@@ -44,5 +52,6 @@ cd miniapp && npm run build:mp
 
 - 微信登录链路：code → openid → 绑定/登录、getPhoneNumber 换手机号 —— 服务端已实现，凭据配置后即通
 - 充值闭环（mock）：下单 → 模拟支付 → 余额到账 —— 冒烟通过
+- 虚拟支付：签名/发货推送解析/幂等入账 —— 单测覆盖；真单需 MP 后台开通后验证
 - 邀请奖励、注册赠送积分 —— 重构后回归通过
 - 分享卡片携带 inviteCode/商机 ID —— 登录页已消费邀请码

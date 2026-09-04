@@ -98,7 +98,7 @@ import { ref } from 'vue';
 import { onLoad, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app';
 import { api } from '@/api/index';
 import { timeAgo } from '@/common/constants';
-import { resolveMiniappChannels, channelLabel } from '@/common/payment';
+import { resolveMiniappChannels, channelLabel, checkIosVirtualPayVersion, getWxLoginCode, requestVirtualPayment } from '@/common/payment';
 
 const balance = ref(null);
 const logs = ref([]);
@@ -187,22 +187,19 @@ async function handleRecharge() {
     return;
   }
   if (recharging.value) return;
+  if (payChannel.value === 'wechat' && !checkIosVirtualPayVersion()) return;
   recharging.value = true;
   try {
-    const order = await api.recharge({ amount, channel: payChannel.value });
+    let wxCode;
+    if (payChannel.value === 'wechat') {
+      wxCode = await getWxLoginCode();
+    }
+    const order = await api.recharge({ amount, channel: payChannel.value, code: wxCode });
 
-    // 渠道判断：jsapi -> 微信支付收银台；mock -> 模拟支付
-    if (order.payMethod === 'jsapi' && order.payload) {
+    if ((order.payMethod === 'virtual' || order.payMethod === 'jsapi') && (order.payData || order.payload)) {
       uni.showLoading({ title: '拉起支付中' });
       try {
-        await new Promise((resolvePay, rejectPay) => {
-          uni.requestPayment({
-            provider: 'wxpay',
-            ...order.payload,
-            success: resolvePay,
-            fail: rejectPay,
-          });
-        });
+        await requestVirtualPayment(order.payData || order.payload);
         uni.hideLoading();
       } catch (payErr) {
         uni.hideLoading();

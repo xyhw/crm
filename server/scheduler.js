@@ -21,8 +21,12 @@ class Scheduler {
     this.jobs.push(
       setInterval(() => this.cleanExpiredNotifications(), 24 * 60 * 60 * 1000)
     );
+    this.jobs.push(
+      setInterval(() => this.reconcileWechatOrders(), 5 * 60 * 1000)
+    );
 
     setTimeout(() => this.recalculateLevels(), 5000);
+    setTimeout(() => this.reconcileWechatOrders(), 30 * 1000);
   }
 
   stop() {
@@ -101,6 +105,35 @@ class Scheduler {
       console.log(`[Scheduler] 过期通知清理完成，删除 ${affectedRows} 条`);
     } catch (error) {
       console.error('[Scheduler] 通知清理失败:', error.message);
+    }
+  }
+
+  async reconcileWechatOrders() {
+    try {
+      const { getAdapter, settleRechargeOrder } = await import('./services/payment/index.js');
+      const { listPendingWechatOrders } = await import('./services/payment/wechat.js');
+      const adapter = getAdapter('wechat');
+      if (!adapter.isConfigured()) return;
+      const rows = await listPendingWechatOrders(30);
+      if (!rows.length) return;
+      console.log(`[Scheduler] 虚拟支付查单兜底，待处理 ${rows.length} 笔`);
+      for (const row of rows) {
+        if (!row.openid) continue;
+        try {
+          const result = await adapter.queryOrder({ orderNo: row.order_no, openid: row.openid });
+          if (result.status === 'paid') {
+            await settleRechargeOrder(row.order_no, {
+              payChannelOrderNo: result.payChannelOrderNo,
+              paidAt: result.paidAt,
+              rawNotify: result.raw,
+            });
+          }
+        } catch (err) {
+          console.error(`[Scheduler] 虚拟支付查单失败 ${row.order_no}:`, err.message);
+        }
+      }
+    } catch (error) {
+      console.error('[Scheduler] 虚拟支付查单兜底失败:', error.message);
     }
   }
 

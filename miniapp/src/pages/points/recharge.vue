@@ -51,7 +51,7 @@
           <view class="pay-order-row"><text>金额</text><text>{{ amount }} 积分</text></view>
           <view class="pay-order-row"><text>渠道</text><text>{{ channelLabel(channel) }}</text></view>
           <view class="dialog-tip">
-            {{ channel === 'mock' ? '开发环境模拟支付，点击确认模拟完成支付' : '即将拉起微信支付收银台' }}
+            {{ channel === 'mock' ? '开发环境模拟支付，点击确认模拟完成支付' : '即将拉起微信虚拟支付收银台' }}
           </view>
           <view class="modal-actions">
             <view class="modal-btn" @click="showPayDetail = false">取消</view>
@@ -69,7 +69,7 @@
 import { ref } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { api } from '@/api/index';
-import { resolveMiniappChannels, channelLabel } from '@/common/payment';
+import { resolveMiniappChannels, channelLabel, checkIosVirtualPayVersion, getWxLoginCode, requestVirtualPayment } from '@/common/payment';
 
 const options = [50, 100, 200, 500, 1000];
 const MAX_AMOUNT = 10000;
@@ -85,7 +85,7 @@ const orderNo = ref('');
 function channelDesc(c) {
   const desc = {
     mock: '开发环境模拟支付',
-    wechat: '微信支付',
+    wechat: '微信虚拟支付（道具直购）',
   };
   return desc[c] || '';
 }
@@ -108,24 +108,21 @@ async function handleRecharge() {
     return;
   }
   if (submitting.value) return;
+  if (channel.value === 'wechat' && !checkIosVirtualPayVersion()) return;
   submitting.value = true;
   try {
-    const order = await api.recharge({ amount: value, channel: channel.value });
+    let wxCode;
+    if (channel.value === 'wechat') {
+      wxCode = await getWxLoginCode();
+    }
+    const order = await api.recharge({ amount: value, channel: channel.value, code: wxCode });
     orderNo.value = order.orderNo;
     amount.value = String(value);
 
-    // jsapi：直接拉起微信支付收银台
-    if (order.payMethod === 'jsapi' && order.payload) {
+    if ((order.payMethod === 'virtual' || order.payMethod === 'jsapi') && (order.payData || order.payload)) {
       uni.showLoading({ title: '拉起支付中' });
       try {
-        await new Promise((resolvePay, rejectPay) => {
-          uni.requestPayment({
-            provider: 'wxpay',
-            ...order.payload,
-            success: resolvePay,
-            fail: rejectPay,
-          });
-        });
+        await requestVirtualPayment(order.payData || order.payload);
         uni.hideLoading();
       } catch (payErr) {
         uni.hideLoading();
@@ -134,6 +131,9 @@ async function handleRecharge() {
         });
         return;
       }
+      const paid = await pollOrderStatus(order.orderNo);
+      uni.redirectTo({ url: `/pages/points/result?status=success&amount=${paid.amount}` });
+      return;
     } else if (order.payMethod === 'redirect' && order.payUrl) {
       // H5 托管收银台：跳转后由轮询页/回跳确认结果
       // #ifdef H5

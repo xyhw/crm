@@ -48,6 +48,7 @@ import creditsRoutes from './routes/credits.routes.js';
 import agreementRoutes from './routes/agreement.routes.js';
 import announcementRoutes from './routes/announcements.routes.js';
 import waffoWebhookRoutes from './routes/waffo-webhook.routes.js';
+import vpayWebhookRoutes from './routes/vpay-webhook.routes.js';
 
 // 后台路由
 import adminAuthRoutes from './routes/admin/auth.routes.js';
@@ -80,8 +81,9 @@ app.set('trust proxy', 1);
 const corsOptions = config.corsOrigins.length ? { origin: config.corsOrigins } : {};
 app.use(cors(corsOptions));
 
-// Waffo 回调必须使用原始 body 验签，须在全局 express.json() 之前挂载
+// Waffo / 虚拟支付回调必须使用原始 body 验签，须在全局 express.json() 之前挂载
 app.use('/api/points/recharge/notify/waffo', express.raw({ type: '*/*' }), waffoWebhookRoutes);
+app.use('/api/points/recharge/notify/wechat', express.raw({ type: ['*/xml', 'text/xml', 'application/xml', '*/*'] }), vpayWebhookRoutes);
 
 app.use(express.json());
 

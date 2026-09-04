@@ -40,7 +40,7 @@ export { BasePaymentAdapter };
  * 创建充值订单并发起支付。
  * 返回订单与支付参数，前端据此拉起支付。
  */
-export async function createRechargeOrder({ userId, amount, channel }) {
+export async function createRechargeOrder({ userId, amount, channel, sessionKey, openid }) {
   if (!amount || amount <= 0) {
     const err = new Error('请输入有效的充值金额');
     err.code = 400;
@@ -79,7 +79,7 @@ export async function createRechargeOrder({ userId, amount, channel }) {
   const userEmail = userRow?.email || null;
 
   const pay = await adapter.createPayment({
-    orderNo, amount, price, subject: '积分充值', userId, email: userEmail,
+    orderNo, amount, price, subject: '积分充值', userId, email: userEmail, sessionKey, openid,
   });
 
   // 记录渠道返回的支付参数

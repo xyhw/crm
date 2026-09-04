@@ -11,6 +11,7 @@ const SENSITIVE_KEY_PATTERNS = [
   /secret_?key/i,
   /webhook_?secret/i,
   /api_?key/i,
+  /appkey/i,
   /apiv3key/i,
   /mch_?key/i,
   /app_?secret/i,
