@@ -38,6 +38,8 @@
 
 测试环境走 mock（`PAY_DEFAULT_CHANNEL=mock`）；生产开启 `pay_wechat_enabled` 并将默认渠道设为 `wechat`。
 
+上线后对账入口：后台「充值对账」（`/pages/admin/recharge-orders`，财务/超管角色）。可按状态、渠道、单号筛选，查看当日成交与「已支付订单积分 vs 已入账积分」差额；发货推送丢失且超出定时兜底窗口（2 天）的 pending 单，可在该页手动「查单补账」，补账幂等且写操作日志。
+
 ## 4. 构建与发布
 
 ```bash
@@ -53,5 +55,6 @@ cd miniapp && npm run build:mp
 - 微信登录链路：code → openid → 绑定/登录、getPhoneNumber 换手机号 —— 服务端已实现，凭据配置后即通
 - 充值闭环（mock）：下单 → 模拟支付 → 余额到账 —— 冒烟通过
 - 虚拟支付：签名/发货推送解析/幂等入账 —— 单测覆盖；真单需 MP 后台开通后验证
+- 充值对账后台：列表筛选、汇总差额、pending 单查单补账 —— 接口与 mock 渠道实测通过
 - 邀请奖励、注册赠送积分 —— 重构后回归通过
 - 分享卡片携带 inviteCode/商机 ID —— 登录页已消费邀请码

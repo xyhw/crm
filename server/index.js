@@ -56,6 +56,7 @@ import adminOpportunityRoutes from './routes/admin/opportunity.routes.js';
 import adminUserRoutes from './routes/admin/user.routes.js';
 import adminOrderRoutes from './routes/admin/order.routes.js';
 import adminPointsRoutes from './routes/admin/points.routes.js';
+import adminRechargeRoutes from './routes/admin/recharge.routes.js';
 import adminLevelRoutes from './routes/admin/level.routes.js';
 import adminConfigRoutes from './routes/admin/config.routes.js';
 import adminAuditRoutes from './routes/admin/audit.routes.js';
@@ -162,6 +163,7 @@ app.use('/api/v1/admin/banners', adminAuthRequired, requireRole(...OP), adminBan
 app.use('/api/v1/admin/announcements', adminAuthRequired, requireRole(...OP), adminAnnouncementRoutes);
 app.use('/api/v1/admin/orders', adminAuthRequired, requireRole(...FIN), adminOrderRoutes);
 app.use('/api/v1/admin/points', adminAuthRequired, requireRole(...FIN), adminPointsRoutes);
+app.use('/api/v1/admin/recharge-orders', adminAuthRequired, requireRole(...FIN), adminRechargeRoutes);
 app.use('/api/v1/admin/finance', adminAuthRequired, requireRole(...FIN), adminFinanceRoutes);
 // 统计：运营、财务、超管均可查看
 app.use('/api/v1/admin/stats', adminAuthRequired, requireRole('operation', 'finance', 'super_admin'), adminStatsRoutes);

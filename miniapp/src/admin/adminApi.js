@@ -116,6 +116,10 @@ export const adminApi = {
 
   getPointsLogs: (params) => adminRequest('/points' + toQuery(params)),
 
+  getRechargeOrders: (params) => adminRequest('/recharge-orders' + toQuery(params)),
+  getRechargeSummary: () => adminRequest('/recharge-orders/summary'),
+  syncRechargeOrder: (orderNo) => adminRequest('/recharge-orders/' + orderNo + '/sync', { method: 'POST' }),
+
   getLevels: () => adminRequest('/levels'),
   updateLevel: (id, data) => adminRequest('/levels/' + id, { method: 'PUT', body: data }),
 

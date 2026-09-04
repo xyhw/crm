@@ -232,6 +232,12 @@
 			}
 		},
 		{
+			"path": "pages/admin/recharge-orders",
+			"style": {
+				"navigationBarTitleText": "充值对账"
+			}
+		},
+		{
 			"path": "pages/admin/audit",
 			"style": {
 				"navigationBarTitleText": "进度审核"

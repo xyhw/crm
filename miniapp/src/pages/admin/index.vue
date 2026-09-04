@@ -43,6 +43,7 @@ const menus = [
   { path: '/pages/admin/users', icon: '户', label: '用户管理', color: '#1B7FE0' },
   { path: '/pages/admin/orders', icon: '单', label: '订单管理', color: '#E8920A' },
   { path: '/pages/admin/points', icon: '分', label: '积分管理', color: '#E54848' },
+  { path: '/pages/admin/recharge-orders', icon: '充', label: '充值对账', color: '#0F766E' },
   { path: '/pages/admin/audit', icon: '审', label: '进度审核', color: '#D96C2A' },
   { path: '/pages/admin/levels', icon: '级', label: '等级配置', color: '#8B5CF6' },
   { path: '/pages/admin/configs', icon: '配', label: '系统配置', color: '#64748B' },
