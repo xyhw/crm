@@ -38,6 +38,15 @@
   - 商机发布/编辑/CRM投稿统一校验 `price` 为正整数，下限 10、上限由 `system_configs` 的 `opportunity_price_min/max` 配置（seed 默认 10~200）。
   - 手动录入 CRM 的商机为 `inactive` 状态（不可公开购买），经 `POST /api/crm/:id/publish` 定价后置 `active` 公开。
 
+## 充值退款约定
+- 日期: 2026-09-04
+- 上下文: 用户明确退款口径（用户指令）
+- 类别: 业务约束 / 运维与部署
+- 说明:
+  - 充值退款只支持整笔订单退款，不做部分退款；不要给 `refundRechargeOrder` 加按金额比例扣分的逻辑。
+  - 系统**不调用**任何渠道（微信虚拟支付 / Waffo）的退款接口。实际退款由运营在渠道后台人工完成，后台 `POST /api/v1/admin/recharge-orders/:orderNo/refund` 只做记账与留痕：订单转 `refunded`、扣回积分、写 `refund` 流水、记 `recharge_refund` 审计日志。
+  - 退款扣分允许把余额扣成负值（积分债务），用于闭合"充值→消费→退款"套利；负余额由下单处的余额校验拦截，不要为了"余额不能为负"改成扣到 0 为止。
+
 ## 前端同源整合（方案A）
 - 日期: 2026-08-30
 - 上下文: 用户确认方案A：以 miniapp（uni-app）为唯一前端，废弃 client（React）双版本（主动记录）
