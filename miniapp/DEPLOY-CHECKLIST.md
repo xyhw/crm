@@ -30,7 +30,7 @@
 | `PAY_WECHAT_OFFER_ID` | MP 后台「虚拟支付 → 基本配置」OfferID |
 | `PAY_WECHAT_APPKEY` | 现网 AppKey（支付签名密钥，勿提交仓库） |
 | `PAY_WECHAT_PRODUCT_MAP` | JSON，积分数→已发布道具 ID，如 `{"50":"prod_50","100":"prod_100"}`。道具价格（分）须等于 积分 × `PAY_POINTS_TO_YUAN` × 100 |
-| `PAY_WECHAT_ENV` | `0` 现网 / `1` 沙箱 |
+| `PAY_WECHAT_ENV` | `0` 现网 / `1` 沙箱（缺省为沙箱，现网须显式设为 0） |
 | `PAY_WECHAT_PUSH_TOKEN` | 消息推送 Token，用于发货推送 URL 验证 |
 | `PAY_WECHAT_NOTIFY_URL` | `https://<域名>/api/points/recharge/notify/wechat`，填到 MP 后台发货推送配置 |
 

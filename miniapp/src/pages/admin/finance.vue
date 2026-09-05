@@ -16,7 +16,7 @@
       <view class="section">
         <view class="section-title">积分概况</view>
         <view class="inner-grid">
-          <view class="mini-card"><text class="mini-value">{{ data.points?.balance || 0 }}</text><text class="mini-label">积分存量</text></view>
+          <view class="mini-card"><text class="mini-value">{{ Number(data.points?.balance ?? 0) }}</text><text class="mini-label">积分存量</text></view>
           <view class="mini-card"><text class="mini-value">{{ data.points?.recharged || 0 }}</text><text class="mini-label">累计充值</text></view>
           <view class="mini-card"><text class="mini-value">{{ data.points?.consumed || 0 }}</text><text class="mini-label">累计消费</text></view>
           <view class="mini-card"><text class="mini-value">{{ data.points?.expired || 0 }}</text><text class="mini-label">累计过期</text></view>

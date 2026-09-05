@@ -30,7 +30,7 @@
           <text>{{ item.company || '-' }}</text>
         </view>
         <view class="card-item__info">
-          <text>积分 {{ item.points_balance || 0 }} · {{ levelName(item.level) }}</text>
+          <text>积分 {{ Number(item.points_balance ?? 0) }} · {{ levelName(item.level) }}</text>
           <text>信用 {{ item.credit_score || 0 }}</text>
         </view>
         <view class="card-item__info">

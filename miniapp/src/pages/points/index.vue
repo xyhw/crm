@@ -5,11 +5,14 @@
       <!-- 积分余额卡片 -->
       <view class="points-card">
         <view class="points-card__label">当前积分</view>
-        <view class="points-card__amount">{{ balance?.balance || 0 }}</view>
+        <view class="points-card__amount">{{ Number(balance?.balance ?? 0) }}</view>
         <view class="points-card__stats">
-          <text>已充值 {{ balance?.total_recharged || 0 }}</text>
+          <text>已充值 {{ Number(balance?.total_recharged ?? 0) }}</text>
           <text class="stats-sep">·</text>
-          <text>已消耗 {{ balance?.total_consumed || 0 }}</text>
+          <text>已消耗 {{ Number(balance?.total_consumed ?? 0) }}</text>
+        </view>
+        <view v-if="Number(balance?.balance) < 0" class="points-card__debt">
+          余额为负，需充值补足后才能下单
         </view>
         <view class="recharge-btn" @click="openRecharge">充值积分</view>
       </view>
@@ -315,6 +318,12 @@ onReachBottom(() => {
 .points-card__stats {
   font-size: 24rpx;
   color: #E4F7EC;
+}
+
+.points-card__debt {
+  margin-top: 16rpx;
+  font-size: 22rpx;
+  color: #FFF3C4;
 }
 
 .stats-sep {

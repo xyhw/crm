@@ -87,7 +87,7 @@ export async function ensureAndLoadPaymentConfig() {
   config.payment.wechat.offerId = parseVal(map.pay_wechat_offer_id, 'string', '');
   config.payment.wechat.appKey = parseVal(map.pay_wechat_appkey, 'string', '');
   config.payment.wechat.productMap = parseVal(map.pay_wechat_product_map, 'string', '');
-  config.payment.wechat.env = parseVal(map.pay_wechat_env, 'number', 0);
+  config.payment.wechat.env = parseVal(map.pay_wechat_env, 'number', 1);
   config.payment.wechat.pushToken = parseVal(map.pay_wechat_push_token, 'string', '');
   config.payment.wechat.notifyUrl = parseVal(map.pay_wechat_notify_url, 'string', '');
   config.payment.wechat.mchId = parseVal(map.pay_wechat_mchid, 'string', '');

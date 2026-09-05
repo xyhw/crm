@@ -44,7 +44,7 @@ export const config = {
       offerId: process.env.PAY_WECHAT_OFFER_ID || '',
       appKey: process.env.PAY_WECHAT_APPKEY || '',
       productMap: process.env.PAY_WECHAT_PRODUCT_MAP || '',
-      env: parseInt(process.env.PAY_WECHAT_ENV || '0', 10),
+      env: parseInt(process.env.PAY_WECHAT_ENV || '1', 10),
       pushToken: process.env.PAY_WECHAT_PUSH_TOKEN || '',
     },
     alipay: {
