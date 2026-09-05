@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { query, queryOne, insert, update } from '../../db.js';
 import { audit } from '../../services/audit-log.service.js';
+import { pickBodyFields } from '../../utils/body-fields.js';
 
 const router = Router();
 
@@ -45,7 +46,7 @@ router.get('/', async (req, res) => {
  */
 router.post('/', audit('category', 'create', (req, res, body) => body?.data?.id ?? null), async (req, res) => {
   try {
-    const { name, icon, sortOrder } = req.body || {};
+    const { name, icon, sortOrder } = pickBodyFields(req.body, ['name', 'icon', 'sortOrder']);
     if (!name) return res.json({ code: 400, message: '分类名称不能为空' });
     const result = await insert('opportunity_categories', {
       name, icon: icon || '', sort_order: sortOrder || 0, status: 'active',
@@ -74,7 +75,7 @@ router.post('/', audit('category', 'create', (req, res, body) => body?.data?.id 
  */
 router.put('/:id', audit('category', 'edit'), async (req, res) => {
   try {
-    const { name, icon, sortOrder, status } = req.body || {};
+    const { name, icon, sortOrder, status } = pickBodyFields(req.body, ['name', 'icon', 'sortOrder', 'status']);
     const data = {};
     if (name !== undefined) data.name = name;
     if (icon !== undefined) data.icon = icon;

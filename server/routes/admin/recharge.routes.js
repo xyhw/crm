@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { query, queryOne } from '../../db.js';
 import { getAdapter, settleRechargeOrder, refundRechargeOrder } from '../../services/payment/index.js';
 import { recordLog } from '../../services/audit-log.service.js';
+import { pickBodyFields } from '../../utils/body-fields.js';
 
 const router = Router();
 
@@ -217,7 +218,7 @@ router.post('/:orderNo/sync', async (req, res) => {
  */
 router.post('/:orderNo/refund', async (req, res) => {
   const { orderNo } = req.params;
-  const { reason, channelRefundNo } = req.body || {};
+  const { reason, channelRefundNo } = pickBodyFields(req.body, ['reason', 'channelRefundNo']);
   try {
     if (!reason || String(reason).trim().length < 2) {
       return res.json({ code: 400, message: '请填写退款原因（至少 2 个字）' });

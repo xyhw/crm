@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { query, queryOne, update } from '../../db.js';
 import { clearLevelConfigCache } from '../../services/level.service.js';
 import { recordLog } from '../../services/audit-log.service.js';
+import { pickBodyFields } from '../../utils/body-fields.js';
 
 const router = Router();
 
@@ -19,7 +20,10 @@ router.get('/', async (req, res) => {
 // 更新等级配置
 router.put('/:id', async (req, res) => {
   try {
-    const { purchaseDiscount, commissionBonus, purchaseRateThreshold, invalidRateThreshold, helpfulRateThreshold, activityThreshold, freeAudit, markWeight } = req.body || {};
+    const { purchaseDiscount, commissionBonus, purchaseRateThreshold, invalidRateThreshold, helpfulRateThreshold, activityThreshold, freeAudit, markWeight } = pickBodyFields(req.body, [
+      'purchaseDiscount', 'commissionBonus', 'purchaseRateThreshold', 'invalidRateThreshold',
+      'helpfulRateThreshold', 'activityThreshold', 'freeAudit', 'markWeight',
+    ]);
 
     const updates = {};
     if (purchaseDiscount !== undefined) updates.purchase_discount = purchaseDiscount;

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { adminAuthRequired } from '../../auth.js';
 import { query, queryOne, insert, update, del } from '../../db.js';
 import { recordLog } from '../../services/audit-log.service.js';
+import { pickBodyFields } from '../../utils/body-fields.js';
 import bcrypt from 'bcryptjs';
 
 const router = Router();
@@ -127,7 +128,7 @@ router.get('/admins', adminAuthRequired, async (req, res) => {
 // 创建管理员
 router.post('/admins', adminAuthRequired, async (req, res) => {
   try {
-    const { username, password, name, phone, roleIds } = req.body || {};
+    const { username, password, name, phone, roleIds } = pickBodyFields(req.body, ['username', 'password', 'name', 'phone', 'roleIds']);
     if (!username || !password || !name) return res.json({ code: 400, message: '请填写必填信息' });
     const existing = await queryOne('SELECT id FROM admin_users WHERE username = ?', [username]);
     if (existing) return res.json({ code: 409, message: '管理员用户名已存在' });
@@ -147,7 +148,7 @@ router.post('/admins', adminAuthRequired, async (req, res) => {
 // 编辑管理员
 router.put('/admin/:id', adminAuthRequired, async (req, res) => {
   try {
-    const { name, phone, roleIds } = req.body || {};
+    const { name, phone, roleIds } = pickBodyFields(req.body, ['name', 'phone', 'roleIds']);
     const adminId = req.params.id;
     const admin = await queryOne('SELECT * FROM admin_users WHERE id = ?', [adminId]);
     if (!admin) return res.json({ code: 404, message: '管理员不存在' });

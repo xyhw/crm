@@ -48,6 +48,26 @@
   - 系统**不调用**任何渠道（微信虚拟支付 / Waffo）的退款接口。实际退款由运营在渠道后台人工完成，后台 `POST /api/v1/admin/recharge-orders/:orderNo/refund` 只做记账与留痕：订单转 `refunded`、扣回积分、写 `refund` 流水、记 `recharge_refund` 审计日志。
   - 退款扣分允许把余额扣成负值（积分债务），用于闭合"充值→消费→退款"套利；负余额由下单处的余额校验拦截，不要为了"余额不能为负"改成扣到 0 为止。
 
+## 后台写接口请求体命名约定
+- 日期: 2026-09-05
+- 上下文: 修复 PC 后台 Banner 创建 400、分类/标签 sort_order 静默丢失时确认（主动记录）
+- 类别: 排查调试 / 开发规范
+- 说明:
+  - 后台写接口（`server/routes/admin/*`）统一用 `server/utils/body-fields.js` 的 `pickBodyFields(req.body, [...])` 读请求体，camelCase 优先、自动回退等价 snake_case。新增写接口沿用这个入口，不要直接 `const { x } = req.body`，否则前端按数据库列名发字段时会静默丢参。
+  - `pickBodyFields` 只收录命中的键，PUT 接口"缺省字段不更新"的语义不受影响；`0` / `null` / `false` / `''` 均按有效值传递。
+  - 排查这类问题的信号：POST 报"必填项为空"但前端明显填了，或 PUT 返回成功而某字段没变。先比对前端实际发的键名与后端解构的键名。
+  - 后端路由改动后需重启进程验证：`background_terminal_kill` 旧终端 → 重新起 `cd /workspace/server && RATE_LIMIT_LOGIN_MAX=999999 node --env-file-if-exists=.env index.js`，`ss -ltnp | grep :3001` 确认监听。
+  - 后端全量 `npm test` 单次跑会超 5 分钟，按文件分批跑：纯逻辑组（body-fields/core/p1/security/vpay-*/payment）与数据库组（admin-recharge/announcement/follow-up）分开。
+
+## 独立 PC 管理后台（admin-pc）
+- 日期: 2026-09-05
+- 上下文: 搭建独立 PC 后台时记录（主动记录）
+- 类别: 构建与测试 / 环境配置
+- 说明:
+  - `admin-pc` 是纯 Vue 3 + Vite 的独立 PC 后台，端口 5175，`npm run dev` / `npm run build`，依赖只有 vue / vue-router / pinia。
+  - `/api` 与 `/uploads` 均反代到 `http://127.0.0.1:3001`；`allowedHosts` 已含 `.monkeycode-ai.online`、`.monkeycode-ai.com`。
+  - 与 miniapp H5（5174）的后台页并存，两端共用同一套 `/api/v1/admin` 接口。
+
 ## 前端同源整合（方案A）
 - 日期: 2026-08-30
 - 上下文: 用户确认方案A：以 miniapp（uni-app）为唯一前端，废弃 client（React）双版本（主动记录）

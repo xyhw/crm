@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { query, insert, queryOne } from '../../db.js';
 import { audit } from '../../services/audit-log.service.js';
+import { pickBodyFields } from '../../utils/body-fields.js';
 
 const router = Router();
 
@@ -17,7 +18,7 @@ const router = Router();
  */
 router.post('/send', audit('notification', 'send'), async (req, res) => {
   try {
-    const { title, content, userIds, sendAll } = req.body || {};
+    const { title, content, userIds, sendAll } = pickBodyFields(req.body, ['title', 'content', 'userIds', 'sendAll']);
     if (!title || !content) {
       return res.json({ code: 400, message: '标题和内容不能为空' });
     }

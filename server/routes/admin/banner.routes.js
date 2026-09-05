@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { query, queryOne, insert, update, del } from '../../db.js';
 import { audit } from '../../services/audit-log.service.js';
+import { pickBodyFields } from '../../utils/body-fields.js';
 
 const router = Router();
 
@@ -91,7 +92,9 @@ router.get('/:id', async (req, res) => {
  */
 router.post('/', audit('banner', 'create'), async (req, res) => {
   try {
-    const { title, imageUrl, linkUrl, sortOrder, startAt, endAt } = req.body || {};
+    const { title, imageUrl, linkUrl, sortOrder, startAt, endAt } = pickBodyFields(req.body, [
+      'title', 'imageUrl', 'linkUrl', 'sortOrder', 'startAt', 'endAt',
+    ]);
     if (!title || !imageUrl) {
       return res.json({ code: 400, message: '标题和图片不能为空' });
     }
@@ -130,7 +133,9 @@ router.post('/', audit('banner', 'create'), async (req, res) => {
  */
 router.put('/:id', audit('banner', 'edit'), async (req, res) => {
   try {
-    const { title, imageUrl, linkUrl, sortOrder, status, startAt, endAt } = req.body || {};
+    const { title, imageUrl, linkUrl, sortOrder, status, startAt, endAt } = pickBodyFields(req.body, [
+      'title', 'imageUrl', 'linkUrl', 'sortOrder', 'status', 'startAt', 'endAt',
+    ]);
     const data = {};
     if (title !== undefined) data.title = title;
     if (imageUrl !== undefined) data.image_url = imageUrl;
