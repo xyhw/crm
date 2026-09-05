@@ -90,6 +90,7 @@ export function adminBuildQuery(params) {
 export const adminApi = {
   login: (data) => adminRequest('/auth/login', { method: 'POST', body: data, auth: false }),
   getMe: () => adminRequest('/auth/me'),
+  changePassword: (data) => adminRequest('/auth/password', { method: 'PUT', body: data }),
 
   getDashboard: () => adminRequest('/stats/dashboard'),
   getTrends: () => adminRequest('/stats/trends'),

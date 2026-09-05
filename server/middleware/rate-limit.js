@@ -16,3 +16,11 @@ export const loginLimiter = rateLimit({
   legacyHeaders: false,
   message: { code: 429, message: '登录尝试过于频繁，请稍后再试' },
 });
+
+export const changePasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: config.rateLimit.changePasswordMax,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { code: 429, message: '修改尝试过于频繁，请 15 分钟后再试' },
+});

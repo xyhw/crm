@@ -57,7 +57,8 @@
   - `pickBodyFields` 只收录命中的键，PUT 接口"缺省字段不更新"的语义不受影响；`0` / `null` / `false` / `''` 均按有效值传递。
   - 排查这类问题的信号：POST 报"必填项为空"但前端明显填了，或 PUT 返回成功而某字段没变。先比对前端实际发的键名与后端解构的键名。
   - 后端路由改动后需重启进程验证：`background_terminal_kill` 旧终端 → 重新起 `cd /workspace/server && RATE_LIMIT_LOGIN_MAX=999999 node --env-file-if-exists=.env index.js`，`ss -ltnp | grep :3001` 确认监听。
-  - 后端全量 `npm test` 单次跑会超 5 分钟，按文件分批跑：纯逻辑组（body-fields/core/p1/security/vpay-*/payment）与数据库组（admin-recharge/announcement/follow-up）分开。
+  - 后端全量 `npm test` 单次跑会超 5 分钟，按文件分批跑：纯逻辑组（body-fields/core/p1/security/vpay-*/payment）与数据库组（admin-recharge/admin-auth/announcement/follow-up）分开。
+  - 本地 dev 服务器需同时带 `RATE_LIMIT_LOGIN_MAX=999999 RATE_LIMIT_CHANGE_PWD_MAX=999` 启动，否则集成测试（admin-auth.test.js / security.test.js 多次 login/改密）会同 IP 触发限流 429。生产默认改密 10 次/15 分钟。
 
 ## 独立 PC 管理后台（admin-pc）
 - 日期: 2026-09-05

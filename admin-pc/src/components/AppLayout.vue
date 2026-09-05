@@ -28,6 +28,7 @@
         <div class="crumb">{{ currentTitle }}</div>
         <div class="top-right">
           <span class="who">{{ auth.displayName }}</span>
+          <button class="btn btn-ghost" type="button" @click="openPwd">修改密码</button>
           <button class="btn btn-ghost" type="button" @click="askLogout">退出</button>
         </div>
       </header>
@@ -43,6 +44,34 @@
       tone="warning"
       @confirm="doLogout"
     />
+    <Modal v-model="pwdOpen" title="修改密码" :dirty="pwdDirty">
+      <label class="field">
+        <span class="field-label">原密码<span class="required">*</span></span>
+        <input v-model="pwdForm.oldPassword" class="input" type="password" autocomplete="current-password" @input="pwdDirty = true" />
+      </label>
+      <label class="field">
+        <span class="field-label">新密码<span class="required">*</span></span>
+        <input v-model="pwdForm.newPassword" class="input" type="password" autocomplete="new-password" placeholder="至少 8 位" @input="pwdDirty = true" />
+      </label>
+      <label class="field">
+        <span class="field-label">确认新密码<span class="required">*</span></span>
+        <input v-model="pwdForm.confirm" class="input" type="password" autocomplete="new-password" @input="pwdDirty = true" />
+      </label>
+      <p class="field-help">修改成功后需使用新密码重新登录。</p>
+      <template #footer>
+        <button class="btn btn-primary" type="button" :disabled="pwdSubmitting" @click="askSubmitPwd">
+          {{ pwdSubmitting ? '提交中…' : '确认修改' }}
+        </button>
+      </template>
+    </Modal>
+    <ConfirmDialog
+      v-model="pwdConfirmOpen"
+      title="确认修改密码"
+      content="修改后当前登录会失效，需使用新密码重新登录。确认继续？"
+      confirm-text="确认修改"
+      tone="warning"
+      @confirm="doSubmitPwd"
+    />
   </div>
 </template>
 
@@ -50,12 +79,21 @@
 import { computed, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
+import { useToastStore } from '../stores/toast';
+import { adminApi } from '../api/client';
 import ConfirmDialog from './ConfirmDialog.vue';
+import Modal from './Modal.vue';
 
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
+const toast = useToastStore();
 const logoutOpen = ref(false);
+const pwdOpen = ref(false);
+const pwdConfirmOpen = ref(false);
+const pwdSubmitting = ref(false);
+const pwdDirty = ref(false);
+const pwdForm = ref({ oldPassword: '', newPassword: '', confirm: '' });
 
 const navGroups = [
   {
@@ -120,6 +158,52 @@ function askLogout() {
 function doLogout() {
   auth.logout();
   router.replace('/login');
+}
+
+function openPwd() {
+  pwdForm.value = { oldPassword: '', newPassword: '', confirm: '' };
+  pwdDirty.value = false;
+  pwdOpen.value = true;
+}
+
+function askSubmitPwd() {
+  const { oldPassword, newPassword, confirm } = pwdForm.value;
+  if (!oldPassword || !newPassword || !confirm) {
+    toast.error('请填写完整');
+    return;
+  }
+  if (newPassword.length < 8) {
+    toast.error('新密码至少 8 位');
+    return;
+  }
+  if (newPassword !== confirm) {
+    toast.error('两次输入的新密码不一致');
+    return;
+  }
+  if (newPassword === oldPassword) {
+    toast.error('新密码不能与原密码相同');
+    return;
+  }
+  pwdConfirmOpen.value = true;
+}
+
+async function doSubmitPwd() {
+  pwdSubmitting.value = true;
+  try {
+    await adminApi.changePassword({
+      oldPassword: pwdForm.value.oldPassword,
+      newPassword: pwdForm.value.newPassword,
+    });
+    pwdOpen.value = false;
+    pwdDirty.value = false;
+    toast.success('密码已修改，请重新登录');
+    auth.logout();
+    router.replace('/login');
+  } catch (e) {
+    toast.error(e.message);
+  } finally {
+    pwdSubmitting.value = false;
+  }
 }
 </script>
 
