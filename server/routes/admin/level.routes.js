@@ -20,14 +20,21 @@ router.get('/', async (req, res) => {
 // 更新等级配置
 router.put('/:id', async (req, res) => {
   try {
-    const { purchaseDiscount, commissionBonus, purchaseRateThreshold, invalidRateThreshold, helpfulRateThreshold, activityThreshold, freeAudit, markWeight } = pickBodyFields(req.body, [
-      'purchaseDiscount', 'commissionBonus', 'purchaseRateThreshold', 'invalidRateThreshold',
+    const { name, purchaseDiscount, sellerCommissionRate, purchaseRateThreshold, invalidRateThreshold, helpfulRateThreshold, activityThreshold, freeAudit, markWeight } = pickBodyFields(req.body, [
+      'name', 'purchaseDiscount', 'sellerCommissionRate', 'purchaseRateThreshold', 'invalidRateThreshold',
       'helpfulRateThreshold', 'activityThreshold', 'freeAudit', 'markWeight',
     ]);
 
     const updates = {};
+    if (name !== undefined) {
+      const trimmed = String(name).trim();
+      if (!trimmed) {
+        return res.json({ code: 400, message: '等级名称不能为空' });
+      }
+      updates.name = trimmed;
+    }
     if (purchaseDiscount !== undefined) updates.purchase_discount = purchaseDiscount;
-    if (commissionBonus !== undefined) updates.commission_bonus = commissionBonus;
+    if (sellerCommissionRate !== undefined) updates.seller_commission_rate = sellerCommissionRate;
     if (purchaseRateThreshold !== undefined) updates.purchase_rate_threshold = purchaseRateThreshold;
     if (invalidRateThreshold !== undefined) updates.invalid_rate_threshold = invalidRateThreshold;
     if (helpfulRateThreshold !== undefined) updates.helpful_rate_threshold = helpfulRateThreshold;
@@ -37,6 +44,27 @@ router.put('/:id', async (req, res) => {
 
     if (Object.keys(updates).length === 0) {
       return res.json({ code: 400, message: '没有需要更新的配置' });
+    }
+
+    // 防穿仓：本档折扣须 >= 本档分佣率，且不得低于任一其它档的分佣率
+    if (updates.purchase_discount !== undefined || updates.seller_commission_rate !== undefined) {
+      const current = await queryOne('SELECT purchase_discount, seller_commission_rate FROM member_levels WHERE id = ?', [req.params.id]);
+      if (!current) {
+        return res.json({ code: 404, message: '等级不存在' });
+      }
+      const mergedDiscount = Number(updates.purchase_discount ?? current.purchase_discount);
+      const mergedRate = Number(updates.seller_commission_rate ?? current.seller_commission_rate);
+      const maxOtherRate = await queryOne(
+        'SELECT MAX(seller_commission_rate) AS max_rate FROM member_levels WHERE id <> ?',
+        [req.params.id]
+      );
+      const otherRate = Number(maxOtherRate?.max_rate || 0);
+      if (mergedRate <= 0 || mergedRate > 1 || mergedDiscount <= 0 || mergedDiscount > 1) {
+        return res.json({ code: 400, message: '折扣与分佣率须在 (0, 1] 区间' });
+      }
+      if (mergedDiscount < mergedRate || mergedDiscount < otherRate) {
+        return res.json({ code: 400, message: `折扣（${mergedDiscount}）不得低于任一等级的分佣率（本档 ${mergedRate} / 其它档最高 ${otherRate}），否则分佣池穿仓` });
+      }
     }
 
     await update('member_levels', updates, 'id = ?', [req.params.id]);

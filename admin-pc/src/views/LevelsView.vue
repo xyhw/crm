@@ -3,7 +3,7 @@
     <div class="page-head">
       <div>
         <h1 class="page-title">等级配置</h1>
-        <p class="page-sub">会员折扣与晋升阈值</p>
+        <p class="page-sub">会员折扣、卖家分佣率与晋升阈值</p>
       </div>
       <button class="btn btn-ghost" type="button" @click="fetchList">刷新</button>
     </div>
@@ -14,7 +14,7 @@
           <tr>
             <th>等级</th>
             <th>购买折扣</th>
-            <th>佣金加成</th>
+            <th>卖家分佣率</th>
             <th>购买率</th>
             <th>失效率</th>
             <th>有用率</th>
@@ -28,7 +28,7 @@
           <tr v-for="item in list" :key="item.id">
             <td>{{ item.name || item.level_key }}</td>
             <td>{{ pct(item.purchase_discount) }}</td>
-            <td>+{{ pct(item.commission_bonus) }}</td>
+            <td>{{ pct(item.seller_commission_rate) }}</td>
             <td>{{ item.purchase_rate_threshold }}%</td>
             <td>{{ item.invalid_rate_threshold }}%</td>
             <td>{{ item.helpful_rate_threshold }}%</td>
@@ -42,8 +42,8 @@
     </div>
 
     <Modal v-model="editOpen" :title="editItem?.name || editItem?.level_key || '编辑等级'" :dirty="formDirty">
-      <label class="field"><span class="field-label">购买折扣(0.9=9折)</span><input v-model="editForm.purchase_discount" class="input" @input="formDirty = true" /><span class="field-help">建议 0.8-0.95</span></label>
-      <label class="field"><span class="field-label">分佣加成(0.1=10%)</span><input v-model="editForm.commission_bonus" class="input" @input="formDirty = true" /></label>
+      <label class="field"><span class="field-label">购买折扣(0.9=9折)</span><input v-model="editForm.purchase_discount" class="input" @input="formDirty = true" /><span class="field-help">须不低于所有等级的分佣率</span></label>
+      <label class="field"><span class="field-label">卖家分佣率(0.76=76%)</span><input v-model="editForm.seller_commission_rate" class="input" @input="formDirty = true" /><span class="field-help">卖家到手 = 商机定价 × 该比例</span></label>
       <label class="field"><span class="field-label">购买率阈值(%)</span><input v-model="editForm.purchase_rate_threshold" class="input" @input="formDirty = true" /></label>
       <label class="field"><span class="field-label">失效率阈值(%)</span><input v-model="editForm.invalid_rate_threshold" class="input" @input="formDirty = true" /></label>
       <label class="field"><span class="field-label">有用率阈值(%)</span><input v-model="editForm.helpful_rate_threshold" class="input" @input="formDirty = true" /></label>
@@ -95,7 +95,7 @@ function openEdit(item) {
   editItem.value = item;
   editForm.value = {
     purchase_discount: String(item.purchase_discount ?? ''),
-    commission_bonus: String(item.commission_bonus ?? ''),
+    seller_commission_rate: String(item.seller_commission_rate ?? ''),
     purchase_rate_threshold: String(item.purchase_rate_threshold ?? ''),
     invalid_rate_threshold: String(item.invalid_rate_threshold ?? ''),
     helpful_rate_threshold: String(item.helpful_rate_threshold ?? ''),
@@ -114,7 +114,7 @@ async function submitEdit() {
   };
   const checks = [
     ['购买折扣', num(editForm.value.purchase_discount), 0, 1],
-    ['分佣加成', num(editForm.value.commission_bonus), 0, 1],
+    ['卖家分佣率', num(editForm.value.seller_commission_rate), 0, 1],
     ['购买率阈值', num(editForm.value.purchase_rate_threshold), 0, 100],
     ['失效率阈值', num(editForm.value.invalid_rate_threshold), 0, 100],
     ['有用率阈值', num(editForm.value.helpful_rate_threshold), 0, 100],
@@ -126,11 +126,15 @@ async function submitEdit() {
     if (min !== null && v < min) { toast.error(`${label}不能小于${min}`); return; }
     if (max !== null && v > max) { toast.error(`${label}不能大于${max}`); return; }
   }
+  const discount = num(editForm.value.purchase_discount);
+  const rate = num(editForm.value.seller_commission_rate);
+  if (rate <= 0 || rate > 1) { toast.error('卖家分佣率须在 (0, 1] 区间'); return; }
+  if (discount < rate) { toast.error('购买折扣不得低于分佣率，否则分佣池穿仓'); return; }
   saving.value = true;
   try {
     await adminApi.updateLevel(editItem.value.id, {
       purchase_discount: num(editForm.value.purchase_discount),
-      commission_bonus: num(editForm.value.commission_bonus),
+      seller_commission_rate: num(editForm.value.seller_commission_rate),
       purchase_rate_threshold: num(editForm.value.purchase_rate_threshold),
       invalid_rate_threshold: num(editForm.value.invalid_rate_threshold),
       helpful_rate_threshold: num(editForm.value.helpful_rate_threshold),

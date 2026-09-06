@@ -56,9 +56,7 @@ export const SHARE_INVALID_REASONS = [
 
 export const LEVEL_META = {
   normal: { label: '普通会员', color: '#7A7A7A', discount: '无折扣' },
-  silver: { label: '银牌会员', color: '#048C47', discount: '9折' },
-  gold: { label: '金牌会员', color: '#E8920A', discount: '8折' },
-  expert: { label: '认证达人', color: '#E54848', discount: '7折' },
+  premium: { label: '高级会员', color: '#048C47', discount: '85折' },
 };
 
 export const OPPORTUNITY_STATUS_META = {

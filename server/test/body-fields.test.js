@@ -56,7 +56,7 @@ describe('请求体字段命名归一化', () => {
   test('等级配置 snake_case 请求体可被完整读取', () => {
     const body = {
       purchase_discount: 0.85,
-      commission_bonus: 0.1,
+      seller_commission_rate: 0.8,
       purchase_rate_threshold: 60,
       invalid_rate_threshold: 5,
       helpful_rate_threshold: 70,
@@ -65,10 +65,11 @@ describe('请求体字段命名归一化', () => {
       free_audit: 1,
     };
     const picked = pickBodyFields(body, [
-      'purchaseDiscount', 'commissionBonus', 'purchaseRateThreshold', 'invalidRateThreshold',
+      'purchaseDiscount', 'sellerCommissionRate', 'purchaseRateThreshold', 'invalidRateThreshold',
       'helpfulRateThreshold', 'activityThreshold', 'markWeight', 'freeAudit',
     ]);
     assert.equal(picked.purchaseDiscount, 0.85);
+    assert.equal(picked.sellerCommissionRate, 0.8);
     assert.equal(picked.purchaseRateThreshold, 60);
     assert.equal(picked.markWeight, 2);
     assert.equal(picked.freeAudit, 1);

@@ -557,7 +557,7 @@ router.post('/:id/invalid-mark', authRequired, async (req, res) => {
         const [penaltyConfig] = await conn.execute(
           "SELECT config_value FROM system_configs WHERE config_key = 'invalid_penalty_rate'"
         );
-        const penaltyRate = parseFloat(penaltyConfig[0]?.config_value || '0.50');
+        const penaltyRate = parseFloat(penaltyConfig[0]?.config_value || '0.20');
 
         // 已发放分佣回扣（按订单实际分佣 × (1 + 惩罚比例) 从投稿人账户扣回）
         const settlements = await conn.execute(

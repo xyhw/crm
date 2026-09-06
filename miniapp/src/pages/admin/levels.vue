@@ -8,7 +8,7 @@
           <text class="card-item__sub">购买折扣 {{ pct(item.purchase_discount) }}</text>
         </view>
         <view class="card-item__info">
-          <text>佣金加成 +{{ pct(item.commission_bonus) }}</text>
+          <text>卖家分佣率 {{ pct(item.seller_commission_rate) }}</text>
           <text>标记权重 {{ item.mark_weight }}</text>
         </view>
         <view class="card-item__info">
@@ -36,9 +36,9 @@
           <text class="form-helper">建议 0.8-0.95，值越小折扣越多</text>
         </view>
         <view class="form-row">
-          <text class="form-label">分佣加成(0.1=10%)<text class="required-mark">*</text></text>
-          <input v-model="editForm.commission_bonus" class="form-input" type="digit" placeholder="0.1" @input="formDirty = true" />
-          <text class="form-helper">在基础分佣比例上额外加成的比例，建议 0-0.2</text>
+          <text class="form-label">卖家分佣率(0.76=76%)<text class="required-mark">*</text></text>
+          <input v-model="editForm.seller_commission_rate" class="form-input" type="digit" placeholder="0.76" @input="formDirty = true" />
+          <text class="form-helper">卖家到手 = 商机定价 × 该比例；须不高于所有等级的购买折扣</text>
         </view>
         <view class="form-row">
           <text class="form-label">购买率阈值(%)<text class="required-mark">*</text></text>
@@ -114,7 +114,7 @@ function openEdit(item) {
   editItem.value = item;
   editForm.value = {
     purchase_discount: String(item.purchase_discount ?? ''),
-    commission_bonus: String(item.commission_bonus ?? ''),
+    seller_commission_rate: String(item.seller_commission_rate ?? ''),
     purchase_rate_threshold: String(item.purchase_rate_threshold ?? ''),
     invalid_rate_threshold: String(item.invalid_rate_threshold ?? ''),
     helpful_rate_threshold: String(item.helpful_rate_threshold ?? ''),
@@ -135,7 +135,6 @@ async function submitEdit() {
   };
   const checks = [
     ['购买折扣', num(editForm.value.purchase_discount), 0, 1],
-    ['分佣加成', num(editForm.value.commission_bonus), 0, 1],
     ['购买率阈值', num(editForm.value.purchase_rate_threshold), 0, 100],
     ['失效率阈值', num(editForm.value.invalid_rate_threshold), 0, 100],
     ['有用率阈值', num(editForm.value.helpful_rate_threshold), 0, 100],
@@ -156,9 +155,19 @@ async function submitEdit() {
       return;
     }
   }
+  const discount = num(editForm.value.purchase_discount);
+  const rate = num(editForm.value.seller_commission_rate);
+  if (rate <= 0 || rate > 1) {
+    uni.showToast({ title: '卖家分佣率须在 (0, 1] 区间', icon: 'none' });
+    return;
+  }
+  if (discount < rate) {
+    uni.showToast({ title: '购买折扣不得低于分佣率，否则分佣池穿仓', icon: 'none' });
+    return;
+  }
   const body = {
     purchaseDiscount: num(editForm.value.purchase_discount),
-    commissionBonus: num(editForm.value.commission_bonus),
+    sellerCommissionRate: rate,
     purchaseRateThreshold: num(editForm.value.purchase_rate_threshold),
     invalidRateThreshold: num(editForm.value.invalid_rate_threshold),
     helpfulRateThreshold: num(editForm.value.helpful_rate_threshold),

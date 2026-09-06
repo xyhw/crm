@@ -65,9 +65,7 @@ const currentIndex = computed(() => levels.findIndex((l) => l.key === level.valu
 
 const levels = [
   { key: 'normal', ...LEVEL_META.normal, threshold: '注册即获得' },
-  { key: 'silver', ...LEVEL_META.silver, threshold: '投稿购买率≥30%，无效率≤10%' },
-  { key: 'gold', ...LEVEL_META.gold, threshold: '投稿购买率≥50%，无效率≤5%' },
-  { key: 'expert', ...LEVEL_META.expert, threshold: '投稿购买率≥70%，无效率≤3%' },
+  { key: 'premium', ...LEVEL_META.premium, threshold: '投稿购买率≥30%，无效率≤10%，有用分享率≥20%，活跃度≥50' },
 ];
 </script>
 

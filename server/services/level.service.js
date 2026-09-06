@@ -83,15 +83,16 @@ export function clearLevelConfigCache() {
 export async function calculatePurchaseDiscount(userId) {
   const level = await getUserLevel(userId);
   const config = await getLevelConfig(level);
-  return config?.purchase_discount || 1.00;
+  const discount = Number(config?.purchase_discount);
+  return Number.isFinite(discount) && discount > 0 && discount <= 1 ? discount : 1.00;
 }
 
-export async function calculateCommissionRate(userId) {
+// 方案 B：定价制分佣率（卖家从"定价"中拿走的占比，与买家折扣解耦）
+export async function getSellerCommissionRate(userId) {
   const level = await getUserLevel(userId);
   const config = await getLevelConfig(level);
-  const baseRate = 0.40;
-  const bonus = Number(config?.commission_bonus) || 0;
-  return baseRate * (1 + bonus);
+  const rate = Number(config?.seller_commission_rate);
+  return Number.isFinite(rate) && rate > 0 && rate <= 1 ? rate : 0.76;
 }
 
 export async function isFreeAudit(userId) {
@@ -108,7 +109,7 @@ export async function getMarkWeight(userId) {
 
 export async function getPurchasePrice(opportunityId, buyerId) {
   const [opp] = await query(
-    'SELECT price FROM opportunities WHERE id = ?',
+    'SELECT price, user_id FROM opportunities WHERE id = ?',
     [opportunityId]
   );
   if (!opp) return null;
@@ -116,28 +117,35 @@ export async function getPurchasePrice(opportunityId, buyerId) {
   const discount = await calculatePurchaseDiscount(buyerId);
   const originalPrice = opp.price;
   const finalPrice = Math.round(originalPrice * discount);
-  
+  // 方案 B：卖家到手 = round(定价 × 卖家分佣率)，与买家折扣解耦
+  const sellerRate = await getSellerCommissionRate(opp.user_id);
+  const sellerIncome = Math.round(originalPrice * sellerRate);
+  const platformFee = finalPrice - sellerIncome;
+
   return {
     originalPrice,
     finalPrice,
     discount,
-    platformFee: Math.round(finalPrice * 0.20),
-    sellerIncome: finalPrice - Math.round(finalPrice * 0.20)
+    sellerCommissionRate: sellerRate,
+    sellerIncome,
+    platformFee,
   };
 }
 
-export async function calculateSellerEarnings(buyerId, sellerId, finalPrice) {
-  const platformFee = Math.round(finalPrice * 0.20);
-  const netAmount = finalPrice - platformFee;
-  
-  const sellerCommissionRate = await calculateCommissionRate(sellerId);
-  const sellerEarnings = Math.round(netAmount * sellerCommissionRate);
-  
+/**
+ * 方案 B 分佣计算：卖家到手只由定价与其等级分佣率决定。
+ * platformFee = 买家实付 − 卖家到手（买家折扣成本由流通池承担，等级组合已由迁移保证不为负）。
+ */
+export async function calculateSellerEarnings(sellerId, originalPrice, finalPrice) {
+  const sellerCommissionRate = await getSellerCommissionRate(sellerId);
+  const sellerEarnings = Math.round(originalPrice * sellerCommissionRate);
+
   return {
-    platformFee,
+    originalPrice,
+    finalPrice,
+    sellerCommissionRate,
     sellerEarnings,
-    netAmount,
-    sellerCommissionRate
+    platformFee: finalPrice - sellerEarnings,
   };
 }
 
@@ -172,7 +180,8 @@ export async function recalculateAllLevels() {
     const activity = stats.total_crm || 0;
 
     let newLevel = 'normal';
-    for (const level of levelConfigs) {
+    // 从高到低匹配首个满足门槛的等级（升序 + break 会导致零门槛档恒先命中）
+    for (const level of [...levelConfigs].sort((a, b) => b.sort_order - a.sort_order)) {
       if (purchaseRate >= level.purchase_rate_threshold &&
           invalidRate <= level.invalid_rate_threshold &&
           usefulRate >= level.helpful_rate_threshold &&

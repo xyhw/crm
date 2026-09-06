@@ -1,11 +1,9 @@
 import { Router } from 'express';
 import { query, queryOne, transaction } from '../db.js';
 import { authRequired } from '../auth.js';
-import { 
-  getUserLevel, 
-  getLevelConfig,
+import {
   getPurchasePrice,
-  calculateSellerEarnings 
+  calculateSellerEarnings
 } from '../services/level.service.js';
 
 const router = Router();
@@ -62,8 +60,8 @@ router.post('/', authRequired, async (req, res) => {
       return res.json({ code: 422, message: '积分余额不足' });
     }
 
-    // 计算分佣（使用 level service）
-    const earningsInfo = await calculateSellerEarnings(req.userId, opportunity.user_id, actualPrice);
+    // 计算分佣（方案 B：卖家到手 = 定价 × 卖家分佣率，与买家折扣解耦）
+    const earningsInfo = await calculateSellerEarnings(opportunity.user_id, opportunity.price, actualPrice);
     const platformCommission = earningsInfo.platformFee;
     const totalSellerIncome = earningsInfo.sellerEarnings;
 
@@ -119,11 +117,12 @@ router.post('/', authRequired, async (req, res) => {
         [req.userId, opportunityId, opportunity.price, discountRate, actualPrice, platformCommission, totalSellerIncome]
       );
 
-      // 4. 创建分佣记录
+      // 4. 创建分佣记录（方案 B：seller_income 记实际发放全额，level_bonus 恒为 0；
+      //    判无效回扣按 seller_income + level_bonus 求和，兼容新旧两代口径）
       await conn.execute(
         `INSERT INTO commission_settlements (order_id, seller_id, order_amount, platform_rate, platform_commission, seller_income, level_bonus, status)
-         VALUES (LAST_INSERT_ID(), ?, ?, ?, ?, ?, ?, 'paid')`,
-        [opportunity.user_id, actualPrice, 0.20, platformCommission, totalSellerIncome, Math.max(0, totalSellerIncome - Math.round(earningsInfo.netAmount * 0.40))]
+         VALUES (LAST_INSERT_ID(), ?, ?, ?, ?, ?, 0, 'paid')`,
+        [opportunity.user_id, actualPrice, Number((platformCommission / actualPrice).toFixed(2)) || 0, platformCommission, totalSellerIncome]
       );
 
       // 5. 更新商机购买数
@@ -140,10 +139,15 @@ router.post('/', authRequired, async (req, res) => {
         [req.userId, opportunityId]
       );
 
-      // 7. 更新信用分
+      // 7. 更新信用分并留痕（枚举 purchase）
       await conn.execute(
         'UPDATE users SET credit_score = LEAST(100, credit_score + 2) WHERE id = ?',
         [opportunity.user_id]
+      );
+      await conn.execute(
+        `INSERT INTO user_credits (user_id, credit_score, change_amount, change_reason, source_type)
+         SELECT ?, credit_score, 2, '商机被有效购买 +2', 'purchase' FROM users WHERE id = ?`,
+        [opportunity.user_id, opportunity.user_id]
       );
     });
 

@@ -21,6 +21,7 @@ import { migrateWechatBinding } from './migrations/014_wechat_binding.js';
 import { migrateOpportunityTagsSortOrder } from './migrations/015_opportunity_tags_sort_order.js';
 import { migrateOrdersRefundedRepurchase } from './migrations/016_orders_refunded_repurchase.js';
 import { migrateP2Indexes } from './migrations/017_perf_indexes.js';
+import { migratePlanBLevels } from './migrations/018_plan_b_levels.js';
 import { ensureAndLoadPaymentConfig } from './services/payment/config-loader.js';
 import { seedDatabase } from './seeds/seed.js';
 import { closePool } from './db.js';
@@ -144,6 +145,8 @@ app.use('/api/announcements', announcementRoutes);
 const OP = ['operation', 'super_admin'];
 const FIN = ['finance', 'super_admin'];
 const SUPER = ['super_admin'];
+// 客服角色：会员管控、摘要审核、类目/标签/通知等轻运营，不碰商机内容编辑与资金模块
+const CS = ['support', 'operation', 'super_admin'];
 
 app.use('/api/v1/admin/auth', adminAuthRoutes);
 app.use('/api/v1/admin/audit-logs', adminAuthRequired, requireRole(...SUPER), adminAuditLogRoutes);
@@ -152,11 +155,11 @@ app.use('/api/v1/admin/admins', adminAuthRequired, requireRole(...SUPER), adminA
 app.use('/api/v1/admin/configs', adminAuthRequired, requireRole(...SUPER), adminConfigRoutes);
 app.use('/api/v1/admin/levels', adminAuthRequired, requireRole(...SUPER), adminLevelRoutes);
 app.use('/api/v1/admin/opportunities', adminAuthRequired, requireRole(...OP), adminOpportunityRoutes);
-app.use('/api/v1/admin/users', adminAuthRequired, requireRole(...OP), adminUserRoutes);
-app.use('/api/v1/admin/audit', adminAuthRequired, requireRole(...OP), adminAuditRoutes);
-app.use('/api/v1/admin/categories', adminAuthRequired, requireRole(...OP), adminCategoryRoutes);
-app.use('/api/v1/admin/tags', adminAuthRequired, requireRole(...OP), adminTagRoutes);
-app.use('/api/v1/admin/notifications', adminAuthRequired, requireRole(...OP), adminNotificationRoutes);
+app.use('/api/v1/admin/users', adminAuthRequired, requireRole(...CS), adminUserRoutes);
+app.use('/api/v1/admin/audit', adminAuthRequired, requireRole(...CS), adminAuditRoutes);
+app.use('/api/v1/admin/categories', adminAuthRequired, requireRole(...CS), adminCategoryRoutes);
+app.use('/api/v1/admin/tags', adminAuthRequired, requireRole(...CS), adminTagRoutes);
+app.use('/api/v1/admin/notifications', adminAuthRequired, requireRole(...CS), adminNotificationRoutes);
 app.use('/api/v1/admin/upload', adminAuthRequired, requireRole(...OP), adminUploadRoutes);
 app.use('/api/v1/admin/import', adminAuthRequired, requireRole(...OP), adminImportRoutes);
 app.use('/api/v1/admin/banners', adminAuthRequired, requireRole(...OP), adminBannerRoutes);
@@ -247,6 +250,9 @@ async function start() {
     // 种子数据
     await seedDatabase();
     console.log('[server] Seed data loaded');
+
+    // 方案 B：定价制分佣 + 等级两档化（须在种子之后执行，全新库也会被归一）
+    await migratePlanBLevels();
 
     // 加载支付渠道配置（system_configs 覆盖环境变量，支持后台热更新）
     await ensureAndLoadPaymentConfig();

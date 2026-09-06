@@ -309,11 +309,11 @@ const attachments = computed(() => {
 });
 
 const levelInfo = computed(() => LEVEL_META[userStore.user?.level] || LEVEL_META.normal);
-const rateMap = { '无折扣': 1, '9折': 0.9, '8折': 0.8, '7折': 0.7 };
+const discountByLevel = { normal: 1, premium: 0.85 };
 const payable = computed(() => {
   const price = detail.value?.price || 0;
-  const rate = rateMap[levelInfo.value.discount] || 1;
-  return Math.ceil(price * rate);
+  const rate = discountByLevel[userStore.user?.level] ?? 1;
+  return Math.round(price * rate);
 });
 
 function requireLogin() {

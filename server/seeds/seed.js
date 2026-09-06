@@ -15,6 +15,8 @@ const CATEGORIES = [
 ];
 
 const MEMBER_LEVELS = [
+  // 注意：保持旧四档 schema 形状（seller_commission_rate 列由迁移 018 创建），
+  // 紧随其后的 018 迁移会把等级归一为 normal/premium 两档定价制参数
   { level_key: 'normal', name: '普通会员', purchase_discount: 1.00, commission_bonus: 0, purchase_rate_threshold: 0, invalid_rate_threshold: 100, helpful_rate_threshold: 0, activity_threshold: 0, free_audit: 0, mark_weight: 1, sort_order: 1 },
   { level_key: 'silver', name: '银牌会员', purchase_discount: 0.90, commission_bonus: 0.10, purchase_rate_threshold: 30, invalid_rate_threshold: 10, helpful_rate_threshold: 20, activity_threshold: 50, free_audit: 0, mark_weight: 1, sort_order: 2 },
   { level_key: 'gold', name: '金牌会员', purchase_discount: 0.80, commission_bonus: 0.20, purchase_rate_threshold: 50, invalid_rate_threshold: 5, helpful_rate_threshold: 40, activity_threshold: 100, free_audit: 1, mark_weight: 2, sort_order: 3 },
@@ -24,10 +26,9 @@ const MEMBER_LEVELS = [
 const SYSTEM_CONFIGS = [
   { config_key: 'register_gift_points', config_value: '10', config_type: 'number', description: '注册赠送积分' },
   { config_key: 'invite_reward_points', config_value: '5', config_type: 'number', description: '邀请奖励积分（双方各得）' },
-  { config_key: 'platform_commission_rate', config_value: '0.20', config_type: 'number', description: '平台抽成比例' },
   { config_key: 'points_expire_days', config_value: '180', config_type: 'number', description: '奖励积分有效期（天）' },
   { config_key: 'invalid_threshold', config_value: '0.20', config_type: 'number', description: '无效判定阈值（购买量占比）' },
-  { config_key: 'invalid_penalty_rate', config_value: '0.50', config_type: 'number', description: '无效惩罚扣除比例' },
+  { config_key: 'invalid_penalty_rate', config_value: '0.20', config_type: 'number', description: '无效惩罚扣除比例（在已发分佣基础上追加 20%，即回扣 1.2 倍）' },
   { config_key: 'invalid_ban_threshold', config_value: '3', config_type: 'number', description: '累计无效封号阈值' },
   { config_key: 'opportunity_price_min', config_value: '10', config_type: 'number', description: '商机定价下限（积分）' },
   { config_key: 'opportunity_price_max', config_value: '200', config_type: 'number', description: '商机定价上限（积分）' },

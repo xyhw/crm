@@ -47,7 +47,7 @@ const saving = ref(false);
 const draft = ref({});
 const groups = ref([]);
 
-const PERCENT_KEYS = ['platform_commission_rate', 'invalid_threshold', 'invalid_penalty_rate', 'similarity_threshold'];
+const PERCENT_KEYS = ['invalid_threshold', 'invalid_penalty_rate', 'similarity_threshold'];
 
 const GROUP_DEF = [
   {
@@ -65,9 +65,8 @@ const GROUP_DEF = [
     ],
   },
   {
-    title: '分成与审核配置',
+    title: '审核与重复判定配置',
     fields: [
-      { key: 'platform_commission_rate', label: '平台抽成比例(%)', type: 'number', desc: '0-100；每笔交易平台收取的分成比例' },
       { key: 'similarity_threshold', label: '相似度判定阈值(%)', type: 'number', desc: '0-100；超过该值视为重复商机' },
     ],
   },
@@ -75,7 +74,7 @@ const GROUP_DEF = [
     title: '信用与无效配置',
     fields: [
       { key: 'invalid_threshold', label: '无效判定阈值(%)', type: 'number', desc: '0-100；超过该值被自动标记为无效' },
-      { key: 'invalid_penalty_rate', label: '无效惩罚信用分', type: 'number', desc: '每次被判定无效扣除的信用分' },
+      { key: 'invalid_penalty_rate', label: '无效分佣回扣追加比例(%)', type: 'number', desc: '0-100；判定无效后按已发分佣×(1+该比例)从投稿人账户扣回' },
       { key: 'invalid_ban_threshold', label: '无效累计封禁次数', type: 'number', desc: '累计无效次数达到该值自动封禁账号' },
       { key: 'credit_review_threshold', label: '投稿审核信用阈值', type: 'number', desc: '0-100；低于该值的投稿需人工审核' },
       { key: 'credit_ban_threshold', label: '封禁信用阈值', type: 'number', desc: '0-100；低于该值自动封禁账号' },
