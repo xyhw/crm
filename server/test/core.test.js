@@ -199,12 +199,13 @@ describe('核心流程', () => {
       descriptionFull: '厨房设备采购需求',
       contactName: '李四',
       contactPhone: '13900000003',
-    }, user2Token);
+    }, user1Token);
     assert.strictEqual(hzRes.code, 0);
     const hangzhouId = hzRes.data.id;
 
     // user2 对 publishedId 的购买已在前面的「无效标记」用例中被退款，
-    // 此处重新购买 hangzhou 建立「杭州」偏好（城市 +30，且 purchase_count +3），保证确定性
+    // 此处由 user2 购买 user1 发布的 hangzhou 重新建立「杭州」偏好
+    // （城市 +30，且 purchase_count +3），保证确定性
     const buyRes = await apiPost('/orders', { opportunityId: hangzhouId }, user2Token);
     assert.strictEqual(buyRes.code, 0);
 
