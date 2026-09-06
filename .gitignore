@@ -27,3 +27,6 @@ client/test-rv.mjs
 server/coverage/
 server/seeds/ihg-opportunities.json
 server/seeds/import-ihg.js
+
+# AI 编码工具本地数据
+.zcode/

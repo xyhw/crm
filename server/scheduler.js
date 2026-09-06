@@ -25,9 +25,14 @@ class Scheduler {
     this.jobs.push(
       setInterval(() => this.reconcileWechatOrders(), 5 * 60 * 1000)
     );
+    this.jobs.push(
+      setInterval(() => this.reconcilePatrol(), 24 * 60 * 60 * 1000)
+    );
 
     setTimeout(() => this.recalculateLevels(), 5000);
     setTimeout(() => this.reconcileWechatOrders(), 30 * 1000);
+    // 启动 1 分钟后先跑一次巡检
+    setTimeout(() => this.reconcilePatrol(), 60 * 1000);
   }
 
   stop() {
@@ -106,6 +111,33 @@ class Scheduler {
       logger.info(`[Scheduler] 过期通知清理完成，删除 ${affectedRows} 条`);
     } catch (error) {
       logger.error('[Scheduler] 通知清理失败:', error.message);
+    }
+  }
+
+  /**
+   * 每日对账巡检：汇总「已过期仍 pending」的充值订单（回调丢失/查单兜底未覆盖的可疑单），
+   * 输出结构化日志供告警系统接入；后台可据 /api/v1/admin/recharge-orders 查单补账。
+   */
+  async reconcilePatrol() {
+    try {
+      const [stuck] = await query(
+        `SELECT COUNT(*) AS cnt, COALESCE(SUM(amount), 0) AS amount,
+                MIN(created_at) AS oldest_created_at
+         FROM payment_orders
+         WHERE status = 'pending' AND expire_at < NOW()`
+      );
+      const cnt = Number(stuck?.cnt) || 0;
+      if (cnt > 0) {
+        logger.warn('[Scheduler] 对账巡检：存在过期未决充值订单（疑似回调丢失，请后台查单补账）', {
+          pendingExpired: cnt,
+          amount: Number(stuck.amount) || 0,
+          oldestCreatedAt: stuck.oldest_created_at,
+        });
+      } else {
+        logger.info('[Scheduler] 对账巡检：无过期未决充值订单');
+      }
+    } catch (error) {
+      logger.error('[Scheduler] 对账巡检失败:', error.message);
     }
   }
 
