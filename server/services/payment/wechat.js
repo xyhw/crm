@@ -103,6 +103,7 @@ export class WechatAdapter extends BasePaymentAdapter {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: postBody,
+      signal: AbortSignal.timeout(10000),
     });
     const data = await resp.json();
     if (data.errcode && data.errcode !== 0) {

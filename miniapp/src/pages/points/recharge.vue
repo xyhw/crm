@@ -91,13 +91,24 @@ function channelDesc(c) {
 }
 
 onLoad(async () => {
-  const info = await resolveMiniappChannels();
-  availableChannels.value = info.channels;
-  channel.value = availableChannels.value[0] || 'mock';
-  loading.value = false;
+  try {
+    const info = await resolveMiniappChannels();
+    availableChannels.value = info.channels;
+    channel.value = info.channel || availableChannels.value[0] || '';
+  } catch (e) {
+    availableChannels.value = [];
+    channel.value = '';
+    uni.showToast({ title: e.message || '支付渠道加载失败，请重新进入', icon: 'none' });
+  } finally {
+    loading.value = false;
+  }
 });
 
 async function handleRecharge() {
+  if (!channel.value) {
+    uni.showToast({ title: '暂无可用支付渠道，请重新进入本页', icon: 'none' });
+    return;
+  }
   const value = Number(amount.value);
   if (!value || value <= 0) {
     uni.showToast({ title: '请输入有效金额', icon: 'none' });

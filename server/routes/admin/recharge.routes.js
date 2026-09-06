@@ -184,7 +184,7 @@ router.post('/:orderNo/sync', async (req, res) => {
   } catch (err) {
     if (err.code === 404) return res.json({ code: 404, message: err.message });
     console.error('Admin recharge sync error:', err);
-    res.status(500).json({ code: 500, message: err.message || '查单补账失败' });
+    res.status(500).json({ code: 500, message: '查单补账失败，请稍后重试' });
   }
 });
 

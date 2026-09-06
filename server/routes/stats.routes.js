@@ -44,7 +44,7 @@ router.get('/me', authRequired, async (req, res) => {
         totalIncome: purchaseStats.totalIncome || 0,
         bought: boughtStats.total || 0,
         crm: crmStats.total || 0,
-        level: levelStats[0] || { level: 'normal' },
+        level: levelStats || { level: 'normal' },
       },
     });
   } catch (err) {

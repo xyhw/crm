@@ -147,7 +147,7 @@ router.post('/wechat-login', async (req, res) => {
     return res.json({ code: 0, data: { bound: true, ...issueSession(user) } });
   } catch (err) {
     console.error('Wechat login error:', err);
-    return res.json({ code: 500, message: err.message || '微信登录失败' });
+    return res.json({ code: 500, message: '微信登录失败，请稍后重试' });
   }
 });
 
@@ -219,7 +219,7 @@ router.post('/bind-wechat', async (req, res) => {
     return res.json({ code: 0, data: issueSession(user), message: existingUser ? '绑定成功' : '注册成功' });
   } catch (err) {
     console.error('Bind wechat error:', err);
-    return res.json({ code: 500, message: err.message || '微信绑定失败' });
+    return res.json({ code: 500, message: '微信绑定失败，请稍后重试' });
   }
 });
 
@@ -237,7 +237,7 @@ router.post('/phone', async (req, res) => {
     return res.json({ code: 0, data: { phone } });
   } catch (err) {
     console.error('Wechat phone error:', err);
-    return res.json({ code: 500, message: err.message || '手机号获取失败' });
+    return res.json({ code: 500, message: '手机号获取失败，请稍后重试' });
   }
 });
 

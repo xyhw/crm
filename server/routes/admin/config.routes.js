@@ -2,10 +2,11 @@ import { Router } from 'express';
 import { query, queryOne, insert, update } from '../../db.js';
 import { recordLog } from '../../services/audit-log.service.js';
 import { ensureAndLoadPaymentConfig } from '../../services/payment/config-loader.js';
+import { isAllowedConfigKey } from '../../services/config-registry.js';
 
 const router = Router();
 
-// 敏感配置打码：支付私钥/密钥/敏感凭证禁止明文回显（列表页也生效）
+// 敏感配置打码：支付私钥/密钥/敏感凭证禁止明文回显与落审计日志
 const SENSITIVE_KEY_PATTERNS = [
   /private_?key/i,
   /secret_?key/i,
@@ -17,10 +18,20 @@ const SENSITIVE_KEY_PATTERNS = [
   /app_?secret/i,
 ];
 
+function isSensitiveKey(key) {
+  return SENSITIVE_KEY_PATTERNS.some((re) => re.test(key));
+}
+
 function maskSensitiveValue(key, value) {
-  if (typeof value !== 'string' || value === '') return value;
-  if (!SENSITIVE_KEY_PATTERNS.some((re) => re.test(key))) return value;
+  if (value === null || value === undefined || value === '') return value;
+  if (!isSensitiveKey(key)) return value;
   return '******';
+}
+
+// 审计日志专用：不论值类型，敏感键一律打码，杜绝私钥原文落库
+function maskForAudit(key, value) {
+  if (isSensitiveKey(key)) return '******';
+  return value;
 }
 
 // 获取系统配置（返回对象形式）
@@ -47,10 +58,17 @@ router.put('/', async (req, res) => {
       return res.json({ code: 400, message: '请填写配置值' });
     }
 
+    // 白名单校验：禁止任意 key 写库
+    const invalidKeys = keys.filter((k) => !isAllowedConfigKey(k));
+    if (invalidKeys.length > 0) {
+      return res.json({ code: 400, message: `不支持的配置项：${invalidKeys.join(', ')}` });
+    }
+
     for (const key of keys) {
       await upsertConfig(key, body[key], req.adminId);
     }
-    await recordLog(req.adminId, 'edit', 'system_configs', null, keys.reduce((acc, k) => ({ ...acc, [k]: body[k] }), {}));
+    // 敏感键脱敏后落审计日志
+    await recordLog(req.adminId, 'edit', 'system_configs', null, keys.reduce((acc, k) => ({ ...acc, [k]: maskForAudit(k, body[k]) }), {}));
     if (keys.some((k) => k.startsWith('pay_'))) {
       await ensureAndLoadPaymentConfig();
     }
@@ -68,9 +86,12 @@ router.put('/:key', async (req, res) => {
     if (value === undefined) {
       return res.json({ code: 400, message: '请填写配置值' });
     }
+    if (!isAllowedConfigKey(req.params.key)) {
+      return res.json({ code: 400, message: '不支持的配置项' });
+    }
 
     await upsertConfig(req.params.key, value, req.adminId);
-    await recordLog(req.adminId, 'edit', 'system_configs', null, { [req.params.key]: value });
+    await recordLog(req.adminId, 'edit', 'system_configs', null, { [req.params.key]: maskForAudit(req.params.key, value) });
     if (req.params.key.startsWith('pay_')) {
       await ensureAndLoadPaymentConfig();
     }

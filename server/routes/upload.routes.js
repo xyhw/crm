@@ -52,7 +52,7 @@ router.post('/', authRequired, upload.single('file'), async (req, res) => {
     }
 
     // 魔数校验：真实内容与扩展名一致，防止伪造文件
-    const head = fs.readFileSync(req.file.path);
+    const head = await fs.promises.readFile(req.file.path);
     if (!validateFileMagic(head, ext)) {
       fs.unlink(req.file.path, () => {});
       return res.json({ code: 400, message: '文件内容与格式不符' });
@@ -102,7 +102,7 @@ router.post('/multiple', authRequired, upload.array('files', 9), async (req, res
       }
 
       // 魔数校验：内容与扩展名一致才入库，否则删除
-      const head = fs.readFileSync(file.path);
+      const head = await fs.promises.readFile(file.path);
       if (!validateFileMagic(head, ext)) {
         fs.unlink(file.path, () => {});
         continue;

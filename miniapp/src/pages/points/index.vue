@@ -161,10 +161,15 @@ function openRecharge() {
   rechargeAmount.value = '';
   showRecharge.value = true;
   // 预取小程序可用渠道（wechat/mock），避免创建 waffo 等 redirect 订单在小程序内无意义
+  // 渠道接口失败不静默回退，置空渠道由提交时兜底拦截
   if (!payChannel.value) {
-    resolveMiniappChannels().then((info) => {
-      payChannel.value = info.channel;
-    });
+    resolveMiniappChannels()
+      .then((info) => {
+        payChannel.value = info.channel;
+      })
+      .catch((e) => {
+        uni.showToast({ title: e.message || '支付渠道加载失败', icon: 'none' });
+      });
   }
 }
 
@@ -187,6 +192,10 @@ async function handleRecharge() {
     return;
   }
   if (recharging.value) return;
+  if (!payChannel.value) {
+    uni.showToast({ title: '支付渠道未就绪，请关闭后重试', icon: 'none' });
+    return;
+  }
   if (payChannel.value === 'wechat' && !checkIosVirtualPayVersion()) return;
   recharging.value = true;
   try {

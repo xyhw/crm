@@ -29,6 +29,7 @@ import scheduler from './scheduler.js';
 import { config } from './config.js';
 import { apiLimiter } from './middleware/rate-limit.js';
 import { requireRole } from './middleware/require-role.js';
+import { paginationLimiter } from './middleware/pagination.js';
 
 // 路由导入
 import authRoutes from './routes/auth.routes.js';
@@ -88,8 +89,9 @@ app.use('/api/points/recharge/notify/wechat', express.raw({ type: ['*/xml', 'tex
 
 app.use(express.json());
 
-// 全局接口限流
+// 全局接口限流 + 分页参数钳制
 app.use('/api', apiLimiter);
+app.use('/api', paginationLimiter);
 
 // Swagger API 文档
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

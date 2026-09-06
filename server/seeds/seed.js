@@ -71,7 +71,10 @@ export async function seedDatabase() {
   console.log('[seed] System configs seeded');
 
   // 创建默认管理员
-  // 生产环境必须通过 ADMIN_INIT_PASSWORD 设置强密码，否则使用默认密码并输出强制改密警告
+  // 生产环境必须显式提供 ADMIN_INIT_PASSWORD，否则拒绝启动，杜绝 admin/admin123 弱口令上线
+  if (process.env.NODE_ENV === 'production' && !process.env.ADMIN_INIT_PASSWORD) {
+    throw new Error('[seed] 生产环境未设置 ADMIN_INIT_PASSWORD，拒绝创建默认管理员。请设置强密码环境变量后重启');
+  }
   const initPassword = process.env.ADMIN_INIT_PASSWORD || 'admin123';
   const adminHash = await bcrypt.hash(initPassword, 10);
   await insert('admin_users', {

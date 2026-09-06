@@ -15,23 +15,27 @@ const PLATFORM_ABLE = null;
 import { api } from '@/api/index';
 
 export async function resolveMiniappChannels() {
-  try {
-    const res = await api.rechargeChannels();
-    const all = res?.channels || ['mock'];
-    const defaultChannel = res?.defaultChannel || (all.length ? all[0] : 'mock');
-    const able = PLATFORM_ABLE
-      ? all.filter((c) => PLATFORM_ABLE.includes(c))
-      : all.filter((c) => c !== 'wechat');
-    // #ifdef MP-WEIXIN
-    const channel = able.includes('wechat') ? 'wechat' : able.length ? able[0] : 'mock';
-    // #endif
-    // #ifndef MP-WEIXIN
-    const channel = defaultChannel;
-    // #endif
-    return { channels: able.length ? able : ['mock'], channel, defaultChannel };
-  } catch (e) {
-    return { channels: ['mock'], channel: 'mock', defaultChannel: 'mock' };
+  // 渠道一律以服务端配置为准；接口失败或当前端无可用渠道时抛错，
+  // 由调用方提示重试——绝不允许静默回退 mock（生产环境 mock 已禁用）。
+  const res = await api.rechargeChannels();
+  const all = res?.channels || [];
+  if (!all.length) {
+    throw new Error('暂无可用支付渠道，请稍后重试');
   }
+  const defaultChannel = res?.defaultChannel || all[0];
+  const able = PLATFORM_ABLE
+    ? all.filter((c) => PLATFORM_ABLE.includes(c))
+    : all.filter((c) => c !== 'wechat');
+  if (!able.length) {
+    throw new Error('当前端暂无可用支付渠道，请稍后重试');
+  }
+  // #ifdef MP-WEIXIN
+  const channel = able.includes('wechat') ? 'wechat' : able[0];
+  // #endif
+  // #ifndef MP-WEIXIN
+  const channel = able.includes(defaultChannel) ? defaultChannel : able[0];
+  // #endif
+  return { channels: able, channel, defaultChannel };
 }
 
 export function channelLabel(value) {

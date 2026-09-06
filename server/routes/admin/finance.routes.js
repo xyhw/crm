@@ -38,7 +38,7 @@ router.get('/', async (req, res) => {
         SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
         SUM(CASE WHEN credit_score >= 80 THEN 1 ELSE 0 END) as goodCredit,
         SUM(CASE WHEN credit_score < 40 THEN 1 ELSE 0 END) as badCredit
-       FROM users WHERE status != 'deleted'`
+       FROM users WHERE deleted_at IS NULL`
     );
 
     const [opportunities] = await query(

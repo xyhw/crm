@@ -26,8 +26,9 @@ export function isWechatConfigured() {
 
 async function wxFetch(pathname, options = {}) {
   const resp = await fetch(`${API_BASE}${pathname}`, {
-    timeout: 10000,
     ...options,
+    // undici fetch 不支持 timeout 选项，须用 AbortSignal 实现超时
+    signal: AbortSignal.timeout(10000),
   });
   if (!resp.ok) {
     throw new Error(`微信接口网络异常(${resp.status})`);

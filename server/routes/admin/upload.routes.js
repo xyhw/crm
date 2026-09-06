@@ -53,7 +53,7 @@ router.post('/', adminAuthRequired, upload.single('file'), async (req, res) => {
     }
 
     // 魔数校验：真实内容与扩展名一致
-    const head = fs.readFileSync(req.file.path);
+    const head = await fs.promises.readFile(req.file.path);
     if (!validateFileMagic(head, ext)) {
       fs.unlink(req.file.path, () => {});
       return res.json({ code: 400, message: '文件内容与格式不符' });
@@ -61,11 +61,9 @@ router.post('/', adminAuthRequired, upload.single('file'), async (req, res) => {
 
     const fileRecord = await insert('upload_files', {
       original_name: req.file.originalname,
-      file_name: req.file.filename,
-      file_path: req.file.path,
+      file_path: `/uploads/${req.file.filename}`,
       file_size: req.file.size,
       mime_type: req.file.mimetype,
-      uploader_id: req.adminId,
     });
 
     res.json({
