@@ -10,9 +10,9 @@ export default function PayResult() {
   const message = params.get('message') || '';
 
   const meta = {
-    success: { title: '充值成功', desc: '积分已到账，请查收', icon: <Passed width={64} height={64} color="#07c160" /> },
-    failed: { title: '支付失败', desc: message || '您的这笔支付未能完成，积分未到账，可重新发起充值', icon: <StopCircleO width={64} height={64} color="#ee0a24" /> },
-    expired: { title: '支付超时', desc: message || '订单已超时失效，请在有效期(30分钟)内完成支付', icon: <ClockO width={64} height={64} color="#ff976a" /> },
+    success: { title: '充值成功', desc: '积分已到账，请查收', icon: <Passed width={64} height={64} color="#048C47" /> },
+    failed: { title: '支付失败', desc: message || '您的这笔支付未能完成，积分未到账，可重新发起充值', icon: <StopCircleO width={64} height={64} color="#E54848" /> },
+    expired: { title: '支付超时', desc: message || '订单已超时失效，请在有效期(30分钟)内完成支付', icon: <ClockO width={64} height={64} color="#E8920A" /> },
   }[status] || meta.expired;
 
   return (
