@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { query, queryOne, insert, update, transaction } from '../db.js';
 import { authRequired } from '../auth.js';
 import { isFreeAudit } from '../services/level.service.js';
+import { creditPoints } from '../services/points-ledger.service.js';
 
 const router = Router();
 
@@ -116,19 +117,12 @@ router.post('/share', authRequired, async (req, res) => {
 
       if (rewardPoints > 0) {
         await transaction(async (conn) => {
-          await conn.execute(
-            'UPDATE points_accounts SET balance = balance + ? WHERE user_id = ?',
-            [rewardPoints, req.userId]
-          );
-          const [account] = await conn.execute(
-            'SELECT balance FROM points_accounts WHERE user_id = ?',
-            [req.userId]
-          );
-          await conn.execute(
-            `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-             VALUES (?, ?, ?, 'reward', '进展同步奖励')`,
-            [req.userId, rewardPoints, account[0].balance]
-          );
+          await creditPoints(conn, {
+            userId: req.userId,
+            delta: rewardPoints,
+            sourceType: 'reward',
+            sourceTitle: '进展同步奖励',
+          });
         });
       }
     }
@@ -205,19 +199,12 @@ router.post('/helpful', authRequired, async (req, res) => {
       const rewardPoints = parseInt(rewardConfig[0]?.config_value || '1');
 
       if (rewardPoints > 0) {
-        await conn.execute(
-          'UPDATE points_accounts SET balance = balance + ? WHERE user_id = ?',
-          [rewardPoints, share.user_id]
-        );
-        const [account] = await conn.execute(
-          'SELECT balance FROM points_accounts WHERE user_id = ?',
-          [share.user_id]
-        );
-        await conn.execute(
-          `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-           VALUES (?, ?, ?, 'reward', '进展被标记有用')`,
-          [share.user_id, rewardPoints, account[0].balance]
-        );
+        await creditPoints(conn, {
+          userId: share.user_id,
+          delta: rewardPoints,
+          sourceType: 'reward',
+          sourceTitle: '进展被标记有用',
+        });
       }
 
       // 信用分 +1（需求 5.7：进展被标记有用）

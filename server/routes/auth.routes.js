@@ -9,6 +9,7 @@ import { loginLimiter } from '../middleware/rate-limit.js';
 import { sendResetCodeEmail } from '../services/mail.service.js';
 import { isAccountLocked, recordLoginFailure, clearLoginFailures } from '../services/account-lock.service.js';
 import { isWechatConfigured, code2Session, getPhoneByCode } from '../services/wechat.service.js';
+import { ensurePointsAccount, creditPoints } from '../services/points-ledger.service.js';
 
 const router = Router();
 
@@ -57,7 +58,7 @@ async function createUserWithGifts(conn, { phone, passwordHash, nickname, email,
   );
   const userId = userResult.insertId;
 
-  await conn.execute('INSERT INTO points_accounts (user_id, balance) VALUES (?, 0)', [userId]);
+  await ensurePointsAccount(conn, userId);
   await conn.execute("INSERT INTO user_level_stats (user_id, level) VALUES (?, 'normal')", [userId]);
 
   // 注册赠送积分
@@ -67,15 +68,7 @@ async function createUserWithGifts(conn, { phone, passwordHash, nickname, email,
   const giftPoints = parseInt(configRow[0]?.config_value || '10');
 
   if (giftPoints > 0) {
-    await conn.execute('UPDATE points_accounts SET balance = balance + ? WHERE user_id = ?', [
-      giftPoints,
-      userId,
-    ]);
-    await conn.execute(
-      `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-       VALUES (?, ?, ?, 'register_gift', '注册赠送')`,
-      [userId, giftPoints, giftPoints]
-    );
+    await creditPoints(conn, { userId, delta: giftPoints, sourceType: 'register_gift', sourceTitle: '注册赠送' });
   }
 
   // 邀请奖励
@@ -86,29 +79,18 @@ async function createUserWithGifts(conn, { phone, passwordHash, nickname, email,
     const rewardPoints = parseInt(inviteConfig[0]?.config_value || '5');
 
     if (rewardPoints > 0) {
-      await conn.execute('UPDATE points_accounts SET balance = balance + ? WHERE user_id = ?', [
-        rewardPoints,
-        invitedBy,
-      ]);
-      const [inviterAccount] = await conn.execute(
-        'SELECT balance FROM points_accounts WHERE user_id = ?',
-        [invitedBy]
-      );
-      await conn.execute(
-        `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-         VALUES (?, ?, ?, 'invite_gift', ?)`,
-        [invitedBy, rewardPoints, inviterAccount[0].balance, `邀请 ${nickname} 注册`]
-      );
-
-      await conn.execute('UPDATE points_accounts SET balance = balance + ? WHERE user_id = ?', [
-        rewardPoints,
+      await creditPoints(conn, {
+        userId: invitedBy,
+        delta: rewardPoints,
+        sourceType: 'invite_gift',
+        sourceTitle: `邀请 ${nickname} 注册`,
+      });
+      await creditPoints(conn, {
         userId,
-      ]);
-      await conn.execute(
-        `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-         VALUES (?, ?, ?, 'invite_gift', '邀请注册奖励')`,
-        [userId, rewardPoints, giftPoints + rewardPoints]
-      );
+        delta: rewardPoints,
+        sourceType: 'invite_gift',
+        sourceTitle: '邀请注册奖励',
+      });
 
       await conn.execute(
         `INSERT INTO invitations (inviter_id, invitee_id, invite_code, status, inviter_reward, invitee_reward, completed_at)

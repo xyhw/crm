@@ -3,6 +3,10 @@ import { Router } from 'express';
 import { query, queryOne, insert, update, transaction } from '../db.js';
 import { authRequired, optionalAuth } from '../auth.js';
 import { detectSimilar } from '../services/similarity.service.js';
+import { buildMarketIntelligence } from '../services/market-intelligence.service.js';
+import { shouldCountView } from '../services/view-counter.js';
+import { buildWhere, wrapLike } from '../lib/list-query.js';
+import { creditPoints, debitPoints } from '../services/points-ledger.service.js';
 
 const router = Router();
 
@@ -11,8 +15,25 @@ router.get('/', optionalAuth, async (req, res) => {
   try {
     const { category, keyword, status = 'active', page = 1, pageSize = 10, sort = 'newest', mine } = req.query;
     const statusProvided = req.query.status !== undefined;
-    
-    let sql = `SELECT o.id, o.title, o.category_id, o.city, o.brand, o.hotel_name, o.price, o.status,
+
+    // list 与 count 共用同一组过滤条件（buildWhere），避免双写漂移
+    const conditions = [];
+    if (mine === '1' && req.userId) {
+      conditions.push(['o.user_id = ?', [req.userId]]);
+      if (statusProvided) conditions.push(['o.status = ?', [status]]);
+    } else if (status) {
+      conditions.push(['o.status = ?', [status]]);
+    }
+    if (category) conditions.push(['o.category_id = ?', [category]]);
+    if (keyword) {
+      conditions.push([
+        '(o.title LIKE ? OR o.hotel_name LIKE ? OR o.city LIKE ? OR o.brand LIKE ? OR o.address LIKE ?)',
+        [wrapLike(keyword), wrapLike(keyword), wrapLike(keyword), wrapLike(keyword), wrapLike(keyword)],
+      ]);
+    }
+    const { whereSql, params: whereParams } = buildWhere(conditions);
+
+    let listSql = `SELECT o.id, o.title, o.category_id, o.city, o.brand, o.hotel_name, o.price, o.status,
               o.purchase_count, o.view_count, o.created_at, o.user_id,
               o.address, o.stage, o.description_full, o.contact_name, o.contact_phone, o.wechat,
               c.name as category_name, c.icon as category_icon,
@@ -24,40 +45,17 @@ router.get('/', optionalAuth, async (req, res) => {
                 FROM follow_up_shares
                 WHERE audit_status = 'approved'
                 GROUP BY opportunity_id
-              ) fs ON fs.opportunity_id = o.id
-              WHERE 1=1`;
-    const params = [];
-
-    if (mine === '1' && req.userId) {
-      sql += ' AND o.user_id = ?';
-      params.push(req.userId);
-      if (statusProvided) {
-        sql += ' AND o.status = ?';
-        params.push(status);
-      }
-    } else if (status) {
-      sql += ' AND o.status = ?';
-      params.push(status);
-    }
-    if (category) {
-      sql += ' AND o.category_id = ?';
-      params.push(category);
-    }
-    if (keyword) {
-      sql += ' AND (o.title LIKE ? OR o.hotel_name LIKE ? OR o.city LIKE ? OR o.brand LIKE ? OR o.address LIKE ?)';
-      const kw = `%${keyword}%`;
-      params.push(kw, kw, kw, kw, kw);
-    }
+              ) fs ON fs.opportunity_id = o.id${whereSql}`;
 
     // 排序
-    if (sort === 'newest') {
-      sql += ' ORDER BY o.created_at DESC';
-    } else if (sort === 'popular') {
-      sql += ' ORDER BY o.purchase_count DESC, o.created_at DESC';
+    let orderSql = ' ORDER BY o.created_at DESC';
+    const orderParams = [];
+    if (sort === 'popular') {
+      orderSql = ' ORDER BY o.purchase_count DESC, o.created_at DESC';
     } else if (sort === 'price_asc') {
-      sql += ' ORDER BY o.price ASC';
+      orderSql = ' ORDER BY o.price ASC';
     } else if (sort === 'price_desc') {
-      sql += ' ORDER BY o.price DESC';
+      orderSql = ' ORDER BY o.price DESC';
     } else if (sort === 'recommend') {
       // 软排序：候选为全部 active 商机，同类型/同城/同品牌加权置顶，其余类目仍可见
       // 城市与品牌偏好取自登录用户的购买历史（paid 订单），无需额外资料字段
@@ -65,7 +63,7 @@ router.get('/', optionalAuth, async (req, res) => {
       let score = 'o.purchase_count * 3 + o.view_count + (o.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)) * 20';
       if (boostCat) {
         score = `(o.category_id = ?) * 100 + ${score}`;
-        params.push(boostCat);
+        orderParams.push(boostCat);
       }
       if (req.userId) {
         const bought = await query(
@@ -78,49 +76,25 @@ router.get('/', optionalAuth, async (req, res) => {
         const brands = [...new Set(bought.map((b) => b.brand).filter(Boolean))];
         if (cities.length) {
           score += ` + (o.city IN (${cities.map(() => '?').join(', ')})) * 30`;
-          params.push(...cities);
+          orderParams.push(...cities);
         }
         if (brands.length) {
           score += ` + (o.brand IN (${brands.map(() => '?').join(', ')})) * 40`;
-          params.push(...brands);
+          orderParams.push(...brands);
         }
       }
-      sql += ` ORDER BY (${score}) DESC, o.created_at DESC`;
-    } else {
-      sql += ' ORDER BY o.created_at DESC';
+      orderSql = ` ORDER BY (${score}) DESC, o.created_at DESC`;
     }
 
     // 分页
     const offset = (Number(page) - 1) * Number(pageSize);
-    sql += ' LIMIT ? OFFSET ?';
-    params.push(Number(pageSize), offset);
+    listSql += `${orderSql} LIMIT ? OFFSET ?`;
 
-    const list = await query(sql, params);
-
-    // 获取总数
-    let countSql = 'SELECT COUNT(*) as total FROM opportunities o WHERE 1=1';
-    const countParams = [];
-    if (mine === '1' && req.userId) {
-      countSql += ' AND o.user_id = ?';
-      countParams.push(req.userId);
-      if (statusProvided) {
-        countSql += ' AND o.status = ?';
-        countParams.push(status);
-      }
-    } else if (status) {
-      countSql += ' AND o.status = ?';
-      countParams.push(status);
-    }
-    if (category) {
-      countSql += ' AND o.category_id = ?';
-      countParams.push(category);
-    }
-    if (keyword) {
-      countSql += ' AND (o.title LIKE ? OR o.hotel_name LIKE ? OR o.city LIKE ? OR o.brand LIKE ? OR o.address LIKE ?)';
-      const kw = `%${keyword}%`;
-      countParams.push(kw, kw, kw, kw, kw);
-    }
-    const [countResult] = await query(countSql, countParams);
+    const [list, countResult] = await Promise.all([
+      query(listSql, [...whereParams, ...orderParams, Number(pageSize), offset]),
+      // fs/c 均为 1:1 LEFT JOIN，count 可直接基于主表
+      query(`SELECT COUNT(*) as total FROM opportunities o${whereSql}`, whereParams),
+    ]);
 
     // 如果用户已登录，检查购买态
     let purchasedIds = [];
@@ -197,11 +171,14 @@ router.get('/:id', optionalAuth, async (req, res) => {
       return res.json({ code: 404, message: '商机不存在' });
     }
 
-    // 增加浏览量（原子自增，避免读-改-写竞态，异步执行不阻塞响应）
-    query('UPDATE opportunities SET view_count = view_count + 1 WHERE id = ?', [opportunity.id]).catch(() => {});
-    const finalViewCount = (opportunity.view_count || 0) + 1;
+    // 增加浏览量（原子自增；同用户/IP 1 小时内对同一商机去重，防刷量）
+    const countedView = shouldCountView(req.userId ? `u${req.userId}` : `ip${req.ip}`, opportunity.id);
+    if (countedView) {
+      query('UPDATE opportunities SET view_count = view_count + 1 WHERE id = ?', [opportunity.id]).catch(() => {});
+    }
+    const finalViewCount = (opportunity.view_count || 0) + (countedView ? 1 : 0);
 
-    // 并行获取：购买态、标签、市场情报（互不依赖，均只依赖 opportunity.id 与 req.userId）
+    // 并行获取：购买态、标签（互不依赖）
     const isPublisher = req.userId === opportunity.user_id;
     let purchaseQuery = Promise.resolve(null);
     if (req.userId) {
@@ -210,24 +187,15 @@ router.get('/:id', optionalAuth, async (req, res) => {
         [req.userId, opportunity.id]
       );
     }
-    const [tagsP, sharesP, purchase] = await Promise.all([
+    const [tags, purchase] = await Promise.all([
       query(
-        `SELECT t.id, t.name FROM opportunity_tags t 
-         JOIN opportunity_tag_relations r ON t.id = r.tag_id 
+        `SELECT t.id, t.name FROM opportunity_tags t
+         JOIN opportunity_tag_relations r ON t.id = r.tag_id
          WHERE r.opportunity_id = ?`,
-        [opportunity.id]
-      ),
-      query(
-        `SELECT s.id, s.status, s.summary, s.helpful_count, s.report_count, s.created_at, s.user_id
-         FROM follow_up_shares s
-         WHERE s.opportunity_id = ? AND s.audit_status = 'approved'
-         ORDER BY s.helpful_count DESC, s.created_at DESC`,
         [opportunity.id]
       ),
       purchaseQuery,
     ]);
-    const tags = tagsP;
-    const shares = sharesP;
     const isPurchased = req.userId ? !!purchase : false;
     let crmId = null;
     if (isPurchased) {
@@ -236,34 +204,6 @@ router.get('/:id', optionalAuth, async (req, res) => {
         [req.userId, opportunity.id]
       );
       crmId = crm?.id || null;
-    }
-
-    // 统计进度分布
-    const statusCounts = {};
-    shares.forEach(s => {
-      statusCounts[s.status] = (statusCounts[s.status] || 0) + 1;
-    });
-
-    // 当前用户点赞/举报过的进展同步（用于回显状态，防重复操作）；均依赖 isPurchased，并行执行
-    let myLikedShares = new Set();
-    let myReportedShares = new Set();
-    if (req.userId && isPurchased) {
-      const [likes, reports] = await Promise.all([
-        query(
-          `SELECT m.share_id FROM follow_up_helpful_marks m
-           JOIN follow_up_shares s ON m.share_id = s.id
-           WHERE m.user_id = ? AND s.opportunity_id = ?`,
-          [req.userId, opportunity.id]
-        ),
-        query(
-          `SELECT m.share_id FROM follow_up_share_invalid_marks m
-           JOIN follow_up_shares s ON m.share_id = s.id
-           WHERE m.user_id = ? AND s.opportunity_id = ?`,
-          [req.userId, opportunity.id]
-        ),
-      ]);
-      myLikedShares = new Set(likes.map(l => l.share_id));
-      myReportedShares = new Set(reports.map(r => r.share_id));
     }
 
     const result = {
@@ -299,21 +239,10 @@ router.get('/:id', optionalAuth, async (req, res) => {
       } catch {
         result.attachments = [];
       }
-      result.marketIntelligence = {
-        totalShares: shares.length,
-        statusDistribution: statusCounts,
-        shareBoard: shares.slice(0, 100).map(s => ({
-          shareId: s.id,
-          status: s.status,
-          summary: s.summary,
-          helpfulCount: s.helpful_count,
-          createdAt: s.created_at,
-          isOwn: req.userId === s.user_id,
-          isLiked: myLikedShares.has(s.id),
-          reportCount: s.report_count || 0,
-          isReported: myReportedShares.has(s.id),
-        })),
-      };
+      result.marketIntelligence = await buildMarketIntelligence({
+        opportunityId: opportunity.id,
+        userId: req.userId,
+      });
     } else {
       result.attachments = [];
     }
@@ -536,17 +465,12 @@ router.post('/:id/invalid-mark', authRequired, async (req, res) => {
 
         for (const order of orders[0]) {
           // 退款积分
-          await conn.execute(
-            'UPDATE points_accounts SET balance = balance + ? WHERE user_id = ?',
-            [order.actual_price, order.user_id]
-          );
-          await conn.execute(
-            `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-             VALUES (?, ?, 
-               (SELECT balance FROM points_accounts WHERE user_id = ?),
-               'refund', '商机无效退款')`,
-            [order.user_id, order.actual_price, order.user_id]
-          );
+          await creditPoints(conn, {
+            userId: order.user_id,
+            delta: order.actual_price,
+            sourceType: 'refund',
+            sourceTitle: '商机无效退款',
+          });
           // 更新订单状态
           await conn.execute(
             'UPDATE orders SET status = "refunded", refunded_at = NOW() WHERE id = ?',
@@ -573,19 +497,13 @@ router.post('/:id/invalid-mark', authRequired, async (req, res) => {
 
         if (clawback > 0) {
           // 从投稿人积分扣除（可为负，代表积分债务）
-          await conn.execute(
-            'UPDATE points_accounts SET balance = GREATEST(-999999, balance - ?) WHERE user_id = ?',
-            [clawback, publisherId]
-          );
-          const [pubAccount] = await conn.execute(
-            'SELECT balance FROM points_accounts WHERE user_id = ?',
-            [publisherId]
-          );
-          await conn.execute(
-            `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-             VALUES (?, ?, ?, 'penalty', '商机被判无效分佣回扣')`,
-            [publisherId, -clawback, pubAccount[0]?.balance || 0]
-          );
+          await debitPoints(conn, {
+            userId: publisherId,
+            delta: clawback,
+            sourceType: 'penalty',
+            sourceTitle: '商机被判无效分佣回扣',
+            allowDebt: true,
+          });
         }
         // 标记分佣结算失效
         await conn.execute(

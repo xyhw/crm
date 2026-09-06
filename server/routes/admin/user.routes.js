@@ -1,7 +1,8 @@
 import { logger } from '../../services/logger.js';
 import { Router } from 'express';
-import { query, queryOne, update } from '../../db.js';
+import { query, queryOne, update, transaction } from '../../db.js';
 import { audit } from '../../services/audit-log.service.js';
+import { ensurePointsAccount, creditPoints, debitPoints } from '../../services/points-ledger.service.js';
 
 const router = Router();
 
@@ -173,24 +174,30 @@ router.put('/:id/points', audit('points', 'adjust_points'), async (req, res) => 
       }
     }
 
-    // 确保积分账户存在，再更新积分
-    await query(
-      'INSERT INTO points_accounts (user_id, balance) VALUES (?, ?) ON DUPLICATE KEY UPDATE user_id = VALUES(user_id)',
-      [userId, 0]
-    );
-    await query('UPDATE points_accounts SET balance = balance + ? WHERE user_id = ?', [finalDelta, userId]);
-
-    const account = await queryOne('SELECT balance FROM points_accounts WHERE user_id = ?', [userId]);
-
-    // 记录流水
-    await query(
-      `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-       VALUES (?, ?, ?, 'admin_adjust', ?)`,
-      [userId, finalDelta, account?.balance ?? 0, reason]
-    );
+    // 确保积分账户存在后，在事务内完成调账与流水（原子操作，原实现为三步非事务）
+    await transaction(async (conn) => {
+      await ensurePointsAccount(conn, userId);
+      if (finalDelta >= 0) {
+        await creditPoints(conn, { userId, delta: finalDelta, sourceType: 'admin_adjust', sourceTitle: reason });
+      } else {
+        const updated = await debitPoints(conn, {
+          userId,
+          delta: Math.abs(finalDelta),
+          sourceType: 'admin_adjust',
+          sourceTitle: reason,
+          requireBalance: true,
+        });
+        if (updated === null) {
+          throw Object.assign(new Error('余额不足'), { expose: true, code: 400 });
+        }
+      }
+    });
 
     res.json({ code: 0, message: '积分调整成功' });
   } catch (err) {
+    if (err.expose) {
+      return res.json({ code: err.code || 400, message: err.message });
+    }
     logger.error('Admin adjust points error:', err);
     res.status(500).json({ code: 500, message: '调整积分失败' });
   }

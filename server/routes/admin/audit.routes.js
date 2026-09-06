@@ -1,6 +1,7 @@
 import { logger } from '../../services/logger.js';
 import { Router } from 'express';
 import { query, queryOne, update, transaction } from '../../db.js';
+import { creditPoints } from '../../services/points-ledger.service.js';
 
 const router = Router();
 
@@ -76,19 +77,12 @@ router.put('/follow-up-shares/:id', async (req, res) => {
       
       if (rewardPoints > 0) {
         await transaction(async (conn) => {
-          await conn.execute(
-            'UPDATE points_accounts SET balance = balance + ? WHERE user_id = ?',
-            [rewardPoints, share.user_id]
-          );
-          const [account] = await conn.execute(
-            'SELECT balance FROM points_accounts WHERE user_id = ?',
-            [share.user_id]
-          );
-          await conn.execute(
-            `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-             VALUES (?, ?, ?, 'reward', '进展审核通过奖励')`,
-            [share.user_id, rewardPoints, account[0].balance]
-          );
+          await creditPoints(conn, {
+            userId: share.user_id,
+            delta: rewardPoints,
+            sourceType: 'reward',
+            sourceTitle: '进展审核通过奖励',
+          });
         });
       }
     }

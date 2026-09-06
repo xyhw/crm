@@ -1,5 +1,6 @@
 import { config } from '../../config.js';
 import { query, queryOne, transaction } from '../../db.js';
+import { ensurePointsAccount, creditPoints } from '../points-ledger.service.js';
 import { BasePaymentAdapter } from './base.js';
 import { MockAdapter } from './mock.js';
 import { WechatAdapter } from './wechat.js';
@@ -118,20 +119,15 @@ export async function settleRechargeOrder(orderNo, { payChannelOrderNo, paidAt, 
       [payChannelOrderNo || null, paidAt || new Date(), JSON.stringify(rawNotify || null), orderNo]
     );
 
-    await conn.execute(
-      'UPDATE points_accounts SET balance = balance + ?, total_recharged = total_recharged + ? WHERE user_id = ?',
-      [order.amount, order.amount, order.user_id]
-    );
-
-    const [acct] = await conn.execute(
-      'SELECT balance FROM points_accounts WHERE user_id = ?',
-      [order.user_id]
-    );
-    await conn.execute(
-      `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title, source_id)
-       VALUES (?, ?, ?, 'recharge', '积分充值', ?)`,
-      [order.user_id, order.amount, acct[0].balance, order.id]
-    );
+    await ensurePointsAccount(conn, order.user_id);
+    await creditPoints(conn, {
+      userId: order.user_id,
+      delta: order.amount,
+      sourceType: 'recharge',
+      sourceId: order.id,
+      sourceTitle: '积分充值',
+      trackField: 'total_recharged',
+    });
 
     return { orderNo, already: false, userId: order.user_id, amount: order.amount };
   });

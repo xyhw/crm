@@ -2,6 +2,7 @@ import { logger } from '../services/logger.js';
 import { Router } from 'express';
 import { query, queryOne, transaction } from '../db.js';
 import { authRequired } from '../auth.js';
+import { ensurePointsAccount, creditPoints, debitPoints } from '../services/points-ledger.service.js';
 import { 
   getUserLevel, 
   getLevelConfig,
@@ -72,46 +73,28 @@ router.post('/', authRequired, async (req, res) => {
       // 0. 行锁商机，防止并发重复购买（配合唯一索引兜底）
       await conn.execute('SELECT id FROM opportunities WHERE id = ? FOR UPDATE', [opportunityId]);
 
-      // 1. 扣减购买者积分；affectedRows 为 0 说明余额不足，回滚
-      const [deductResult] = await conn.execute(
-        'UPDATE points_accounts SET balance = balance - ?, total_consumed = total_consumed + ? WHERE user_id = ? AND balance >= ?',
-        [actualPrice, actualPrice, req.userId, actualPrice]
-      );
-      if (deductResult.affectedRows === 0) {
+      // 1. 扣减购买者积分；余额不足（或账户缺失）时返回 null，抛错回滚
+      const buyerBalance = await debitPoints(conn, {
+        userId: req.userId,
+        delta: actualPrice,
+        sourceType: 'consume',
+        sourceId: opportunityId,
+        sourceTitle: `购买商机「${opportunity.title}」`,
+        requireBalance: true,
+      });
+      if (buyerBalance === null) {
         throw new Error('INSUFFICIENT_BALANCE');
       }
-      
-      const [buyerAccount] = await conn.execute(
-        'SELECT balance FROM points_accounts WHERE user_id = ?',
-        [req.userId]
-      );
-      
-      await conn.execute(
-        `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_id, source_title)
-         VALUES (?, ?, ?, 'consume', ?, ?)`,
-        [req.userId, -actualPrice, buyerAccount[0].balance, opportunityId, `购买商机「${opportunity.title}」`]
-      );
 
       // 2. 投稿人积分账户不存在时先初始化，再加积分
-      await conn.execute(
-        'INSERT IGNORE INTO points_accounts (user_id, balance, total_consumed) VALUES (?, 0, 0)',
-        [opportunity.user_id]
-      );
-      await conn.execute(
-        'UPDATE points_accounts SET balance = balance + ? WHERE user_id = ?',
-        [totalSellerIncome, opportunity.user_id]
-      );
-      
-      const [sellerAccount] = await conn.execute(
-        'SELECT balance FROM points_accounts WHERE user_id = ?',
-        [opportunity.user_id]
-      );
-      
-      await conn.execute(
-        `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_id, source_title)
-         VALUES (?, ?, ?, 'commission', ?, ?)`,
-        [opportunity.user_id, totalSellerIncome, sellerAccount[0].balance, opportunityId, `商机被购买「${opportunity.title}」`]
-      );
+      await ensurePointsAccount(conn, opportunity.user_id);
+      await creditPoints(conn, {
+        userId: opportunity.user_id,
+        delta: totalSellerIncome,
+        sourceType: 'commission',
+        sourceId: opportunityId,
+        sourceTitle: `商机被购买「${opportunity.title}」`,
+      });
 
       // 3. 创建订单
       await conn.execute(
