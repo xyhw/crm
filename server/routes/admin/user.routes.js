@@ -36,7 +36,17 @@ router.get('/', async (req, res) => {
 
     const list = await query(sql, params);
 
-    const [countResult] = await query('SELECT COUNT(*) as total FROM users WHERE deleted_at IS NULL', []);
+    let filterSql = ' WHERE deleted_at IS NULL';
+    const countParams = [];
+    if (status) {
+      filterSql += ' AND status = ?';
+      countParams.push(status);
+    }
+    if (keyword) {
+      filterSql += ' AND (nickname LIKE ? OR phone LIKE ? OR company LIKE ?)';
+      countParams.push(`%${keyword}%`, `%${keyword}%`, `%${keyword}%`);
+    }
+    const [countResult] = await query(`SELECT COUNT(*) as total FROM users${filterSql}`, countParams);
 
     res.json({
       code: 0,
@@ -108,10 +118,14 @@ router.get('/:id', async (req, res) => {
  */
 router.put('/:id', audit('users', 'edit'), async (req, res) => {
   try {
-    const { nickname, company } = req.body || {};
+    const { nickname, company, status } = req.body || {};
+    if (status !== undefined && !['active', 'banned'].includes(status)) {
+      return res.json({ code: 400, message: '状态值无效' });
+    }
     const data = {};
     if (nickname !== undefined) data.nickname = nickname;
     if (company !== undefined) data.company = company;
+    if (status !== undefined) data.status = status;
     if (Object.keys(data).length === 0) {
       return res.json({ code: 400, message: '没有可更新的字段' });
     }

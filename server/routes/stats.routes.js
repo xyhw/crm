@@ -33,18 +33,22 @@ router.get('/me', authRequired, async (req, res) => {
         [req.userId]
       ),
     ]);
+    const [publishRow = {}] = publishStats;
+    const [purchaseRow = {}] = purchaseStats;
+    const [boughtRow = {}] = boughtStats;
+    const [crmRow = {}] = crmStats;
     const [levelStats] = levelRows;
 
     res.json({
       code: 0,
       data: {
-        published: publishStats.total || 0,
-        publishedActive: publishStats.active || 0,
-        totalPurchased: purchaseStats.total || 0,
-        totalIncome: purchaseStats.totalIncome || 0,
-        bought: boughtStats.total || 0,
-        crm: crmStats.total || 0,
-        level: levelStats[0] || { level: 'normal' },
+        published: Number(publishRow.total) || 0,
+        publishedActive: Number(publishRow.active) || 0,
+        totalPurchased: Number(purchaseRow.total) || 0,
+        totalIncome: Number(purchaseRow.totalIncome) || 0,
+        bought: Number(boughtRow.total) || 0,
+        crm: Number(crmRow.total) || 0,
+        level: levelStats || { level: 'normal' },
       },
     });
   } catch (err) {

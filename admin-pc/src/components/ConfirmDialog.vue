@@ -5,6 +5,9 @@
         <h3 class="title">{{ title }}</h3>
         <p class="content">{{ content }}</p>
         <p v-if="desc" class="desc">{{ desc }}</p>
+        <div v-if="needReason" class="reason-field">
+          <input v-model="reason" class="input" type="text" :placeholder="reasonPlaceholder" maxlength="200" />
+        </div>
         <div class="actions">
           <button class="btn btn-ghost" type="button" @click="onCancel">取消</button>
           <button
@@ -20,6 +23,8 @@
 </template>
 
 <script setup>
+import { ref, watch } from 'vue';
+
 const props = defineProps({
   modelValue: Boolean,
   title: { type: String, default: '确认' },
@@ -27,8 +32,15 @@ const props = defineProps({
   desc: { type: String, default: '' },
   confirmText: { type: String, default: '确定' },
   tone: { type: String, default: 'primary' },
+  needReason: { type: Boolean, default: false },
+  reasonPlaceholder: { type: String, default: '请输入原因' },
 });
 const emit = defineEmits(['update:modelValue', 'confirm', 'cancel']);
+
+const reason = ref('');
+watch(() => props.modelValue, (open) => {
+  if (!open) reason.value = '';
+});
 
 function onCancel() {
   emit('update:modelValue', false);
@@ -36,7 +48,7 @@ function onCancel() {
 }
 function onConfirm() {
   emit('update:modelValue', false);
-  emit('confirm');
+  emit('confirm', reason.value.trim());
 }
 </script>
 
@@ -70,6 +82,9 @@ function onConfirm() {
   margin: 8px 0 0;
   color: var(--color-muted-fg);
   font-size: 12px;
+}
+.reason-field {
+  margin-top: 12px;
 }
 .actions {
   display: flex;

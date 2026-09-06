@@ -46,9 +46,11 @@ class Scheduler {
       const config = Array.isArray(configResult) ? configResult[0] : configResult;
       const expiryDays = parseInt(config?.config_value || '180');
 
+      // 仅奖励类积分参与过期（规格 5.2）：充值与退款返还积分永久有效，必须豁免
       const expiredResult = await query(
         `SELECT id, user_id, delta FROM points_logs
          WHERE delta > 0
+         AND source_type IN ('register_gift','invite_gift','purchase_income','commission','reward','admin_adjust')
          AND expires_at IS NULL
          AND created_at < DATE_SUB(NOW(), INTERVAL ? DAY)`,
         [expiryDays]

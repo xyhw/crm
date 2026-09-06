@@ -26,9 +26,9 @@
               <th>用户</th>
               <th>商机</th>
               <th>摘要</th>
-              <th>状态</th>
+              <th>跟进状态</th>
+              <th>审核状态</th>
               <th>时间</th>
-              <th>操作</th>
             </tr>
           </thead>
           <tbody>
@@ -37,9 +37,10 @@
               <td>{{ item.opportunity_title || '-' }}</td>
               <td>{{ item.summary || '-' }}</td>
               <td><span class="badge" :class="badgeTone(item.status)">{{ followUpStatusLabel(item.status) }}</span></td>
+              <td><span class="badge" :class="badgeTone(item.audit_status)">{{ auditStatusLabel(item.audit_status) }}</span></td>
               <td>{{ formatDateTime(item.created_at) }}</td>
               <td>
-                <div v-if="item.status === 'pending'" class="row-actions">
+                <div v-if="item.audit_status === 'pending'" class="row-actions">
                   <button class="btn btn-primary" type="button" @click="ask(item, 'approved')">通过</button>
                   <button class="btn btn-danger-ghost" type="button" @click="ask(item, 'rejected')">驳回</button>
                 </div>
@@ -55,6 +56,8 @@
       title="审核确认"
       :content="`确认${confirmAction === 'approved' ? '通过' : '驳回'}该跟进分享？`"
       desc="该操作不可撤销"
+      :need-reason="confirmAction === 'rejected'"
+      reason-placeholder="填写驳回原因（提交人可见）"
       :confirm-text="confirmAction === 'approved' ? '通过' : '驳回'"
       :tone="confirmAction === 'rejected' ? 'danger' : 'primary'"
       @confirm="doAudit"
@@ -95,10 +98,19 @@ function ask(item, action) {
   confirmOpen.value = true;
 }
 
-async function doAudit() {
+const AUDIT_STATUS_LABELS = { pending: '待审核', approved: '已通过', rejected: '已驳回' };
+
+function auditStatusLabel(v) {
+  return AUDIT_STATUS_LABELS[v] || v || '-';
+}
+
+async function doAudit(reason = '') {
   if (!confirmItem.value) return;
   try {
-    await adminApi.auditFollowUp(confirmItem.value.id, { status: confirmAction.value });
+    await adminApi.auditFollowUp(confirmItem.value.id, {
+      status: confirmAction.value,
+      reason: confirmAction.value === 'rejected' ? reason || '内容不符合平台规范' : undefined,
+    });
     toast.success(confirmAction.value === 'approved' ? '已通过' : '已驳回');
     fetchList(page.value);
   } catch (e) {

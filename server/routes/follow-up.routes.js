@@ -226,7 +226,7 @@ router.post('/helpful', authRequired, async (req, res) => {
       );
       await conn.execute(
         `INSERT INTO user_credits (user_id, credit_score, change_amount, change_reason, source_type)
-         SELECT ?, credit_score, 1, '进展被标记有用', 'helpful_mark' FROM users WHERE id = ?`,
+         SELECT ?, credit_score, 1, '进展被标记有用', 'share_helpful' FROM users WHERE id = ?`,
         [share.user_id, share.user_id]
       );
     });

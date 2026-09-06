@@ -2,7 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import os from 'os';
 import { adminAuthRequired } from '../../auth.js';
-import { insert, query } from '../../db.js';
+import { insert, queryOne } from '../../db.js';
 import { recordLog } from '../../services/audit-log.service.js';
 import crypto from 'crypto';
 
@@ -55,10 +55,12 @@ router.post('/', adminAuthRequired, upload.single('file'), async (req, res) => {
       '标题': 'title', '分类ID': 'category_id', '城市': 'city',
       '酒店名称': 'hotel_name', '阶段': 'stage', '价格': 'price',
       '公开描述': 'description_public', '详细描述': 'description_full',
-      '联系人': 'contact_name', '联系电话': 'contact_phone', '状态': 'status'
+      '联系人': 'contact_name', '联系电话': 'contact_phone', '状态': 'status',
+      '发布人用户ID': 'owner_user_id'
     };
 
     const errors = [], successes = [];
+    const ownerCheck = new Map();
 
     for (let i = 1; i < lines.length; i++) {
       try {
@@ -71,11 +73,26 @@ router.post('/', adminAuthRequired, upload.single('file'), async (req, res) => {
 
         if (!row.title) continue;
         if (!row.category_id) row.category_id = 10;
+
+        // 投稿归属必须是真实用户：分佣流向由 user_id 决定，禁止静默挂到导入管理员身上
+        const ownerId = parseInt(row.owner_user_id, 10);
+        if (!Number.isFinite(ownerId)) {
+          errors.push(`第${i}行: 缺少或无效的「发布人用户ID」，跳过`);
+          continue;
+        }
+        if (!ownerCheck.has(ownerId)) {
+          ownerCheck.set(ownerId, await queryOne('SELECT id FROM users WHERE id = ? AND deleted_at IS NULL', [ownerId]));
+        }
+        if (!ownerCheck.get(ownerId)) {
+          errors.push(`第${i}行: 发布人用户 ${ownerId} 不存在，跳过`);
+          continue;
+        }
+
         const rawPrice = parseInt(row.price, 10);
         const price = Number.isFinite(rawPrice) && rawPrice >= 10 ? rawPrice : 50;
 
         await insert('opportunities', {
-          user_id: req.adminId,
+          user_id: ownerId,
           title: row.title,
           category_id: parseInt(row.category_id, 10),
           city: row.city || '',

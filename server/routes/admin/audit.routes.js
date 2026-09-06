@@ -9,12 +9,18 @@ router.get('/follow-up-shares', async (req, res) => {
     const { status = 'pending', page = 1, pageSize = 20 } = req.query;
     const offset = (Number(page) - 1) * Number(pageSize);
 
+    // status 传空或 all 表示查看全部审核状态
+    const allModes = ['', 'all'];
+    const showAll = allModes.includes(status);
     let sql = `SELECT s.*, u.nickname as user_name, o.title as opportunity_title
                FROM follow_up_shares s
                LEFT JOIN users u ON s.user_id = u.id
-               LEFT JOIN opportunities o ON s.opportunity_id = o.id
-               WHERE s.audit_status = ?`;
-    const params = [status];
+               LEFT JOIN opportunities o ON s.opportunity_id = o.id`;
+    const params = [];
+    if (!showAll) {
+      sql += ' WHERE s.audit_status = ?';
+      params.push(status);
+    }
 
     sql += ' ORDER BY s.created_at DESC LIMIT ? OFFSET ?';
     params.push(Number(pageSize), offset);
@@ -22,8 +28,10 @@ router.get('/follow-up-shares', async (req, res) => {
     const list = await query(sql, params);
 
     const [countResult] = await query(
-      'SELECT COUNT(*) as total FROM follow_up_shares WHERE audit_status = ?',
-      [status]
+      showAll
+        ? 'SELECT COUNT(*) as total FROM follow_up_shares'
+        : 'SELECT COUNT(*) as total FROM follow_up_shares WHERE audit_status = ?',
+      showAll ? [] : [status]
     );
 
     res.json({
@@ -58,6 +66,7 @@ router.put('/follow-up-shares/:id', async (req, res) => {
     const affectedRows = await update('follow_up_shares', {
       audit_status: status,
       audit_reason: reason || '',
+      audit_admin_id: req.adminId,
     }, 'id = ? AND audit_status = "pending"', [req.params.id]);
 
     if (affectedRows === 0) {
