@@ -4,27 +4,32 @@
       <view class="login-title">商机管理后台</view>
       <view class="login-sub">Hotel Order Follow Admin</view>
       <view class="login-form">
-        <input
-          v-model="username"
-          class="login-input"
-          placeholder="用户名"
-          placeholder-class="input-ph"
-        />
-        <view class="password-wrap">
+        <view class="field">
+          <text class="field-label">用户名</text>
           <input
-            v-model="password"
+            v-model="username"
             class="login-input"
-            :type="passwordVisible ? 'text' : 'password'"
-            placeholder="密码"
+            placeholder="请输入用户名"
             placeholder-class="input-ph"
           />
-          <text class="password-toggle" @click="passwordVisible = !passwordVisible">{{ passwordVisible ? '隐藏' : '显示' }}</text>
+        </view>
+        <view class="field">
+          <text class="field-label">密码</text>
+          <view class="password-wrap">
+            <input
+              v-model="password"
+              class="login-input"
+              :type="passwordVisible ? 'text' : 'password'"
+              placeholder="请输入密码"
+              placeholder-class="input-ph"
+            />
+            <text class="password-toggle" @click="passwordVisible = !passwordVisible">{{ passwordVisible ? '隐藏' : '显示' }}</text>
+          </view>
         </view>
         <view class="login-btn" :class="{ disabled: loading }" @click="handleLogin">
           {{ loading ? '登录中...' : '登录' }}
         </view>
       </view>
-      <view class="login-tip">默认账号：admin / admin123</view>
     </view>
   </view>
 </template>
@@ -84,13 +89,21 @@ async function handleLogin() {
   color: #999999;
   margin: 12rpx 0 48rpx;
 }
+.field {
+  margin-bottom: 24rpx;
+}
+.field-label {
+  display: block;
+  font-size: 26rpx;
+  color: #555555;
+  margin-bottom: 12rpx;
+}
 .login-input {
   height: 88rpx;
   background: #F7F8F9;
   border-radius: 12rpx;
   padding: 0 24rpx;
   font-size: 28rpx;
-  margin-bottom: 24rpx;
   border: 1px solid #DDDEEE;
 }
 .input-ph {
@@ -108,12 +121,6 @@ async function handleLogin() {
 }
 .login-btn.disabled {
   opacity: 0.6;
-}
-.login-tip {
-  text-align: center;
-  font-size: 24rpx;
-  color: #666666;
-  margin-top: 32rpx;
 }
 .password-wrap { position: relative; }
 .password-toggle { position: absolute; right: 20rpx; top: 50%; transform: translateY(-50%); font-size: 24rpx; color: #037539; padding: 12rpx; line-height: 1; }

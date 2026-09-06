@@ -2,9 +2,9 @@
 
 > 日期：2026-09-06
 > 分支：`260906-feat-ci-pipeline`
-> 范围：`miniapp/src/pages.json` 共 52 页（用户端 30 + 管理端 22）
+> 范围：`miniapp/src/pages.json` 共 52 页（用户端 29 + 管理端 23）
 > 依据：ui-ux-pro-max 清单（a11y / 触控 / 表单 / 导航）
-> 状态：待实施
+> 状态：T-02～T-08 已完成（T-01 待办），P2/P3 待排期
 
 对照优先级：P0 先修 → P1 高 → P2 中 → P3 低。验收以 H5（5174）与微信小程序编译为准。
 
@@ -31,16 +31,17 @@
 
 ### T-03 H5 邀请海报降级
 
-- 问题：`community/invite.vue` 海报整段 `#ifdef MP-WEIXIN`，H5 点「邀请海报」空白。
+- 问题：「邀请海报」tab 按钮在所有平台渲染（`invite.vue:8`），但海报卡片（36–48 行）与绘制逻辑（119–217 行）整段包在 `#ifdef MP-WEIXIN` 内。H5 切过去是完全空白的 tab，连「不支持」提示都没有——提示文案本身也在条件编译块里。
 - 文件：`miniapp/src/pages/community/invite.vue`
-- 动作：H5 展示说明（海报仅小程序可用）+ 保留复制邀请码/分享入口；或 H5 用 canvas 生成可下载图。
-- 验收：H5 切到「邀请海报」有明确文案或可保存的图，不再空白。
+- 动作：在 `#ifndef MP-WEIXIN` 分支补降级卡片，说明海报仅小程序可用，并保留复制邀请码入口。
+- 验收：H5 切到「邀请海报」有明确说明与可用操作，不再空白。
 
 ### T-04 去掉管理端默认账密文案
 
-- 问题：`admin/login.vue` 写着 `默认账号：admin / admin123`。
+- 问题：`admin/login.vue:27` 写着 `默认账号：admin / admin123`；两个输入框只有 placeholder，无可见 label。
 - 文件：`miniapp/src/pages/admin/login.vue`
-- 动作：删除该提示；管理端登录补可见「用户名/密码」label。
+- 动作：删除该提示行；补「用户名」「密码」可见 label。
+- 注：该页已有 `passwordVisible` 显隐（17、21 行），无需改动。
 - 验收：页面不再出现默认账密；输入框有可见标签。
 
 ### T-05 移除「我发布的」错误底栏
@@ -56,9 +57,10 @@
 
 ### T-06 用户端密码显隐
 
-- 问题：登录 / 注册 / 找回只有 `:password="true"`；改密页和管理端已有开关。
-- 文件：`miniapp/src/pages/login/index.vue`、`register.vue`、`forgot.vue`
-- 动作：每字段独立「显示/隐藏」，触控区 ≥44pt。
+- 问题：用户端三页仍是 `:password="true"`（`login/index.vue:41`、`register.vue:42`、`forgot.vue:44`），无法查看已输入内容。
+- 文件：`miniapp/src/pages/login/index.vue`、`login/register.vue`、`login/forgot.vue`
+- 动作：改 `:type="visible ? 'text' : 'password'"` + 独立「显示/隐藏」，触控区 ≥44pt。
+- 注：`profile/change-password.vue` 与 `admin/login.vue` 已有开关，本条只改用户端这三页。
 - 验收：三页均可单独切换明文。
 
 ### T-07 协议改为显式勾选
@@ -68,11 +70,12 @@
 - 动作：增加勾选框，未勾选禁止提交并 toast；协议文字对比度达标（至少 `#555` / 24rpx+）。
 - 验收：未勾选无法登录/注册；可点开协议与隐私。
 
-### T-08 提交防连点补全
+### T-08 找回密码提交防连点
 
-- 问题：手机登录、找回密码有 loading 无 `:disabled`；发布「下一步」、CRM 录入按钮同理。
-- 文件：`login/index.vue`、`login/forgot.vue`、`opportunity/publish.vue`、`crm/add.vue`、`profile/edit.vue`
-- 动作：异步期间 `:disabled` + loading 文案；发布「下一步」校验失败时焦点落到首个空字段。
+- 问题：`login/forgot.vue:51` 提交按钮只有 `:loading="submitting"`，缺 `:disabled`，可重复点击。
+- 文件：`miniapp/src/pages/login/forgot.vue`
+- 动作：补 `:disabled="submitting"`。
+- 注：`login/index.vue:14,50`、`register.vue:50`、`login/bind.vue:11` 已有 `:disabled`，原清单误列，本条范围收窄到 forgot 一页。`publish.vue`、`crm/add.vue` 另行核对后再定。
 - 验收：连点不会重复提交。
 
 ### T-09 触控区达标

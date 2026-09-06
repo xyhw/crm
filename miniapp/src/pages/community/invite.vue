@@ -46,6 +46,15 @@
         </view>
       </block>
       <!-- #endif -->
+      <!-- #ifndef MP-WEIXIN -->
+      <block v-else>
+        <view class="section-card poster-card">
+          <view class="poster-fallback__title">邀请海报暂不支持当前环境</view>
+          <view class="poster-fallback__desc">海报含小程序码，需在微信小程序内生成。请用微信打开本页保存海报，或先复制邀请码分享给好友。</view>
+          <button class="invite-btn invite-btn--primary" size="small" round @click="handleCopy">复制邀请码</button>
+        </view>
+      </block>
+      <!-- #endif -->
 
       <!-- 邀请记录 -->
       <view class="section-title">邀请记录</view>
@@ -298,6 +307,20 @@ function changePage(p) {
   margin-top: 16rpx;
   font-size: 24rpx;
   color: #B0B0B0;
+}
+
+.poster-fallback__title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1A1A1A;
+  margin-bottom: 16rpx;
+}
+
+.poster-fallback__desc {
+  font-size: 26rpx;
+  color: #555555;
+  line-height: 1.6;
+  margin-bottom: 32rpx;
 }
 
 .empty {

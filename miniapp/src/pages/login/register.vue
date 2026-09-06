@@ -37,13 +37,18 @@
       </view>
       <view class="form-item">
         <text class="form-label">密码</text>
-        <input
-          v-model="form.password"
-          :password="true"
-          placeholder="8 位以上，含字母和数字"
-          :maxlength="32"
-          class="form-input"
-        />
+        <view class="password-wrap">
+          <input
+            v-model="form.password"
+            :type="passwordVisible ? 'text' : 'password'"
+            placeholder="8 位以上，含字母和数字"
+            :maxlength="32"
+            class="form-input form-input--password"
+          />
+          <text class="password-toggle" @click="passwordVisible = !passwordVisible">
+            {{ passwordVisible ? '隐藏' : '显示' }}
+          </text>
+        </view>
       </view>
       <view v-if="inviteCode" class="invite-tip">邀请码：{{ inviteCode }}</view>
 
@@ -52,11 +57,16 @@
       </button>
       <button class="register-link-btn" @click="goLogin">已有账号？去登录</button>
 
-      <view class="register-agreement">
-        注册即代表您已阅读并同意
-        <text class="link" @click="goAgreement('agreement')">《用户协议》</text>
-        和
-        <text class="link" @click="goAgreement('privacy')">《隐私政策》</text>
+      <view class="register-agreement" @click="agreed = !agreed">
+        <view class="agreement-box" :class="{ checked: agreed }">
+          <text v-if="agreed" class="agreement-check">✓</text>
+        </view>
+        <text class="agreement-text">
+          我已阅读并同意
+          <text class="link" @click.stop="goAgreement('agreement')">《用户协议》</text>
+          和
+          <text class="link" @click.stop="goAgreement('privacy')">《隐私政策》</text>
+        </text>
       </view>
     </view>
 
@@ -96,6 +106,8 @@ const userStore = useUserStore();
 
 const submitting = ref(false);
 const showCategory = ref(false);
+const passwordVisible = ref(false);
+const agreed = ref(false);
 const inviteCode = ref('');
 
 const form = reactive({
@@ -115,6 +127,10 @@ onLoad((options) => {
 });
 
 async function handleRegister() {
+  if (!agreed.value) {
+    uni.showToast({ title: '请先阅读并同意用户协议和隐私政策', icon: 'none' });
+    return;
+  }
   if (!/^1\d{10}$/.test(form.phone)) {
     uni.showToast({ title: '请输入正确手机号', icon: 'none' });
     return;
@@ -226,6 +242,25 @@ function goAgreement(type) {
   align-items: center;
 }
 
+.password-wrap {
+  position: relative;
+}
+
+.form-input--password {
+  padding-right: 120rpx;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 88rpx;
+  line-height: 88rpx;
+  padding: 0 24rpx;
+  font-size: 26rpx;
+  color: #048C47;
+}
+
 .picker-arrow {
   color: #B0B0B0;
   font-size: 32rpx;
@@ -253,9 +288,38 @@ function goAgreement(type) {
 
 .register-agreement {
   margin-top: 40rpx;
+  display: flex;
+  align-items: flex-start;
+  padding: 12rpx 8rpx;
+}
+
+.agreement-box {
+  flex-shrink: 0;
+  width: 36rpx;
+  height: 36rpx;
+  margin-right: 12rpx;
+  border: 1px solid #C0C4C8;
+  border-radius: 6rpx;
+  background: #ffffff;
   text-align: center;
-  font-size: 22rpx;
-  color: #B0B0B0;
+  line-height: 34rpx;
+}
+
+.agreement-box.checked {
+  border-color: #048C47;
+  background: #048C47;
+}
+
+.agreement-check {
+  font-size: 24rpx;
+  color: #ffffff;
+}
+
+.agreement-text {
+  flex: 1;
+  font-size: 24rpx;
+  color: #555555;
+  line-height: 36rpx;
 }
 
 .link {

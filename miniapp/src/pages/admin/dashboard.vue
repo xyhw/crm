@@ -1,6 +1,7 @@
 <template>
   <view class="dash-page">
     <view v-if="loading" class="empty">加载中...</view>
+    <view v-else-if="!stats" class="empty">暂无数据，请下拉或稍后重试</view>
     <view v-else>
       <view class="stat-grid">
         <view v-for="card in statCards" :key="card.title" class="stat-card">
@@ -13,19 +14,31 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import { adminApi } from '@/admin/adminApi';
 
 const stats = ref(null);
 const loading = ref(true);
 
-const statCards = [
+const CARD_DEFS = [
   { title: '用户总数', key: 'totalUsers', color: '#037539' },
   { title: '商机总数', key: 'totalOpportunities', color: '#037539' },
   { title: '订单总数', key: 'totalOrders', color: '#E8920A' },
   { title: '积分总量', key: 'totalPoints', color: '#E54848' },
 ];
+
+const statCards = computed(() =>
+  CARD_DEFS.map((def) => ({
+    ...def,
+    value: formatCount(stats.value?.[def.key]),
+  })),
+);
+
+function formatCount(raw) {
+  const num = Number(raw);
+  return Number.isFinite(num) ? num.toLocaleString('zh-CN') : '--';
+}
 
 async function load() {
   loading.value = true;

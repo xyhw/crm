@@ -39,16 +39,21 @@
 
       <view class="form-item">
         <text class="form-label">新密码</text>
-        <input
-          v-model="form.newPassword"
-          :password="true"
-          placeholder="8 位以上，含字母和数字"
-          :maxlength="32"
-          class="form-input"
-        />
+        <view class="password-wrap">
+          <input
+            v-model="form.newPassword"
+            :type="passwordVisible ? 'text' : 'password'"
+            placeholder="8 位以上，含字母和数字"
+            :maxlength="32"
+            class="form-input form-input--password"
+          />
+          <text class="password-toggle" @click="passwordVisible = !passwordVisible">
+            {{ passwordVisible ? '隐藏' : '显示' }}
+          </text>
+        </view>
       </view>
 
-      <button class="button-primary submit-btn" :loading="submitting" @click="handleSubmit">
+      <button class="button-primary submit-btn" :loading="submitting" :disabled="submitting" @click="handleSubmit">
         重置密码
       </button>
 
@@ -66,6 +71,7 @@ const COUNTDOWN = 60;
 const form = ref({ email: '', code: '', newPassword: '' });
 const submitting = ref(false);
 const sending = ref(false);
+const passwordVisible = ref(false);
 const countdown = ref(0);
 let timer = null;
 
@@ -195,6 +201,25 @@ function goLogin() {
 
 .form-input--flex {
   flex: 1;
+}
+
+.password-wrap {
+  position: relative;
+}
+
+.form-input--password {
+  padding-right: 120rpx;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 88rpx;
+  line-height: 88rpx;
+  padding: 0 24rpx;
+  font-size: 26rpx;
+  color: #048C47;
 }
 
 .send-code-btn {

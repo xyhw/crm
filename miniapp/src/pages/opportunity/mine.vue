@@ -45,9 +45,6 @@
         <text v-else class="load-text">上拉加载更多</text>
       </view>
     </view>
-
-    <!-- 底部主导航栏 -->
-    <CustomTabBar active-tab="我的" />
   </view>
 </template>
 
@@ -56,7 +53,6 @@ import { ref, computed } from 'vue';
 import { onShow, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app';
 import { api } from '@/api/index';
 import { stageLabel, stageTone } from '@/common/constants';
-import CustomTabBar from '@/components/CustomTabBar.vue';
 
 const list = ref([]);
 const loading = ref(false);
@@ -152,7 +148,7 @@ function goEdit(id) {
 <style lang="scss" scoped>
 .my-opp-page {
   min-height: 100vh;
-  padding: 16rpx 24rpx calc(110px + env(safe-area-inset-bottom));
+  padding: 16rpx 24rpx calc(32rpx + env(safe-area-inset-bottom));
 }
 
 .empty {
