@@ -8,7 +8,7 @@
 |------|-----------|------|
 | `mysql` | mysql:8.0 | 数据库，数据持久化到 `mysql_data` volume，带健康检查 |
 | `api` | `./server` 构建 | Node.js 后端，启动时自动执行 migration 与种子数据 |
-| `web` | `./client` 构建 | Vite 多阶段构建出静态文件，nginx 托管并反代 |
+| `web` | `./miniapp` 构建 | uni-app H5 多阶段构建出静态文件，nginx 托管并反代（方案A 唯一前端；`client/` 已冻结不参与部署） |
 
 请求链路：浏览器 → `web`(nginx:80) → `/api`、`/uploads` 反代到 `api`:3001；SPA 路由由 nginx 回退到 `index.html`。
 
@@ -121,6 +121,23 @@ docker compose exec mysql sh -c 'mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" hotel
 # 恢复数据库备份
 docker compose exec -T mysql sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" hotel_order_follow' < backup_xxxx.sql
 ```
+
+### 定时备份（推荐）
+
+使用 `deploy/backup.sh`（mysqldump 单事务快照 + uploads 打包 + 按天轮转）：
+
+```bash
+# 安装每日 03:00 备份
+crontab -e
+0 3 * * * cd /path/to/project && BACKUP_DIR=/opt/backups/hof KEEP_DAYS=14 ./deploy/backup.sh >> /var/log/hof-backup.log 2>&1
+
+# 恢复演练（上线前必做一次）
+gunzip < /opt/backups/hof/db-xxxx.sql.gz | \
+  docker compose exec -T mysql sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD" hotel_order_follow'
+docker compose exec -T api sh -c 'cd /app && tar xzf -' < /opt/backups/hof/uploads-xxxx.tar.gz
+```
+
+建议将 `BACKUP_DIR` 定期同步到对象存储等异地位置。api 日志为 JSON lines 结构化格式，可接入日志平台按 `level`/`msg` 检索；每日对账巡检任务会对「过期未决充值订单」输出 `level=warn` 日志（`[Scheduler] 对账巡检`），可据此配置支付回调失败告警。
 
 ## 故障排查
 
