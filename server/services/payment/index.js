@@ -16,6 +16,13 @@ const ADAPTERS = {
   waffo: () => new WaffoAdapter(),
 };
 
+/**
+ * 当前实际开放接入的渠道注册表。
+ * alipay/stripe 适配器为占位实现（createPayment 抛「待实现」），不对用户侧开放：
+ * 不出现在渠道列表、不可创建订单；适配器代码保留，后续实现后加入本表即可。
+ */
+const OPEN_CHANNELS = ['mock', 'wechat', 'waffo'];
+
 /** 按渠道名获取适配器实例（单例缓存） */
 const cache = {};
 export function getAdapter(channel) {
@@ -25,14 +32,26 @@ export function getAdapter(channel) {
   return cache[key];
 }
 
-/** 列出当前可用的渠道：各渠道均需后台开关开启且配置齐全 */
+/** 列出当前可用的渠道：仅开放渠道 + 后台开关开启 + 配置齐全 */
 export function listAvailableChannels() {
-  return Object.keys(ADAPTERS).filter((c) => {
+  return OPEN_CHANNELS.filter((c) => {
     const enabled = config.payment._channelEnabled?.[c];
     if (enabled === false) return false;
     const a = getAdapter(c);
     return typeof a.isConfigured === 'function' && a.isConfigured();
   });
+}
+
+/**
+ * 解析默认渠道：后台配置的 pay_default_channel 优先；
+ * 未配置/不可用/未开放时按「微信优先」回退（小程序虚拟支付为主渠道），再回退首个可用渠道。
+ */
+export function resolveDefaultChannel() {
+  const available = listAvailableChannels();
+  const preferred = config.payment.defaultChannel;
+  if (preferred && available.includes(preferred)) return preferred;
+  if (available.includes('wechat')) return 'wechat';
+  return available[0] || 'mock';
 }
 
 export { BasePaymentAdapter };
@@ -57,6 +76,11 @@ export async function createRechargeOrder({ userId, amount, channel, sessionKey,
     throw err;
   }
 
+  if (!OPEN_CHANNELS.includes(channel)) {
+    const err = new Error('该支付渠道暂未开放');
+    err.code = 400;
+    throw err;
+  }
   const adapter = getAdapter(channel);
   if (adapter.channel === 'mock' && process.env.NODE_ENV === 'production') {
     const err = new Error('生产环境不提供 mock 支付渠道');

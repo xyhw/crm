@@ -2,7 +2,6 @@ import { logger } from '../services/logger.js';
 import { Router } from 'express';
 import { query, queryOne, insert, transaction } from '../db.js';
 import { authRequired } from '../auth.js';
-import { config } from '../config.js';
 import { code2Session } from '../services/wechat.service.js';
 import {
   createRechargeOrder,
@@ -10,6 +9,7 @@ import {
   getOrderForUser,
   getAdapter,
   listAvailableChannels,
+  resolveDefaultChannel,
 } from '../services/payment/index.js';
 
 const router = Router();
@@ -84,7 +84,7 @@ router.get('/logs', authRequired, async (req, res) => {
 router.post('/recharge', authRequired, async (req, res) => {
   try {
     const { amount, channel, code } = req.body || {};
-    const chosen = channel || config.payment.defaultChannel;
+    const chosen = channel || resolveDefaultChannel();
     let sessionKey;
     let openid;
     if (chosen === 'wechat') {
@@ -220,7 +220,7 @@ router.post('/recharge/notify/:channel', async (req, res) => {
 
 // 可用支付渠道列表（前端渲染渠道选择）
 router.get('/recharge/channels', authRequired, (_req, res) => {
-  res.json({ code: 0, data: { channels: listAvailableChannels(), defaultChannel: config.payment.defaultChannel } });
+  res.json({ code: 0, data: { channels: listAvailableChannels(), defaultChannel: resolveDefaultChannel() } });
 });
 
 export default router;
