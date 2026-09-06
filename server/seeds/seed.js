@@ -91,11 +91,16 @@ export async function seedDatabase() {
     logger.warn('[seed][SECURITY] Default admin created with DEFAULT password admin/admin123 — 请登录后台立即修改密码，或部署前设置 ADMIN_INIT_PASSWORD');
   }
 
-  // 创建默认角色
-  await insert('roles', { name: 'super_admin', description: '超级管理员' });
-  await insert('roles', { name: 'operation', description: '运营管理员' });
-  await insert('roles', { name: 'finance', description: '财务管理员' });
-  await insert('roles', { name: 'support', description: '客服/助理' });
+  // 创建默认角色（迁移 013 在种子之前已确保角色存在，必须幂等插入，否则全新库报 Duplicate entry）
+  const DEFAULT_ROLES = [
+    ['super_admin', '超级管理员'],
+    ['operation', '运营管理员'],
+    ['finance', '财务管理员'],
+    ['support', '客服/助理'],
+  ];
+  for (const [name, description] of DEFAULT_ROLES) {
+    await query('INSERT IGNORE INTO roles (name, description) VALUES (?, ?)', [name, description]);
+  }
   logger.info('[seed] Default roles created');
 
   // 绑定默认管理员到 super_admin 角色（角色体系防空转）
