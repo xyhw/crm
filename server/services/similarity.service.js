@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { query } from '../db.js';
 
 const STOP_WORDS = new Set([
@@ -182,7 +183,7 @@ export async function detectSimilar(title, city, hotelName, categoryId, excludeI
       threshold
     };
   } catch (error) {
-    console.error('[Similarity] Detection error:', error.message);
+    logger.error('[Similarity] Detection error:', error.message);
     return { similar: false, count: 0, items: [], error: error.message };
   }
 }

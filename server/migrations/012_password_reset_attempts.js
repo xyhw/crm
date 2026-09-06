@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { query } from '../db.js';
 
 export const migratePasswordResetAttempts = async () => {
@@ -7,6 +8,6 @@ export const migratePasswordResetAttempts = async () => {
   );
   if (!cols) {
     await query('ALTER TABLE password_reset_codes ADD COLUMN attempts INT NOT NULL DEFAULT 0');
-    console.log('[migration] password_reset_codes.attempts added');
+    logger.info('[migration] password_reset_codes.attempts added');
   }
 };

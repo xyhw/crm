@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { query } from '../db.js';
 
 export const migrateWaffoChannel = async () => {
@@ -5,5 +6,5 @@ export const migrateWaffoChannel = async () => {
     ALTER TABLE payment_orders
     MODIFY COLUMN channel ENUM('mock','wechat','alipay','stripe','waffo') NOT NULL
   `);
-  console.log('[migration] payment_orders.channel +waffo');
+  logger.info('[migration] payment_orders.channel +waffo');
 };

@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import mysql from 'mysql2/promise';
 
 const DB_CONFIG = {
@@ -18,12 +19,12 @@ export async function migratePointsLogsRefund() {
          'reward','consume','expire','recharge','admin_adjust','refund','penalty'
        ) NOT NULL`
     );
-    console.log('[migration] points_logs.source_type enum ready (refund+penalty)');
+    logger.info('[migration] points_logs.source_type enum ready (refund+penalty)');
   } finally {
     await conn.end();
   }
 }
 
 if (process.argv[1]?.endsWith('005_points_logs_refund.js')) {
-  migratePointsLogsRefund().catch(console.error);
+  migratePointsLogsRefund().catch(logger.error);
 }

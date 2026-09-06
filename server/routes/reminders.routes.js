@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { Router } from 'express';
 import { authRequired } from '../auth.js';
 import { query } from '../db.js';
@@ -65,7 +66,7 @@ router.get('/', authRequired, async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('[Reminders]', error.message);
+    logger.error('[Reminders]', error.message);
     res.status(500).json({ code: 500, message: '获取提醒失败' });
   }
 });

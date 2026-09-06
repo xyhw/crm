@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { Router } from 'express';
 import { query, queryOne, insert, transaction } from '../db.js';
 import { authRequired } from '../auth.js';
@@ -26,7 +27,7 @@ router.get('/balance', authRequired, async (req, res) => {
       data: account || { balance: 0, total_recharged: 0, total_consumed: 0, total_expired: 0 },
     });
   } catch (err) {
-    console.error('Get balance error:', err);
+    logger.error('Get balance error:', err);
     res.status(500).json({ code: 500, message: '获取积分余额失败' });
   }
 });
@@ -74,7 +75,7 @@ router.get('/logs', authRequired, async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Get points logs error:', err);
+    logger.error('Get points logs error:', err);
     res.status(500).json({ code: 500, message: '获取积分流水失败' });
   }
 });
@@ -108,7 +109,7 @@ router.post('/recharge', authRequired, async (req, res) => {
     res.json({ code: 0, data: result, message: '订单已创建，请完成支付' });
   } catch (err) {
     if (err.code) return res.json({ code: err.code, message: err.message });
-    console.error('Create recharge order error:', err);
+    logger.error('Create recharge order error:', err);
     res.status(500).json({ code: 500, message: '创建充值订单失败' });
   }
 });
@@ -153,7 +154,7 @@ router.get('/recharge/order/:orderNo', authRequired, async (req, res) => {
     }
     res.json({ code: 0, data: order });
   } catch (err) {
-    console.error('Query recharge order error:', err);
+    logger.error('Query recharge order error:', err);
     res.status(500).json({ code: 500, message: '查询订单失败' });
   }
 });
@@ -178,7 +179,7 @@ router.post('/recharge/mock-pay/:orderNo', authRequired, async (req, res) => {
     res.json({ code: 0, data: fresh, message: settled.already ? '订单已支付过' : '模拟支付成功' });
   } catch (err) {
     if (err.code) return res.json({ code: err.code, message: err.message });
-    console.error('Mock pay error:', err);
+    logger.error('Mock pay error:', err);
     res.status(500).json({ code: 500, message: '模拟支付失败' });
   }
 });
@@ -197,7 +198,7 @@ router.post('/recharge/notify/:channel', async (req, res) => {
   try {
     verified = await adapter.verifyNotify(req.headers, req.body);
   } catch (err) {
-    console.error(`[${channel}] verifyNotify not implemented:`, err.message);
+    logger.error(`[${channel}] verifyNotify not implemented:`, err.message);
   }
   if (!verified) return res.status(400).json({ code: 400, message: '回调验签失败' });
 
@@ -212,7 +213,7 @@ router.post('/recharge/notify/:channel', async (req, res) => {
     });
     res.json(adapter.buildNotifyResponse());
   } catch (err) {
-    console.error(`[${channel}] notify handle error:`, err);
+    logger.error(`[${channel}] notify handle error:`, err);
     res.status(500).json(adapter.buildNotifyResponse());
   }
 });

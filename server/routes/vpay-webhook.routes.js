@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { Router } from 'express';
 import { getAdapter, settleRechargeOrder } from '../services/payment/index.js';
 import { verifyMpPushSignature, deliverNotifyFailXml } from '../services/payment/vpay-sign.js';
@@ -48,7 +49,7 @@ router.post('/', async (req, res) => {
     });
     res.send(adapter.buildNotifyResponse());
   } catch (err) {
-    console.error('[vpay] deliver notify error:', err.message);
+    logger.error('[vpay] deliver notify error:', err.message);
     if (err.code === 404) {
       return res.status(404).send(deliverNotifyFailXml('order not found'));
     }

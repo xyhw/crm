@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { Router } from 'express';
 import { query, queryOne, insert, update, transaction } from '../db.js';
 import { authRequired } from '../auth.js';
@@ -46,7 +47,7 @@ router.post('/', authRequired, async (req, res) => {
       message: '跟进记录已添加',
     });
   } catch (err) {
-    console.error('Add follow-up error:', err);
+    logger.error('Add follow-up error:', err);
     res.status(500).json({ code: 500, message: '添加跟进记录失败' });
   }
 });
@@ -70,7 +71,7 @@ router.get('/:crmOpportunityId', authRequired, async (req, res) => {
 
     res.json({ code: 0, data: followUps });
   } catch (err) {
-    console.error('Get follow-ups error:', err);
+    logger.error('Get follow-ups error:', err);
     res.status(500).json({ code: 500, message: '获取跟进记录失败' });
   }
 });
@@ -138,7 +139,7 @@ router.post('/share', authRequired, async (req, res) => {
       message: freeAudit ? '已同步' : '已提交，等待审核',
     });
   } catch (err) {
-    console.error('Share follow-up error:', err);
+    logger.error('Share follow-up error:', err);
     res.status(500).json({ code: 500, message: '同步失败' });
   }
 });
@@ -233,7 +234,7 @@ router.post('/helpful', authRequired, async (req, res) => {
 
     res.json({ code: 0, message: '标记成功' });
   } catch (err) {
-    console.error('Mark helpful error:', err);
+    logger.error('Mark helpful error:', err);
     res.status(500).json({ code: 500, message: '标记失败' });
   }
 });
@@ -333,7 +334,7 @@ router.post('/report', authRequired, async (req, res) => {
 
     res.json({ code: 0, message: '举报成功' });
   } catch (err) {
-    console.error('Report share error:', err);
+    logger.error('Report share error:', err);
     res.status(500).json({ code: 500, message: '举报处理失败' });
   }
 });

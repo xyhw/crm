@@ -1,3 +1,4 @@
+import { logger } from '../../services/logger.js';
 import { WaffoPancake, verifyWebhook } from '@waffo/pancake-ts';
 import { config } from '../../config.js';
 import { query } from '../../db.js';
@@ -110,7 +111,7 @@ export class WaffoAdapter extends BasePaymentAdapter {
       verifyWebhook(body, sig, { environment: this.cfg.environment });
       return true;
     } catch (err) {
-      console.error('[waffo] verifyNotify failed:', err.message);
+      logger.error('[waffo] verifyNotify failed:', err.message);
       return false;
     }
   }

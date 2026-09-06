@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { query } from '../db.js';
 
 /**
@@ -16,18 +17,18 @@ export const migrateWechatBinding = async () => {
     await query(
       'ALTER TABLE users ADD COLUMN wechat_openid VARCHAR(64) NULL DEFAULT NULL'
     );
-    console.log('[migration] users.wechat_openid added');
+    logger.info('[migration] users.wechat_openid added');
   } else {
-    console.log('[migration] users.wechat_openid already exists, skip');
+    logger.info('[migration] users.wechat_openid already exists, skip');
   }
 
   if (!has('wechat_unionid')) {
     await query(
       'ALTER TABLE users ADD COLUMN wechat_unionid VARCHAR(64) NULL DEFAULT NULL'
     );
-    console.log('[migration] users.wechat_unionid added');
+    logger.info('[migration] users.wechat_unionid added');
   } else {
-    console.log('[migration] users.wechat_unionid already exists, skip');
+    logger.info('[migration] users.wechat_unionid already exists, skip');
   }
 
   // 唯一索引
@@ -37,8 +38,8 @@ export const migrateWechatBinding = async () => {
     await query(
       'CREATE UNIQUE INDEX idx_users_wechat_openid ON users (wechat_openid)'
     );
-    console.log('[migration] idx_users_wechat_openid created');
+    logger.info('[migration] idx_users_wechat_openid created');
   } else {
-    console.log('[migration] idx_users_wechat_openid already exists, skip');
+    logger.info('[migration] idx_users_wechat_openid already exists, skip');
   }
 };

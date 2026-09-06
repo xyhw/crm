@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { query, queryOne } from '../db.js';
 
 /**
@@ -16,7 +17,7 @@ export const migrateSecurityGuards = async () => {
       KEY idx_user_time (user_id, failed_at)
     )
   `);
-  console.log('[migration] login_failures table ready');
+  logger.info('[migration] login_failures table ready');
 
   // 2. 确保后台角色存在（name 有 UNIQUE 约束，INSERT IGNORE 幂等）
   const roles = [
@@ -28,7 +29,7 @@ export const migrateSecurityGuards = async () => {
   for (const [name, desc] of roles) {
     await query('INSERT IGNORE INTO roles (name, description) VALUES (?, ?)', [name, desc]);
   }
-  console.log('[migration] roles ensured');
+  logger.info('[migration] roles ensured');
 
   // 3. 默认管理员（username=admin）若无任何角色，绑定 super_admin
   const admins = await query("SELECT id FROM admin_users WHERE username = 'admin'");
@@ -44,5 +45,5 @@ export const migrateSecurityGuards = async () => {
       );
     }
   }
-  console.log('[migration] default admin roles ensured');
+  logger.info('[migration] default admin roles ensured');
 };

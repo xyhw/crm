@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import mysql from 'mysql2/promise';
 
 const DB_CONFIG = {
@@ -21,11 +22,11 @@ async function columnExists(conn, table, column) {
 
 async function addColumnIfMissing(conn, table, column, definition) {
   if (await columnExists(conn, table, column)) {
-    console.log(`[migration] ${table}.${column} already exists, skip`);
+    logger.info(`[migration] ${table}.${column} already exists, skip`);
     return;
   }
   await conn.execute(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
-  console.log(`[migration] ${table}.${column} added`);
+  logger.info(`[migration] ${table}.${column} added`);
 }
 
 async function migrateFollowUpStatusEnums(conn) {
@@ -52,7 +53,7 @@ async function migrateFollowUpStatusEnums(conn) {
         `ALTER TABLE ${table} MODIFY COLUMN status ENUM(${enumSql}) NOT NULL`
       );
     }
-    console.log(`[migration] ${table}.status enum expanded to 7 values`);
+    logger.info(`[migration] ${table}.status enum expanded to 7 values`);
   }
 }
 
@@ -104,7 +105,7 @@ async function seedDefaultAgreements(conn) {
       [`agreement_${type}`, JSON.stringify(content), `${content.title}（动态配置，可后台修改）`]
     );
   }
-  console.log('[migration] Default agreements seeded');
+  logger.info('[migration] Default agreements seeded');
 }
 
 export async function migrateP0Fields() {
@@ -125,7 +126,7 @@ export async function migrateP0Fields() {
     // 默认协议动态配置
     await seedDefaultAgreements(conn);
 
-    console.log('[migration] 002_p0_fields applied successfully');
+    logger.info('[migration] 002_p0_fields applied successfully');
   } finally {
     await conn.end();
   }
@@ -133,5 +134,5 @@ export async function migrateP0Fields() {
 
 // 如果直接运行此文件，执行迁移
 if (process.argv[1]?.endsWith('002_p0_fields.js')) {
-  migrateP0Fields().catch(console.error);
+  migrateP0Fields().catch(logger.error);
 }

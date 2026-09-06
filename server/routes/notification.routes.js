@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { Router } from 'express';
 import { query, queryOne, update } from '../db.js';
 import { authRequired } from '../auth.js';
@@ -52,7 +53,7 @@ router.get('/', authRequired, async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Get notifications error:', err);
+    logger.error('Get notifications error:', err);
     res.status(500).json({ code: 500, message: '获取通知列表失败' });
   }
 });
@@ -63,7 +64,7 @@ router.put('/:id/read', authRequired, async (req, res) => {
     await update('notifications', { is_read: 1 }, 'id = ? AND user_id = ?', [req.params.id, req.userId]);
     res.json({ code: 0, message: '已标记已读' });
   } catch (err) {
-    console.error('Mark read error:', err);
+    logger.error('Mark read error:', err);
     res.status(500).json({ code: 500, message: '标记失败' });
   }
 });
@@ -74,7 +75,7 @@ router.put('/read-all', authRequired, async (req, res) => {
     await update('notifications', { is_read: 1 }, 'user_id = ? AND is_read = 0', [req.userId]);
     res.json({ code: 0, message: '已全部标记已读' });
   } catch (err) {
-    console.error('Mark all read error:', err);
+    logger.error('Mark all read error:', err);
     res.status(500).json({ code: 500, message: '标记失败' });
   }
 });

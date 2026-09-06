@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { query } from '../db.js';
 
 export const migrateFollowUpShareInvalidMarks = async () => {
@@ -14,5 +15,5 @@ export const migrateFollowUpShareInvalidMarks = async () => {
       INDEX idx_user_id (user_id)
     ) ENGINE=InnoDB
   `);
-  console.log('[migration] follow_up_share_invalid_marks table ready');
+  logger.info('[migration] follow_up_share_invalid_marks table ready');
 };

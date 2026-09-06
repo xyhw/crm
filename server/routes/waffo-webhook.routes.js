@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { Router } from 'express';
 import { getAdapter, settleRechargeOrder } from '../services/payment/index.js';
 
@@ -34,11 +35,11 @@ router.post('/', async (req, res) => {
           rawNotify: result.raw,
         });
       } catch (err) {
-        console.error('[waffo] webhook settle error:', err.message);
+        logger.error('[waffo] webhook settle error:', err.message);
       }
     });
   } catch (err) {
-    console.error('[waffo] webhook verify error:', err.message);
+    logger.error('[waffo] webhook verify error:', err.message);
     res.status(500).send('Error');
   }
 });

@@ -1,3 +1,4 @@
+import { logger } from '../../services/logger.js';
 import { Router } from 'express';
 import { query, queryOne, update } from '../../db.js';
 import { clearLevelConfigCache } from '../../services/level.service.js';
@@ -11,7 +12,7 @@ router.get('/', async (req, res) => {
     const levels = await query('SELECT * FROM member_levels ORDER BY sort_order');
     res.json({ code: 0, data: levels });
   } catch (err) {
-    console.error('Admin get levels error:', err);
+    logger.error('Admin get levels error:', err);
     res.status(500).json({ code: 500, message: '获取等级配置失败' });
   }
 });
@@ -40,7 +41,7 @@ router.put('/:id', async (req, res) => {
     await recordLog(req.adminId, 'edit', 'member_levels', req.params.id, updates);
     res.json({ code: 0, message: '等级配置更新成功' });
   } catch (err) {
-    console.error('Admin update level error:', err);
+    logger.error('Admin update level error:', err);
     res.status(500).json({ code: 500, message: '更新等级配置失败' });
   }
 });

@@ -1,3 +1,4 @@
+import { logger } from '../../services/logger.js';
 import { Router } from 'express';
 import { query } from '../../db.js';
 
@@ -52,7 +53,7 @@ router.get('/', async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Admin get points logs error:', err);
+    logger.error('Admin get points logs error:', err);
     res.status(500).json({ code: 500, message: '获取积分流水失败' });
   }
 });

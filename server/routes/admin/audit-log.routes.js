@@ -1,3 +1,4 @@
+import { logger } from '../../services/logger.js';
 import { Router } from 'express';
 import { adminAuthRequired } from '../../auth.js';
 import { query } from '../../db.js';
@@ -37,7 +38,7 @@ router.get('/', adminAuthRequired, async (req, res) => {
       data: { list, total: countResult.total, page: Number(page), pageSize: Number(pageSize) },
     });
   } catch (error) {
-    console.error('[Audit Logs]', error.message);
+    logger.error('[Audit Logs]', error.message);
     res.status(500).json({ code: 500, message: '获取日志失败' });
   }
 });

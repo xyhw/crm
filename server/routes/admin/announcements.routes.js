@@ -1,3 +1,4 @@
+import { logger } from '../../services/logger.js';
 import { Router } from 'express';
 import { query, queryOne, insert, update, del } from '../../db.js';
 import { audit } from '../../services/audit-log.service.js';
@@ -48,7 +49,7 @@ router.get('/', async (req, res) => {
       data: { list, total: countResult.total, page: Number(page), pageSize: Number(pageSize) },
     });
   } catch (err) {
-    console.error('Admin get announcements error:', err);
+    logger.error('Admin get announcements error:', err);
     res.status(500).json({ code: 500, message: '获取公告列表失败' });
   }
 });
@@ -76,7 +77,7 @@ router.get('/:id', async (req, res) => {
     if (!item) return res.json({ code: 404, message: '公告不存在' });
     res.json({ code: 0, data: item });
   } catch (err) {
-    console.error('Admin get announcement error:', err);
+    logger.error('Admin get announcement error:', err);
     res.status(500).json({ code: 500, message: '获取公告失败' });
   }
 });
@@ -133,7 +134,7 @@ router.post('/', audit('announcement', 'create', (req, res, body) => body?.data?
     });
     res.json({ code: 0, data: { id: result.id } });
   } catch (err) {
-    console.error('Admin create announcement error:', err);
+    logger.error('Admin create announcement error:', err);
     res.status(500).json({ code: 500, message: '创建公告失败' });
   }
 });
@@ -180,7 +181,7 @@ router.put('/:id', audit('announcement', 'edit'), async (req, res) => {
     await update('announcements', data, 'id = ?', [req.params.id]);
     res.json({ code: 0, message: '更新成功' });
   } catch (err) {
-    console.error('Admin update announcement error:', err);
+    logger.error('Admin update announcement error:', err);
     res.status(500).json({ code: 500, message: '更新公告失败' });
   }
 });
@@ -207,7 +208,7 @@ router.delete('/:id', audit('announcement', 'delete'), async (req, res) => {
     await del('announcements', 'id = ?', [req.params.id]);
     res.json({ code: 0, message: '删除成功' });
   } catch (err) {
-    console.error('Admin delete announcement error:', err);
+    logger.error('Admin delete announcement error:', err);
     res.status(500).json({ code: 500, message: '删除公告失败' });
   }
 });

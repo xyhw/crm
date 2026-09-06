@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { query } from '../db.js';
 
 export const analyticsLabels = {
@@ -25,7 +26,7 @@ export async function recordLog(adminId, action, targetType, targetId, detail = 
       [adminId, action, targetType, targetId, JSON.stringify(detail || {}), ip]
     );
   } catch (error) {
-    console.error('[AuditLog] Write failed:', error.message);
+    logger.error('[AuditLog] Write failed:', error.message);
   }
 }
 

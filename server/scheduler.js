@@ -1,3 +1,4 @@
+import { logger } from './services/logger.js';
 import { query, queryOne, getConnection } from './db.js';
 import { recalculateAllLevels } from './services/level.service.js';
 
@@ -10,7 +11,7 @@ class Scheduler {
   start() {
     if (this.running) return;
     this.running = true;
-    console.log('[Scheduler] 服务启动');
+    logger.info('[Scheduler] 服务启动');
 
     this.jobs.push(
       setInterval(() => this.recalculateLevels(), 24 * 60 * 60 * 1000)
@@ -33,11 +34,11 @@ class Scheduler {
     this.jobs.forEach(clearInterval);
     this.jobs = [];
     this.running = false;
-    console.log('[Scheduler] 服务停止');
+    logger.info('[Scheduler] 服务停止');
   }
 
   async cleanExpiredPoints() {
-    console.log('[Scheduler] 开始清理过期积分');
+    logger.info('[Scheduler] 开始清理过期积分');
     try {
       const configResult = await query(
         'SELECT config_value FROM system_configs WHERE config_key = ?',
@@ -56,7 +57,7 @@ class Scheduler {
       const expiredLogs = Array.isArray(expiredResult) ? expiredResult : [];
 
       if (expiredLogs.length === 0) {
-        console.log('[Scheduler] 无过期积分');
+        logger.info('[Scheduler] 无过期积分');
         return;
       }
 
@@ -83,28 +84,28 @@ class Scheduler {
         }
 
         await connection.commit();
-        console.log(`[Scheduler] 过期积分清理完成，处理 ${expiredLogs.length} 条记录`);
+        logger.info(`[Scheduler] 过期积分清理完成，处理 ${expiredLogs.length} 条记录`);
       } catch (error) {
         await connection.rollback();
-        console.error('[Scheduler] 过期积分清理失败:', error.message);
+        logger.error('[Scheduler] 过期积分清理失败:', error.message);
       } finally {
         connection.release();
       }
     } catch (error) {
-      console.error('[Scheduler] 过期积分查询失败:', error.message);
+      logger.error('[Scheduler] 过期积分查询失败:', error.message);
     }
   }
 
   async cleanExpiredNotifications() {
-    console.log('[Scheduler] 开始清理过期通知');
+    logger.info('[Scheduler] 开始清理过期通知');
     try {
       const result = await query(
         'DELETE FROM notifications WHERE created_at < DATE_SUB(NOW(), INTERVAL 90 DAY) AND is_read = 1'
       );
       const affectedRows = result?.affectedRows || 0;
-      console.log(`[Scheduler] 过期通知清理完成，删除 ${affectedRows} 条`);
+      logger.info(`[Scheduler] 过期通知清理完成，删除 ${affectedRows} 条`);
     } catch (error) {
-      console.error('[Scheduler] 通知清理失败:', error.message);
+      logger.error('[Scheduler] 通知清理失败:', error.message);
     }
   }
 
@@ -116,7 +117,7 @@ class Scheduler {
       if (!adapter.isConfigured()) return;
       const rows = await listPendingWechatOrders(30);
       if (!rows.length) return;
-      console.log(`[Scheduler] 虚拟支付查单兜底，待处理 ${rows.length} 笔`);
+      logger.info(`[Scheduler] 虚拟支付查单兜底，待处理 ${rows.length} 笔`);
       for (const row of rows) {
         if (!row.openid) continue;
         try {
@@ -129,21 +130,21 @@ class Scheduler {
             });
           }
         } catch (err) {
-          console.error(`[Scheduler] 虚拟支付查单失败 ${row.order_no}:`, err.message);
+          logger.error(`[Scheduler] 虚拟支付查单失败 ${row.order_no}:`, err.message);
         }
       }
     } catch (error) {
-      console.error('[Scheduler] 虚拟支付查单兜底失败:', error.message);
+      logger.error('[Scheduler] 虚拟支付查单兜底失败:', error.message);
     }
   }
 
   async recalculateLevels() {
-    console.log('[Scheduler] 开始等级重算');
+    logger.info('[Scheduler] 开始等级重算');
     try {
       const result = await recalculateAllLevels();
-      console.log(`[Scheduler] 等级重算完成，处理 ${result.updated}/${result.total} 个用户`);
+      logger.info(`[Scheduler] 等级重算完成，处理 ${result.updated}/${result.total} 个用户`);
     } catch (error) {
-      console.error('[Scheduler] 等级重算失败:', error.message);
+      logger.error('[Scheduler] 等级重算失败:', error.message);
     }
   }
 }

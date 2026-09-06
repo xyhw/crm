@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import mysql from 'mysql2/promise';
 
 const DB_CONFIG = {
@@ -408,10 +409,10 @@ export async function initDatabase() {
   }
 
   await conn.end();
-  console.log('[migration] All tables created successfully');
+  logger.info('[migration] All tables created successfully');
 }
 
 // 如果直接运行此文件，执行迁移
 if (process.argv[1]?.endsWith('001_init.js')) {
-  initDatabase().catch(console.error);
+  initDatabase().catch(logger.error);
 }

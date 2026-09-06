@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { query } from '../db.js';
 
 export async function migrateP1Indexes() {
@@ -25,12 +26,12 @@ export async function migrateP1Indexes() {
   for (const sql of statements) {
     try {
       await query(sql);
-      console.log(`[migration] ${sql.split('(')[0].trim()} applied`);
+      logger.info(`[migration] ${sql.split('(')[0].trim()} applied`);
     } catch (error) {
       if (error.code === 'ER_DUP_KEYNAME') {
-        console.log(`[migration] index already exists, skip: ${sql.split('(')[0].trim()}`);
+        logger.info(`[migration] index already exists, skip: ${sql.split('(')[0].trim()}`);
       } else {
-        console.error(`[migration] failed: ${sql}`, error.message);
+        logger.error(`[migration] failed: ${sql}`, error.message);
       }
     }
   }

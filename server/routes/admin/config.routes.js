@@ -1,3 +1,4 @@
+import { logger } from '../../services/logger.js';
 import { Router } from 'express';
 import { query, queryOne, insert, update } from '../../db.js';
 import { recordLog } from '../../services/audit-log.service.js';
@@ -44,7 +45,7 @@ router.get('/', async (req, res) => {
     }
     res.json({ code: 0, data: map });
   } catch (err) {
-    console.error('Admin get configs error:', err);
+    logger.error('Admin get configs error:', err);
     res.status(500).json({ code: 500, message: '获取系统配置失败' });
   }
 });
@@ -74,7 +75,7 @@ router.put('/', async (req, res) => {
     }
     res.json({ code: 0, message: '配置更新成功' });
   } catch (err) {
-    console.error('Admin update config error:', err);
+    logger.error('Admin update config error:', err);
     res.status(500).json({ code: 500, message: '更新配置失败' });
   }
 });
@@ -97,7 +98,7 @@ router.put('/:key', async (req, res) => {
     }
     res.json({ code: 0, message: '配置更新成功' });
   } catch (err) {
-    console.error('Admin update config error:', err);
+    logger.error('Admin update config error:', err);
     res.status(500).json({ code: 500, message: '更新配置失败' });
   }
 });

@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import mysql from 'mysql2/promise';
 
 const DB_CONFIG = {
@@ -14,17 +15,17 @@ export async function migrateOpportunityAddressWechat() {
     const [cols] = await conn.execute('SHOW COLUMNS FROM opportunities LIKE "address"');
     if (cols.length === 0) {
       await conn.execute('ALTER TABLE opportunities ADD COLUMN address VARCHAR(200) NULL COMMENT \'具体地址\' AFTER city');
-      console.log('[migration] opportunities.address column added');
+      logger.info('[migration] opportunities.address column added');
     } else {
-      console.log('[migration] opportunities.address already exists, skip');
+      logger.info('[migration] opportunities.address already exists, skip');
     }
 
     const [cols2] = await conn.execute('SHOW COLUMNS FROM opportunities LIKE "wechat"');
     if (cols2.length === 0) {
       await conn.execute('ALTER TABLE opportunities ADD COLUMN wechat VARCHAR(50) NULL COMMENT \'微信号\' AFTER contact_phone');
-      console.log('[migration] opportunities.wechat column added');
+      logger.info('[migration] opportunities.wechat column added');
     } else {
-      console.log('[migration] opportunities.wechat already exists, skip');
+      logger.info('[migration] opportunities.wechat already exists, skip');
     }
   } finally {
     await conn.end();
@@ -32,5 +33,5 @@ export async function migrateOpportunityAddressWechat() {
 }
 
 if (process.argv[1]?.endsWith('006_opportunity_address_wechat.js')) {
-  migrateOpportunityAddressWechat().catch(console.error);
+  migrateOpportunityAddressWechat().catch(logger.error);
 }

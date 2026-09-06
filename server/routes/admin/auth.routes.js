@@ -1,3 +1,4 @@
+import { logger } from '../../services/logger.js';
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -84,7 +85,7 @@ router.post('/login', loginLimiter, async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Admin login error:', err);
+    logger.error('Admin login error:', err);
     res.status(500).json({ code: 500, message: '登录失败' });
   }
 });
@@ -137,7 +138,7 @@ router.get('/me', async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Get admin me error:', err);
+    logger.error('Get admin me error:', err);
     res.status(401).json({ code: 401, message: '登录已过期' });
   }
 });

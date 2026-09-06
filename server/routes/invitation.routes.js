@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { Router } from 'express';
 import { query, queryOne, insert } from '../db.js';
 import { authRequired } from '../auth.js';
@@ -35,7 +36,7 @@ router.get('/me', authRequired, async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Get invitation info error:', err);
+    logger.error('Get invitation info error:', err);
     res.status(500).json({ code: 500, message: '获取邀请信息失败' });
   }
 });

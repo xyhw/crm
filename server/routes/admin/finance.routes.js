@@ -1,3 +1,4 @@
+import { logger } from '../../services/logger.js';
 import { Router } from 'express';
 import { query } from '../../db.js';
 
@@ -69,7 +70,7 @@ router.get('/', async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Finance stats error:', err);
+    logger.error('Finance stats error:', err);
     res.status(500).json({ code: 500, message: '获取财务数据失败' });
   }
 });

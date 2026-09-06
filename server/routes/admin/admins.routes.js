@@ -1,3 +1,4 @@
+import { logger } from '../../services/logger.js';
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { query, queryOne, insert, update } from '../../db.js';
@@ -38,7 +39,7 @@ router.get('/', async (req, res) => {
     const [countResult] = await query(`SELECT COUNT(*) as total FROM admin_users ${whereSql}`, params);
     res.json({ code: 0, data: { list, total: countResult.total, page: Number(page), pageSize: Number(pageSize) } });
   } catch (err) {
-    console.error('Admin list error:', err);
+    logger.error('Admin list error:', err);
     res.status(500).json({ code: 500, message: '获取管理员列表失败' });
   }
 });
@@ -68,7 +69,7 @@ router.post('/', audit('admin_user', 'create'), async (req, res) => {
     await insert('admin_users', { username, password_hash: passwordHash, name: name || '', phone: phone || '', status: 'active' });
     res.json({ code: 0, message: '创建成功' });
   } catch (err) {
-    console.error('创建管理员 error:', err);
+    logger.error('创建管理员 error:', err);
     res.status(500).json({ code: 500, message: '创建失败' });
   }
 });
@@ -112,7 +113,7 @@ router.put('/:id', audit('admin_user', 'edit'), async (req, res) => {
     await update('admin_users', data, 'id = ?', [req.params.id]);
     res.json({ code: 0, message: '更新成功' });
   } catch (err) {
-    console.error('更新管理员 error:', err);
+    logger.error('更新管理员 error:', err);
     res.status(500).json({ code: 500, message: '更新失败' });
   }
 });
@@ -142,7 +143,7 @@ router.delete('/:id', audit('admin_user', 'delete'), async (req, res) => {
     await query('DELETE FROM admin_users WHERE id = ?', [req.params.id]);
     res.json({ code: 0, message: '删除成功' });
   } catch (err) {
-    console.error('删除管理员 error:', err);
+    logger.error('删除管理员 error:', err);
     res.status(500).json({ code: 500, message: '删除失败' });
   }
 });

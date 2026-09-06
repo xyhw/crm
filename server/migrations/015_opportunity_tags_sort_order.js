@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { query } from '../db.js';
 
 /**
@@ -13,8 +14,8 @@ export const migrateOpportunityTagsSortOrder = async () => {
   );
   if (!cols) {
     await query('ALTER TABLE opportunity_tags ADD COLUMN sort_order INT NOT NULL DEFAULT 0');
-    console.log('[migration] opportunity_tags.sort_order added');
+    logger.info('[migration] opportunity_tags.sort_order added');
   } else {
-    console.log('[migration] opportunity_tags.sort_order already exists, skip');
+    logger.info('[migration] opportunity_tags.sort_order already exists, skip');
   }
 };

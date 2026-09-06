@@ -1,3 +1,4 @@
+import { logger } from '../../services/logger.js';
 import { Router } from 'express';
 import { query, queryOne, update } from '../../db.js';
 import { audit } from '../../services/audit-log.service.js';
@@ -48,7 +49,7 @@ router.get('/', async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Admin get users error:', err);
+    logger.error('Admin get users error:', err);
     res.status(500).json({ code: 500, message: '获取用户列表失败' });
   }
 });
@@ -83,7 +84,7 @@ router.get('/:id', async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Admin get user detail error:', err);
+    logger.error('Admin get user detail error:', err);
     res.status(500).json({ code: 500, message: '获取用户详情失败' });
   }
 });
@@ -119,7 +120,7 @@ router.put('/:id', audit('users', 'edit'), async (req, res) => {
     await update('users', data, 'id = ? AND deleted_at IS NULL', [req.params.id]);
     res.json({ code: 0, message: '用户信息已更新' });
   } catch (err) {
-    console.error('Admin update user error:', err);
+    logger.error('Admin update user error:', err);
     res.status(500).json({ code: 500, message: '更新用户失败' });
   }
 });
@@ -190,7 +191,7 @@ router.put('/:id/points', audit('points', 'adjust_points'), async (req, res) => 
 
     res.json({ code: 0, message: '积分调整成功' });
   } catch (err) {
-    console.error('Admin adjust points error:', err);
+    logger.error('Admin adjust points error:', err);
     res.status(500).json({ code: 500, message: '调整积分失败' });
   }
 });
@@ -236,7 +237,7 @@ router.put('/:id/credit', audit('users', 'adjust_credits'), async (req, res) => 
 
     res.json({ code: 0, message: '信用分调整成功' });
   } catch (err) {
-    console.error('Admin adjust credit error:', err);
+    logger.error('Admin adjust credit error:', err);
     res.status(500).json({ code: 500, message: '调整信用分失败' });
   }
 });

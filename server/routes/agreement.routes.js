@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { Router } from 'express';
 import { queryOne } from '../db.js';
 
@@ -39,7 +40,7 @@ router.get('/:type', async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Get agreement error:', err);
+    logger.error('Get agreement error:', err);
     res.status(500).json({ code: 500, message: '获取协议失败' });
   }
 });

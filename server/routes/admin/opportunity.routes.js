@@ -1,3 +1,4 @@
+import { logger } from '../../services/logger.js';
 import { Router } from 'express';
 import { query, queryOne, update } from '../../db.js';
 import { recordLog } from '../../services/audit-log.service.js';
@@ -61,7 +62,7 @@ router.get('/', async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Admin get opportunities error:', err);
+    logger.error('Admin get opportunities error:', err);
     res.status(500).json({ code: 500, message: '获取商机列表失败' });
   }
 });
@@ -99,7 +100,7 @@ router.get('/:id', async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Admin get opportunity detail error:', err);
+    logger.error('Admin get opportunity detail error:', err);
     res.status(500).json({ code: 500, message: '获取商机详情失败' });
   }
 });
@@ -116,7 +117,7 @@ router.put('/:id/status', async (req, res) => {
     await recordLog(req.adminId, 'status_toggle', 'opportunity', req.params.id, { status });
     res.json({ code: 0, message: '状态更新成功' });
   } catch (err) {
-    console.error('Admin update opportunity status error:', err);
+    logger.error('Admin update opportunity status error:', err);
     res.status(500).json({ code: 500, message: '更新状态失败' });
   }
 });

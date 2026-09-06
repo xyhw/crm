@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { Router } from 'express';
 import { query, queryOne, insert, update } from '../db.js';
 import { authRequired } from '../auth.js';
@@ -49,7 +50,7 @@ router.get('/', authRequired, async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Get CRM list error:', err);
+    logger.error('Get CRM list error:', err);
     res.status(500).json({ code: 500, message: '获取CRM列表失败' });
   }
 });
@@ -151,7 +152,7 @@ router.get('/:id', authRequired, async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Get CRM detail error:', err);
+    logger.error('Get CRM detail error:', err);
     res.status(500).json({ code: 500, message: '获取CRM详情失败' });
   }
 });
@@ -193,7 +194,7 @@ router.post('/', authRequired, async (req, res) => {
       message: '录入成功',
     });
   } catch (err) {
-    console.error('Add to CRM error:', err);
+    logger.error('Add to CRM error:', err);
     res.status(500).json({ code: 500, message: '录入失败' });
   }
 });
@@ -235,7 +236,7 @@ router.post('/:id/publish', authRequired, async (req, res) => {
       message: '投稿成功',
     });
   } catch (err) {
-    console.error('Publish from CRM error:', err);
+    logger.error('Publish from CRM error:', err);
     res.status(500).json({ code: 500, message: '投稿失败' });
   }
 });

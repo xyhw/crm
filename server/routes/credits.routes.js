@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { Router } from 'express';
 import { authRequired } from '../auth.js';
 import { query, queryOne } from '../db.js';
@@ -46,7 +47,7 @@ router.get('/', authRequired, async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('[Credits]', error.message);
+    logger.error('[Credits]', error.message);
     res.status(500).json({ code: 500, message: '获取信用记录失败' });
   }
 });

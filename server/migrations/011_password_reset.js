@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { query } from '../db.js';
 
 export const migratePasswordReset = async () => {
@@ -7,7 +8,7 @@ export const migratePasswordReset = async () => {
   );
   if (!cols) {
     await query('ALTER TABLE users ADD COLUMN token_version INT NOT NULL DEFAULT 0');
-    console.log('[migration] users.token_version added');
+    logger.info('[migration] users.token_version added');
   }
 
   await query(`
@@ -22,5 +23,5 @@ export const migratePasswordReset = async () => {
       KEY idx_expires (expires_at)
     )
   `);
-  console.log('[migration] password_reset_codes table ready');
+  logger.info('[migration] password_reset_codes table ready');
 };

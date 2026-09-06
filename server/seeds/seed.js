@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { query, insert, getPool } from '../db.js';
 import bcrypt from 'bcryptjs';
 
@@ -46,29 +47,29 @@ export async function seedDatabase() {
   // 检查是否已有数据
   const [existing] = await pool.execute('SELECT COUNT(*) as count FROM opportunity_categories');
   if (existing[0].count > 0) {
-    console.log('[seed] Database already seeded, skipping');
+    logger.info('[seed] Database already seeded, skipping');
     return;
   }
 
-  console.log('[seed] Seeding database...');
+  logger.info('[seed] Seeding database...');
 
   // 插入分类
   for (const cat of CATEGORIES) {
     await insert('opportunity_categories', cat);
   }
-  console.log('[seed] Categories seeded');
+  logger.info('[seed] Categories seeded');
 
   // 插入等级配置
   for (const level of MEMBER_LEVELS) {
     await insert('member_levels', level);
   }
-  console.log('[seed] Member levels seeded');
+  logger.info('[seed] Member levels seeded');
 
   // 插入系统配置
   for (const config of SYSTEM_CONFIGS) {
     await insert('system_configs', config);
   }
-  console.log('[seed] System configs seeded');
+  logger.info('[seed] System configs seeded');
 
   // 创建默认管理员
   // 生产环境必须显式提供 ADMIN_INIT_PASSWORD，否则拒绝启动，杜绝 admin/admin123 弱口令上线
@@ -85,9 +86,9 @@ export async function seedDatabase() {
     status: 'active',
   });
   if (process.env.ADMIN_INIT_PASSWORD) {
-    console.log('[seed] Default admin created (password from ADMIN_INIT_PASSWORD)');
+    logger.info('[seed] Default admin created (password from ADMIN_INIT_PASSWORD)');
   } else {
-    console.warn('[seed][SECURITY] Default admin created with DEFAULT password admin/admin123 — 请登录后台立即修改密码，或部署前设置 ADMIN_INIT_PASSWORD');
+    logger.warn('[seed][SECURITY] Default admin created with DEFAULT password admin/admin123 — 请登录后台立即修改密码，或部署前设置 ADMIN_INIT_PASSWORD');
   }
 
   // 创建默认角色
@@ -95,7 +96,7 @@ export async function seedDatabase() {
   await insert('roles', { name: 'operation', description: '运营管理员' });
   await insert('roles', { name: 'finance', description: '财务管理员' });
   await insert('roles', { name: 'support', description: '客服/助理' });
-  console.log('[seed] Default roles created');
+  logger.info('[seed] Default roles created');
 
   // 绑定默认管理员到 super_admin 角色（角色体系防空转）
   const [adminRow] = await pool.execute("SELECT id FROM admin_users WHERE username = 'admin' LIMIT 1");
@@ -105,13 +106,13 @@ export async function seedDatabase() {
       adminRow[0].id,
       superRole[0].id,
     ]);
-    console.log('[seed] Default admin bound to super_admin role');
+    logger.info('[seed] Default admin bound to super_admin role');
   }
 
-  console.log('[seed] Database seeding completed');
+  logger.info('[seed] Database seeding completed');
 }
 
 // 如果直接运行此文件，执行种子
 if (process.argv[1]?.endsWith('seed.js')) {
-  seedDatabase().then(() => process.exit(0)).catch(console.error);
+  seedDatabase().then(() => process.exit(0)).catch(logger.error);
 }

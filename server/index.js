@@ -1,3 +1,4 @@
+import { logger } from './services/logger.js';
 import express from 'express';
 import fs from 'fs';
 import path from 'path';
@@ -30,6 +31,7 @@ import { config } from './config.js';
 import { apiLimiter } from './middleware/rate-limit.js';
 import { requireRole } from './middleware/require-role.js';
 import { paginationLimiter } from './middleware/pagination.js';
+import { requestId } from './middleware/request-id.js';
 
 // 路由导入
 import authRoutes from './routes/auth.routes.js';
@@ -78,6 +80,9 @@ const app = express();
 
 // 反代（nginx/CLB）后按真实客户端 IP 限流，避免所有请求共用一个限流桶
 app.set('trust proxy', 1);
+
+// 请求 ID：关联日志与响应头，便于排障
+app.use(requestId);
 
 // CORS：配置了白名单则仅放行白名单来源，否则开发环境允许任意来源
 const corsOptions = config.corsOrigins.length ? { origin: config.corsOrigins } : {};
@@ -178,9 +183,10 @@ app.use((req, res) => {
   res.status(404).json({ code: 404, message: '接口不存在' });
 });
 
-// 错误处理
+// 错误处理：结构化日志（含请求 ID 与堆栈），不向客户端外泄内部信息
 app.use((err, req, res, next) => {
-  console.error(err);
+  logger.error('Unhandled error', { requestId: req.id, method: req.method, path: req.originalUrl, err });
+  if (res.headersSent) return next(err);
   res.status(500).json({ code: 500, message: '服务器内部错误' });
 });
 
@@ -192,89 +198,89 @@ async function start() {
 
     // 初始化数据库
     await initDatabase();
-    console.log('[server] Database initialized');
+    logger.info('[server] Database initialized');
 
     // P0 字段迁移（幂等）
     await migrateP0Fields();
-    console.log('[server] P0 fields migrated');
+    logger.info('[server] P0 fields migrated');
 
     // 公告表迁移（幂等）
     await migrateAnnouncements();
-    console.log('[server] Announcements table ready');
+    logger.info('[server] Announcements table ready');
 
     // P1 索引迁移（幂等）
     await migrateP1Indexes();
-    console.log('[server] P1 indexes applied');
+    logger.info('[server] P1 indexes applied');
 
     // 积分流水 source_type 枚举补 refund（幂等）
     await migratePointsLogsRefund();
-    console.log('[server] points_logs.source_type enum ready');
+    logger.info('[server] points_logs.source_type enum ready');
 
     await migrateOpportunityAddressWechat();
-    console.log('[server] opportunities address/wechat columns ready');
+    logger.info('[server] opportunities address/wechat columns ready');
 
     await migrateFollowUpHelpfulMarks();
-    console.log('[server] follow_up_helpful_marks table ready');
+    logger.info('[server] follow_up_helpful_marks table ready');
 
     await migrateFollowUpShareInvalidMarks();
-    console.log('[server] follow_up_share_invalid_marks table ready');
+    logger.info('[server] follow_up_share_invalid_marks table ready');
 
     // 支付订单表 + points_logs.source_type 补 penalty（幂等）
     await migratePaymentOrders();
-    console.log('[server] payment_orders table ready');
+    logger.info('[server] payment_orders table ready');
 
     await migrateWaffoChannel();
-    console.log('[server] payment_orders.channel +waffo');
+    logger.info('[server] payment_orders.channel +waffo');
 
     await migratePasswordReset();
-    console.log('[server] users.token_version + password_reset_codes ready');
+    logger.info('[server] users.token_version + password_reset_codes ready');
 
     await migratePasswordResetAttempts();
-    console.log('[server] password_reset_codes.attempts ready');
+    logger.info('[server] password_reset_codes.attempts ready');
 
     await migrateSecurityGuards();
-    console.log('[server] login_failures + roles + admin binding ready');
+    logger.info('[server] login_failures + roles + admin binding ready');
 
     await migrateWechatBinding();
-    console.log('[server] users.wechat_openid/unionid ready (预留)');
+    logger.info('[server] users.wechat_openid/unionid ready (预留)');
 
     await migrateOpportunityTagsSortOrder();
     await migrateOrdersRefundedRepurchase();
-    console.log('[server] opportunity_tags.sort_order ready');
+    logger.info('[server] opportunity_tags.sort_order ready');
 
     // P2 性能索引（幂等）
     await migrateP2Indexes();
-    console.log('[server] P2 performance indexes applied');
+    logger.info('[server] P2 performance indexes applied');
 
     // 种子数据
     await seedDatabase();
-    console.log('[server] Seed data loaded');
+    logger.info('[server] Seed data loaded');
 
     // 加载支付渠道配置（system_configs 覆盖环境变量，支持后台热更新）
     await ensureAndLoadPaymentConfig();
-    console.log('[server] payment config loaded from DB');
+    logger.info('[server] payment config loaded from DB');
 
     // 启动服务器
     app.listen(config.port, () => {
-      console.log(`[server] Hotel Order Follow API listening on http://localhost:${config.port}`);
+      logger.info(`[server] Hotel Order Follow API listening on http://localhost:${config.port}`);
       scheduler.start();
     });
   } catch (err) {
-    console.error('[server] Failed to start:', err);
+    logger.error('[server] Failed to start:', err);
     process.exit(1);
   }
 }
 
 // 优雅退出
 process.on('SIGINT', async () => {
-  console.log('[server] Shutting down...');
+  logger.info('[server] Shutting down...');
   scheduler.stop();
   await closePool();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
-  console.log('[server] Shutting down...');
+  logger.info('[server] Shutting down...');
   scheduler.stop();
   await closePool();
   process.exit(0);

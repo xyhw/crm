@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { Router } from 'express';
 import { query } from '../db.js';
 import { authRequired, optionalAuth } from '../auth.js';
@@ -98,7 +99,7 @@ router.get('/', optionalAuth, setCache(300, { staleWhileRevalidate: 600 }), asyn
       },
     });
   } catch (err) {
-    console.error('Get ranking error:', err);
+    logger.error('Get ranking error:', err);
     res.status(500).json({ code: 500, message: '获取排行榜失败' });
   }
 });

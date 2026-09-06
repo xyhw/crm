@@ -1,3 +1,4 @@
+import { logger } from '../../services/logger.js';
 import { Router } from 'express';
 import { query, queryOne } from '../../db.js';
 import { getAdapter, settleRechargeOrder } from '../../services/payment/index.js';
@@ -64,7 +65,7 @@ router.get('/', async (req, res) => {
       data: { list, total: countRow?.total || 0, page: pageNum, pageSize: size },
     });
   } catch (err) {
-    console.error('Admin get recharge orders error:', err);
+    logger.error('Admin get recharge orders error:', err);
     res.status(500).json({ code: 500, message: '获取充值订单失败' });
   }
 });
@@ -123,7 +124,7 @@ router.get('/summary', async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Admin recharge summary error:', err);
+    logger.error('Admin recharge summary error:', err);
     res.status(500).json({ code: 500, message: '获取充值对账汇总失败' });
   }
 });
@@ -183,7 +184,7 @@ router.post('/:orderNo/sync', async (req, res) => {
     });
   } catch (err) {
     if (err.code === 404) return res.json({ code: 404, message: err.message });
-    console.error('Admin recharge sync error:', err);
+    logger.error('Admin recharge sync error:', err);
     res.status(500).json({ code: 500, message: '查单补账失败，请稍后重试' });
   }
 });

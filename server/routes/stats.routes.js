@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { Router } from 'express';
 import { query } from '../db.js';
 import { authRequired } from '../auth.js';
@@ -48,7 +49,7 @@ router.get('/me', authRequired, async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Get my stats error:', err);
+    logger.error('Get my stats error:', err);
     res.status(500).json({ code: 500, message: '获取统计信息失败' });
   }
 });

@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { Router } from 'express';
 import { query, queryOne } from '../db.js';
 import { setCache } from '../middleware/cache-headers.js';
@@ -45,7 +46,7 @@ router.get('/', setCache(60, { staleWhileRevalidate: 120 }), async (req, res) =>
     );
     res.json({ code: 0, data: { list } });
   } catch (err) {
-    console.error('Get announcements error:', err);
+    logger.error('Get announcements error:', err);
     res.status(500).json({ code: 500, message: '获取公告列表失败' });
   }
 });
@@ -80,7 +81,7 @@ router.get('/:id', setCache(60, { staleWhileRevalidate: 120 }), async (req, res)
     if (!item) return res.json({ code: 404, message: '公告不存在' });
     res.json({ code: 0, data: item });
   } catch (err) {
-    console.error('Get announcement error:', err);
+    logger.error('Get announcement error:', err);
     res.status(500).json({ code: 500, message: '获取公告详情失败' });
   }
 });

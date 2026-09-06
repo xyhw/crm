@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { Router } from 'express';
 import { query, queryOne, transaction } from '../db.js';
 import { authRequired } from '../auth.js';
@@ -163,7 +164,7 @@ router.post('/', authRequired, async (req, res) => {
     if (err.code === 'ER_DUP_ENTRY') {
       return res.json({ code: 409, message: '你已购买过此商机' });
     }
-    console.error('Purchase error:', err);
+    logger.error('Purchase error:', err);
     res.status(500).json({ code: 500, message: '购买失败' });
   }
 });
@@ -215,7 +216,7 @@ router.get('/my', authRequired, async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Get my orders error:', err);
+    logger.error('Get my orders error:', err);
     res.status(500).json({ code: 500, message: '获取购买记录失败' });
   }
 });

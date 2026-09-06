@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
@@ -146,7 +147,7 @@ router.post('/wechat-login', async (req, res) => {
     }
     return res.json({ code: 0, data: { bound: true, ...issueSession(user) } });
   } catch (err) {
-    console.error('Wechat login error:', err);
+    logger.error('Wechat login error:', err);
     return res.json({ code: 500, message: '微信登录失败，请稍后重试' });
   }
 });
@@ -218,7 +219,7 @@ router.post('/bind-wechat', async (req, res) => {
 
     return res.json({ code: 0, data: issueSession(user), message: existingUser ? '绑定成功' : '注册成功' });
   } catch (err) {
-    console.error('Bind wechat error:', err);
+    logger.error('Bind wechat error:', err);
     return res.json({ code: 500, message: '微信绑定失败，请稍后重试' });
   }
 });
@@ -236,7 +237,7 @@ router.post('/phone', async (req, res) => {
     const phone = await getPhoneByCode(code);
     return res.json({ code: 0, data: { phone } });
   } catch (err) {
-    console.error('Wechat phone error:', err);
+    logger.error('Wechat phone error:', err);
     return res.json({ code: 500, message: '手机号获取失败，请稍后重试' });
   }
 });
@@ -294,7 +295,7 @@ router.post('/register', async (req, res) => {
     const user = await queryOne('SELECT * FROM users WHERE phone = ?', [phone]);
     res.json({ code: 0, data: issueSession(user), message: '注册成功' });
   } catch (err) {
-    console.error('Register error:', err);
+    logger.error('Register error:', err);
     res.status(500).json({ code: 500, message: '注册失败' });
   }
 });
@@ -348,7 +349,7 @@ router.post('/login', loginLimiter, async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Login error:', err);
+    logger.error('Login error:', err);
     res.status(500).json({ code: 500, message: '登录失败' });
   }
 });
@@ -384,7 +385,7 @@ router.post('/refresh', async (req, res) => {
       data: { token: newToken, refreshToken: newRefreshToken },
     });
   } catch (err) {
-    console.error('Refresh error:', err);
+    logger.error('Refresh error:', err);
     res.status(500).json({ code: 500, message: '刷新失败' });
   }
 });
@@ -426,7 +427,7 @@ router.get('/me', authRequired, async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Get me error:', err);
+    logger.error('Get me error:', err);
     res.status(500).json({ code: 500, message: '获取用户信息失败' });
   }
 });
@@ -469,7 +470,7 @@ router.put('/me', authRequired, async (req, res) => {
       message: '更新成功',
     });
   } catch (err) {
-    console.error('Update me error:', err);
+    logger.error('Update me error:', err);
     res.status(500).json({ code: 500, message: '更新失败' });
   }
 });
@@ -505,7 +506,7 @@ router.post('/send-reset-code', loginLimiter, async (req, res) => {
 
     res.json({ code: 0, message: '验证码已发送至绑定邮箱，5 分钟内有效' });
   } catch (err) {
-    console.error('Send reset code error:', err);
+    logger.error('Send reset code error:', err);
     if (err.message && err.message.includes('未绑定邮箱')) {
       return res.status(400).json({ code: 400, message: err.message });
     }
@@ -567,7 +568,7 @@ router.post('/reset-password', loginLimiter, async (req, res) => {
 
     res.json({ code: 0, message: '密码重置成功，请使用新密码登录' });
   } catch (err) {
-    console.error('Reset password error:', err);
+    logger.error('Reset password error:', err);
     res.status(500).json({ code: 500, message: '重置失败' });
   }
 });
@@ -600,7 +601,7 @@ router.put('/change-password', authRequired, async (req, res) => {
 
     res.json({ code: 0, message: '密码修改成功，请重新登录' });
   } catch (err) {
-    console.error('Change password error:', err);
+    logger.error('Change password error:', err);
     res.status(500).json({ code: 500, message: '修改失败' });
   }
 });

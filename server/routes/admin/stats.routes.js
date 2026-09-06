@@ -1,3 +1,4 @@
+import { logger } from '../../services/logger.js';
 import { Router } from 'express';
 import { adminAuthRequired } from '../../auth.js';
 import { query, queryOne } from '../../db.js';
@@ -25,7 +26,7 @@ router.get('/dashboard', adminAuthRequired, async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('[Stats dashboard]', err.message);
+    logger.error('[Stats dashboard]', err.message);
     res.status(500).json({ code: 500, message: '获取仪表盘数据失败' });
   }
 });
@@ -48,7 +49,7 @@ router.get('/trends', adminAuthRequired, async (req, res) => {
 
     res.json({ code: 0, data: { users: newUsers || [], opportunities: newOpps || [], revenue: revenue || [] } });
   } catch (err) {
-    console.error('[Stats trends]', err.message);
+    logger.error('[Stats trends]', err.message);
     res.status(500).json({ code: 500, message: '获取趋势数据失败' });
   }
 });
@@ -70,7 +71,7 @@ router.get('/distribution', adminAuthRequired, async (req, res) => {
 
     res.json({ code: 0, data: { oppCategories: oppCategories || [], levelDist: levelDist || [], priceDist: priceDist || [] } });
   } catch (err) {
-    console.error('[Stats distribution]', err.message);
+    logger.error('[Stats distribution]', err.message);
     res.status(500).json({ code: 500, message: '获取分布数据失败' });
   }
 });

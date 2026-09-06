@@ -1,3 +1,4 @@
+import { logger } from '../../services/logger.js';
 import { Router } from 'express';
 import { query, insert, queryOne } from '../../db.js';
 import { audit } from '../../services/audit-log.service.js';
@@ -53,7 +54,7 @@ router.post('/send', audit('notification', 'send'), async (req, res) => {
 
     res.json({ code: 0, message: `已向 ${targetUserIds.length} 位用户发送通知` });
   } catch (err) {
-    console.error('Admin send notification error:', err);
+    logger.error('Admin send notification error:', err);
     res.status(500).json({ code: 500, message: '发送通知失败' });
   }
 });
@@ -102,7 +103,7 @@ router.get('/history', async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Admin get notification history error:', err);
+    logger.error('Admin get notification history error:', err);
     res.status(500).json({ code: 500, message: '获取通知历史失败' });
   }
 });

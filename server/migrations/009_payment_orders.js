@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { query } from '../db.js';
 
 export const migratePaymentOrders = async () => {
@@ -36,5 +37,5 @@ export const migratePaymentOrders = async () => {
     ) NOT NULL
   `);
 
-  console.log('[migration] payment_orders table ready, points_logs.source_type +penalty');
+  logger.info('[migration] payment_orders table ready, points_logs.source_type +penalty');
 };

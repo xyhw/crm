@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { Router } from 'express';
 import { query } from '../db.js';
 import { setCache } from '../middleware/cache-headers.js';
@@ -58,7 +59,7 @@ router.get('/', setCache(60, { staleWhileRevalidate: 120 }), async (req, res) =>
     );
     res.json({ code: 0, data: { list } });
   } catch (err) {
-    console.error('Get banners error:', err);
+    logger.error('Get banners error:', err);
     res.status(500).json({ code: 500, message: '获取Banner列表失败' });
   }
 });

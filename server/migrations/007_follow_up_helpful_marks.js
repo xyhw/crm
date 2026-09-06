@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { query } from '../db.js';
 
 export const migrateFollowUpHelpfulMarks = async () => {
@@ -12,5 +13,5 @@ export const migrateFollowUpHelpfulMarks = async () => {
       INDEX idx_user_id (user_id)
     ) ENGINE=InnoDB
   `);
-  console.log('[migration] follow_up_helpful_marks table ready');
+  logger.info('[migration] follow_up_helpful_marks table ready');
 };

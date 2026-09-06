@@ -1,3 +1,4 @@
+import { logger } from '../../services/logger.js';
 import { Router } from 'express';
 import multer from 'multer';
 import os from 'os';
@@ -103,7 +104,7 @@ router.post('/', adminAuthRequired, upload.single('file'), async (req, res) => {
       message: `成功导入 ${successes.length} 条，失败 ${errors.length} 条`,
     });
   } catch (error) {
-    console.error('[IMPORT CSV]', error.message);
+    logger.error('[IMPORT CSV]', error.message);
     res.status(500).json({ code: 500, message: 'CSV导入失败' });
   }
 });

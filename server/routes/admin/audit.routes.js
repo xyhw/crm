@@ -1,3 +1,4 @@
+import { logger } from '../../services/logger.js';
 import { Router } from 'express';
 import { query, queryOne, update, transaction } from '../../db.js';
 
@@ -36,7 +37,7 @@ router.get('/follow-up-shares', async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Admin get audit list error:', err);
+    logger.error('Admin get audit list error:', err);
     res.status(500).json({ code: 500, message: '获取审核列表失败' });
   }
 });
@@ -94,7 +95,7 @@ router.put('/follow-up-shares/:id', async (req, res) => {
 
     res.json({ code: 0, message: '审核完成' });
   } catch (err) {
-    console.error('Admin audit share error:', err);
+    logger.error('Admin audit share error:', err);
     res.status(500).json({ code: 500, message: '审核失败' });
   }
 });

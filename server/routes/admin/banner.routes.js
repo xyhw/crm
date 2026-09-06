@@ -1,3 +1,4 @@
+import { logger } from '../../services/logger.js';
 import { Router } from 'express';
 import { query, queryOne, insert, update, del } from '../../db.js';
 import { audit } from '../../services/audit-log.service.js';
@@ -44,7 +45,7 @@ router.get('/', async (req, res) => {
       data: { list, total: countResult.total, page: Number(page), pageSize: Number(pageSize) },
     });
   } catch (err) {
-    console.error('Admin get banners error:', err);
+    logger.error('Admin get banners error:', err);
     res.status(500).json({ code: 500, message: '获取Banner列表失败' });
   }
 });
@@ -72,7 +73,7 @@ router.get('/:id', async (req, res) => {
     if (!banner) return res.json({ code: 404, message: 'Banner不存在' });
     res.json({ code: 0, data: banner });
   } catch (err) {
-    console.error('Admin get banner error:', err);
+    logger.error('Admin get banner error:', err);
     res.status(500).json({ code: 500, message: '获取Banner失败' });
   }
 });
@@ -106,7 +107,7 @@ router.post('/', audit('banner', 'create'), async (req, res) => {
     });
     res.json({ code: 0, data: { id: result.insertId } });
   } catch (err) {
-    console.error('Admin create banner error:', err);
+    logger.error('Admin create banner error:', err);
     res.status(500).json({ code: 500, message: '创建Banner失败' });
   }
 });
@@ -147,7 +148,7 @@ router.put('/:id', audit('banner', 'edit'), async (req, res) => {
     await update('banners', data, 'id = ?', [req.params.id]);
     res.json({ code: 0, message: '更新成功' });
   } catch (err) {
-    console.error('Admin update banner error:', err);
+    logger.error('Admin update banner error:', err);
     res.status(500).json({ code: 500, message: '更新Banner失败' });
   }
 });
@@ -174,7 +175,7 @@ router.delete('/:id', audit('banner', 'delete'), async (req, res) => {
     await del('banners', 'id = ?', [req.params.id]);
     res.json({ code: 0, message: '删除成功' });
   } catch (err) {
-    console.error('Admin delete banner error:', err);
+    logger.error('Admin delete banner error:', err);
     res.status(500).json({ code: 500, message: '删除Banner失败' });
   }
 });

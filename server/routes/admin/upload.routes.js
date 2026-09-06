@@ -1,3 +1,4 @@
+import { logger } from '../../services/logger.js';
 import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
@@ -71,7 +72,7 @@ router.post('/', adminAuthRequired, upload.single('file'), async (req, res) => {
       data: { id: fileRecord.id, url: `/uploads/${req.file.filename}`, name: req.file.originalname, size: req.file.size }
     });
   } catch (error) {
-    console.error('[UPLOAD]', error.message);
+    logger.error('[UPLOAD]', error.message);
     if (error.message === 'UNSUPPORTED_TYPE' || error.message === 'UNSUPPORTED_MIME') {
       return res.status(400).json({ code: 400, message: '不支持的文件类型' });
     }

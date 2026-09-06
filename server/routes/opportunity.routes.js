@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { Router } from 'express';
 import { query, queryOne, insert, update, transaction } from '../db.js';
 import { authRequired, optionalAuth } from '../auth.js';
@@ -176,7 +177,7 @@ router.get('/', optionalAuth, async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Get opportunities error:', err);
+    logger.error('Get opportunities error:', err);
     res.status(500).json({ code: 500, message: '获取商机列表失败' });
   }
 });
@@ -323,7 +324,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
 
     res.json({ code: 0, data: result });
   } catch (err) {
-    console.error('Get opportunity detail error:', err);
+    logger.error('Get opportunity detail error:', err);
     res.status(500).json({ code: 500, message: '获取商机详情失败' });
   }
 });
@@ -403,7 +404,7 @@ router.post('/', authRequired, async (req, res) => {
       message: '发布成功',
     });
   } catch (err) {
-    console.error('Create opportunity error:', err);
+    logger.error('Create opportunity error:', err);
     res.status(500).json({ code: 500, message: '发布失败' });
   }
 });
@@ -462,7 +463,7 @@ router.put('/:id', authRequired, async (req, res) => {
 
     res.json({ code: 0, message: '更新成功' });
   } catch (err) {
-    console.error('Update opportunity error:', err);
+    logger.error('Update opportunity error:', err);
     res.status(500).json({ code: 500, message: '更新失败' });
   }
 });
@@ -647,7 +648,7 @@ router.post('/:id/invalid-mark', authRequired, async (req, res) => {
     if (err.code === 'ER_DUP_ENTRY') {
       return res.json({ code: 409, message: '你已经标记过此商机' });
     }
-    console.error('Mark invalid error:', err);
+    logger.error('Mark invalid error:', err);
     res.status(500).json({ code: 500, message: '标记失败' });
   }
 });

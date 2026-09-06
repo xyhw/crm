@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import { query, queryOne } from '../db.js';
 
 /**
@@ -15,7 +16,7 @@ export const migrateOrdersRefundedRepurchase = async () => {
     const exists = (stat && stat.cnt > 0) || false;
 
     if (!exists) {
-      console.log('[migration] orders.uk_user_opp already rebuilt, skip');
+      logger.info('[migration] orders.uk_user_opp already rebuilt, skip');
       return;
     }
 
@@ -25,10 +26,10 @@ export const migrateOrdersRefundedRepurchase = async () => {
         GENERATED ALWAYS AS (CASE WHEN status = 'paid' THEN opportunity_id ELSE NULL END) STORED,
       ADD UNIQUE KEY uk_user_paid_opp (user_id, paid_opp_key)`);
 
-    console.log('[migration] orders uk_user_opp -> uk_user_paid_opp (refunded repurchase enabled)');
+    logger.info('[migration] orders uk_user_opp -> uk_user_paid_opp (refunded repurchase enabled)');
   } catch (err) {
     // 生成列已存在等情况视为幂等失败，重试前确认
-    console.error('[migration] rebuild orders unique key error:', err.message);
+    logger.error('[migration] rebuild orders unique key error:', err.message);
     throw err;
   }
 };

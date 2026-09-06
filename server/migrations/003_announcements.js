@@ -1,3 +1,4 @@
+import { logger } from '../services/logger.js';
 import mysql from 'mysql2/promise';
 
 const DB_CONFIG = {
@@ -30,7 +31,7 @@ export async function migrateAnnouncements() {
         INDEX idx_created_at (created_at)
       ) ENGINE=InnoDB
     `);
-    console.log('[migration] announcements table ready');
+    logger.info('[migration] announcements table ready');
   } finally {
     await conn.end();
   }
@@ -38,5 +39,5 @@ export async function migrateAnnouncements() {
 
 // 如果直接运行此文件，执行迁移
 if (process.argv[1]?.endsWith('003_announcements.js')) {
-  migrateAnnouncements().catch(console.error);
+  migrateAnnouncements().catch(logger.error);
 }
