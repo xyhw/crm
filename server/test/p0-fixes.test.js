@@ -51,17 +51,17 @@ describe('P0 修复回归', () => {
   let userToken, adminToken;
 
   before(async () => {
-    // 确保测试用户存在（与 core.test.js 共用 13800000001 账号）
+    // 独立测试用户：并行测试文件共享用户会互相污染（如 core 的封禁用例）
     const pool = await createTestPool();
     await pool.query(
       `INSERT INTO users (phone, nickname, password_hash, status, credit_score, created_at)
-       VALUES ('13800000001', '测试用户1', ?, 'active', 100, NOW())
-       ON DUPLICATE KEY UPDATE status = 'active'`,
+       VALUES ('13800000051', 'P0回归用户', ?, 'active', 100, NOW())
+       ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), status = 'active'`,
       [await bcrypt.hash('123456', 10)]
     );
     await pool.end();
 
-    const res = await login('13800000001');
+    const res = await login('13800000051');
     assert.strictEqual(res.code, 0);
     userToken = res.data.token;
 

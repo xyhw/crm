@@ -1,5 +1,6 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert';
+import bcrypt from 'bcryptjs';
 import { createTestPool } from './helpers/db.js';
 
 const BASE = 'http://127.0.0.1:3001/api';
@@ -13,17 +14,23 @@ async function login(phone, password = '123456') {
   return resp.json();
 }
 
-// 独立的测试账号，避免与 core/payment 等并行文件共用 13800000001/02 造成锁定互相干扰
-const LOCK_PHONE = '13800000021';
+// 独立的测试账号：自建自管，不与其他并行套件共享（避免注册策略/状态互相污染）
+const LOCK_PHONE = '13800000071';
 
 async function getUserIdByPhone(pool, phone) {
   const [rows] = await pool.query('SELECT id FROM users WHERE phone = ?', [phone]);
   return rows[0]?.id || 0;
 }
 
-// 清理锁定环境：删除该账号失败记录，保证可重复运行
+// 确保锁定测试用户存在且状态正常，并清理锁定环境保证可重复运行
 async function clearFailures() {
   const pool = await createTestPool();
+  await pool.query(
+    `INSERT INTO users (phone, nickname, password_hash, status, credit_score, created_at)
+     VALUES (?, '安全测试用户', ?, 'active', 100, NOW())
+     ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), status = 'active'`,
+    [LOCK_PHONE, await bcrypt.hash('123456', 10)]
+  );
   const uid = await getUserIdByPhone(pool, LOCK_PHONE);
   if (uid) await pool.query('DELETE FROM login_failures WHERE user_id = ?', [uid]);
   return pool;
@@ -31,11 +38,9 @@ async function clearFailures() {
 
 describe('安全加固', () => {
   before(async () => {
+    // 自建用户（密码策略仅约束注册 API，直插数据库绕过）+ 清理失败记录
     const pool = await clearFailures();
-    await pool.query(
-      "UPDATE users SET status = 'active' WHERE phone = ?",
-      [LOCK_PHONE]
-    );
+    await pool.query("UPDATE users SET status = 'active' WHERE phone = ?", [LOCK_PHONE]);
     await pool.end();
   });
 

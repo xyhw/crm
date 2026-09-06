@@ -83,12 +83,14 @@ describe('核心流程', () => {
       `UPDATE opportunities SET status = 'active', invalid_mark_count = 0
        WHERE user_id = (SELECT id FROM users WHERE phone = '13800000001')`
     );
+    // 并行测试文件下自增 id 不可假定，均按手机号定位 user2
     await pool2.query(
       `INSERT INTO points_logs (user_id, delta, balance_after, source_type, created_at)
-       VALUES (2, 10000, 10000, 'recharge', NOW())`
+       SELECT id, 10000, 10000, 'recharge', NOW() FROM users WHERE phone = '13800000002'`
     );
     await pool2.query(
-      `INSERT INTO points_accounts (user_id, balance, total_recharged) VALUES (2, 10000, 10000)
+      `INSERT INTO points_accounts (user_id, balance, total_recharged)
+       SELECT id, 10000, 10000 FROM users WHERE phone = '13800000002'
        ON DUPLICATE KEY UPDATE balance = balance + 10000, total_recharged = total_recharged + 10000`
     );
     await pool2.end();
@@ -201,7 +203,9 @@ describe('核心流程', () => {
     assert.strictEqual(hzRes.code, 0);
     const hangzhouId = hzRes.data.id;
 
-    const listRes = await apiGet('/opportunities?sort=recommend&pageSize=500&boostCategory=6', user1Token);
+    // user2 已购买 publishedId（杭州、分类4）→ 城市偏好杭州：
+    // hangzhou（杭州/分类6）得分 100+30，kitchen（深圳/分类6）仅 100，确定性排序
+    const listRes = await apiGet('/opportunities?sort=recommend&pageSize=500&boostCategory=6', user2Token);
     assert.strictEqual(listRes.code, 0);
     const ids = listRes.data.list.map((x) => x.id);
     assert.ok(ids.includes(hangzhouId), '同分类商机应在列表内');

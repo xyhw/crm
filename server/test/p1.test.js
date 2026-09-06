@@ -22,9 +22,11 @@ async function apiPost(path, data, token) {
   return resp.json();
 }
 
-// 注册（已存在则忽略，返回 null）
+// 注册（已存在则忽略，返回 null）；密码需符合注册策略：≥8 位且含字母数字
+const TEST_PASSWORD = 'abcd1234';
+
 async function registerIfAbsent(phone, extra = {}) {
-  const res = await apiPost('/auth/register', { phone, password: '123456', nickname: `T${phone.slice(-4)}`, ...extra });
+  const res = await apiPost('/auth/register', { phone, password: TEST_PASSWORD, nickname: `T${phone.slice(-4)}`, ...extra });
   if (res.code !== 0 && res.code !== 400) {
     throw new Error(`register failed: ${JSON.stringify(res)}`);
   }
@@ -38,13 +40,13 @@ describe('P1 关键能力', () => {
     // 用户A：注册（带 email）
     const phoneA = '13700009901';
     const regA = await registerIfAbsent(phoneA, { email: 'a@example.com', company: 'A公司', category: 'zhuangxiu' });
-    const loginA = regA.code === 0 ? regA : await apiPost('/auth/login', { phone: phoneA, password: '123456' });
+    const loginA = regA.code === 0 ? regA : await apiPost('/auth/login', { phone: phoneA, password: TEST_PASSWORD });
     userAToken = loginA.data.token;
 
     // 用户B：注册 + 充值
     const phoneB = '13700009902';
     const regB = await registerIfAbsent(phoneB);
-    const loginB = regB.code === 0 ? regB : await apiPost('/auth/login', { phone: phoneB, password: '123456' });
+    const loginB = regB.code === 0 ? regB : await apiPost('/auth/login', { phone: phoneB, password: TEST_PASSWORD });
     userBToken = loginB.data.token;
 
     const pool = await createTestPool();

@@ -32,16 +32,17 @@ describe('积分充值支付流程', () => {
   let token;
 
   before(async () => {
+    // 独立测试用户：并行测试文件共享用户会互相污染（如 core 的封禁用例）
     const pool = await createTestPool();
     await pool.query(
       `INSERT INTO users (phone, nickname, password_hash, status, created_at)
-       VALUES ('13800000001', '测试用户1', ?, 'active', NOW())
-       ON DUPLICATE KEY UPDATE nickname = '测试用户1', status = 'active'`,
+       VALUES ('13800000061', '支付测试用户', ?, 'active', NOW())
+       ON DUPLICATE KEY UPDATE nickname = '支付测试用户', status = 'active'`,
       [await bcrypt.hash('123456', 10)]
     );
     await pool.end();
 
-    const res = await login('13800000001');
+    const res = await login('13800000061');
     assert.strictEqual(res.code, 0);
     token = res.data.token;
   });
