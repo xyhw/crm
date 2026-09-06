@@ -203,13 +203,16 @@ describe('核心流程', () => {
     assert.strictEqual(hzRes.code, 0);
     const hangzhouId = hzRes.data.id;
 
-    // user2 已购买 publishedId（杭州、分类4）→ 城市偏好杭州：
-    // hangzhou（杭州/分类6）得分 100+30，kitchen（深圳/分类6）仅 100，确定性排序
+    // user2 对 publishedId 的购买已在前面的「无效标记」用例中被退款，
+    // 此处重新购买 hangzhou 建立「杭州」偏好（城市 +30，且 purchase_count +3），保证确定性
+    const buyRes = await apiPost('/orders', { opportunityId: hangzhouId }, user2Token);
+    assert.strictEqual(buyRes.code, 0);
+
+    // hangzhou（杭州/分类6）得分 130+，kitchen（深圳/分类6）仅 100，确定性排序
     const listRes = await apiGet('/opportunities?sort=recommend&pageSize=500&boostCategory=6', user2Token);
     assert.strictEqual(listRes.code, 0);
     const ids = listRes.data.list.map((x) => x.id);
     assert.ok(ids.includes(hangzhouId), '同分类商机应在列表内');
-    // 未登录用户无偏好数据：换 user2 自己请求也不影响断言目标（其偏好即杭州）
     assert.ok(
       ids.indexOf(hangzhouId) < ids.indexOf(kitchenId),
       '同城偏好的商机应排在同分类型异地商机之前'
