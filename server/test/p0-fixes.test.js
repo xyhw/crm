@@ -1,18 +1,9 @@
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert';
 import bcrypt from 'bcryptjs';
+import { createTestPool } from './helpers/db.js';
 
 const BASE = 'http://localhost:3001/api';
-
-async function getPool() {
-  const { default: mysql } = await import('mysql2/promise');
-  return mysql.createPool({
-    host: process.env.TEST_DB_HOST || '127.0.0.1',
-    user: process.env.TEST_DB_USER || 'hof_user',
-    password: process.env.TEST_DB_PASS || 'hof_pass_2026',
-    database: process.env.TEST_DB_NAME || 'hotel_order_follow',
-  });
-}
 
 async function login(phone, password = '123456') {
   const resp = await fetch(`${BASE}/auth/login`, {
@@ -61,7 +52,7 @@ describe('P0 修复回归', () => {
 
   before(async () => {
     // 确保测试用户存在（与 core.test.js 共用 13800000001 账号）
-    const pool = await getPool();
+    const pool = await createTestPool();
     await pool.query(
       `INSERT INTO users (phone, nickname, password_hash, status, credit_score, created_at)
        VALUES ('13800000001', '测试用户1', ?, 'active', 100, NOW())

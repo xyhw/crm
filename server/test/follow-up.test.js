@@ -1,5 +1,6 @@
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert';
+import { createTestPool } from './helpers/db.js';
 
 const BASE = 'http://localhost:3001/api';
 
@@ -34,13 +35,7 @@ async function ensureLogin(phone) {
 }
 
 async function grantPoints(userId, amount) {
-  const { default: pkg } = await import('mysql2/promise');
-  const pool = pkg.createPool({
-    host: '127.0.0.1',
-    user: 'hof_user',
-    password: 'hof_pass_2026',
-    database: 'hotel_order_follow',
-  });
+  const pool = await createTestPool();
   await pool.query(
     'INSERT INTO points_accounts (user_id, balance, total_recharged) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE balance = balance + ?, total_recharged = total_recharged + ?',
     [userId, amount, amount, amount, amount]
@@ -49,26 +44,14 @@ async function grantPoints(userId, amount) {
 }
 
 async function getUserId(phone) {
-  const { default: pkg } = await import('mysql2/promise');
-  const pool = pkg.createPool({
-    host: '127.0.0.1',
-    user: 'hof_user',
-    password: 'hof_pass_2026',
-    database: 'hotel_order_follow',
-  });
+  const pool = await createTestPool();
   const [rows] = await pool.query('SELECT id FROM users WHERE phone = ?', [phone]);
   await pool.end();
   return rows[0]?.id;
 }
 
 async function forceApproveShare(shareId) {
-  const { default: pkg } = await import('mysql2/promise');
-  const pool = pkg.createPool({
-    host: '127.0.0.1',
-    user: 'hof_user',
-    password: 'hof_pass_2026',
-    database: 'hotel_order_follow',
-  });
+  const pool = await createTestPool();
   await pool.query('UPDATE follow_up_shares SET audit_status = "approved" WHERE id = ?', [shareId]);
   await pool.end();
 }

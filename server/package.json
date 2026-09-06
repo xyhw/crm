@@ -8,6 +8,7 @@
     "dev": "node --env-file-if-exists=.env index.js",
     "start": "node --env-file-if-exists=.env index.js",
     "test": "node --test test/*.test.js",
+    "test:coverage": "npx --yes c8 --reporter=text --reporter=lcov node --test test/*.test.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },

@@ -1,5 +1,6 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert';
+import { createTestPool } from './helpers/db.js';
 
 const BASE = 'http://127.0.0.1:3001/api';
 
@@ -22,13 +23,7 @@ async function getUserIdByPhone(pool, phone) {
 
 // 清理锁定环境：删除该账号失败记录，保证可重复运行
 async function clearFailures() {
-  const { default: pkg } = await import('mysql2/promise');
-  const pool = pkg.createPool({
-    host: '127.0.0.1',
-    user: 'hof_user',
-    password: 'hof_pass_2026',
-    database: 'hotel_order_follow',
-  });
+  const pool = await createTestPool();
   const uid = await getUserIdByPhone(pool, LOCK_PHONE);
   if (uid) await pool.query('DELETE FROM login_failures WHERE user_id = ?', [uid]);
   return pool;

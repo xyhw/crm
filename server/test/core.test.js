@@ -1,6 +1,7 @@
 import { describe, it, before, beforeEach } from 'node:test';
 import assert from 'node:assert';
 import bcrypt from 'bcryptjs';
+import { createTestPool } from './helpers/db.js';
 
 const BASE = 'http://localhost:3001/api';
 
@@ -43,13 +44,7 @@ describe('核心流程', () => {
 
   before(async () => {
     // 确保测试用户存在且昵称正确（reset-password 测试依赖 nickname 匹配）
-    const { default: pkg } = await import('mysql2/promise');
-    const pool = pkg.createPool({
-      host: '127.0.0.1',
-      user: 'hof_user',
-      password: 'hof_pass_2026',
-      database: 'hotel_order_follow',
-    });
+    const pool = await createTestPool();
     await pool.query(
       `INSERT INTO users (phone, nickname, password_hash, status, credit_score, created_at)
        VALUES ('13800000001', '测试用户1', ?, 'active', 100, NOW())
@@ -73,13 +68,7 @@ describe('核心流程', () => {
     user2Token = res2.data.token;
 
     // 确保用户2有足够积分（直接写 points_logs）才能购买
-    const { default: pkg2 } = await import('mysql2/promise');
-    const pool2 = pkg2.createPool({
-      host: '127.0.0.1',
-      user: 'hof_user',
-      password: 'hof_pass_2026',
-      database: 'hotel_order_follow',
-    });
+    const pool2 = await createTestPool();
     // 重置用户1状态与积分（前次运行"无效标记录"测试会扣分/封禁，需归位）
     await pool2.query(
       "UPDATE users SET status = 'active', credit_score = 100 WHERE phone = '13800000001'"
@@ -277,13 +266,7 @@ describe('Banner 接口', () => {
     const tokenBefore = resetBefore.data.token;
 
     // 0. 测试用户补绑定邮箱并确保 active（前序无效判定测试可能已置为 banned）
-    const { default: pkg } = await import('mysql2/promise');
-    const pool = pkg.createPool({
-      host: '127.0.0.1',
-      user: 'hof_user',
-      password: 'hof_pass_2026',
-      database: 'hotel_order_follow',
-    });
+    const pool = await createTestPool();
     await pool.query(
       "UPDATE users SET status = 'active', email = 'test1@example.com' WHERE phone = '13800000001'"
     );
@@ -341,13 +324,7 @@ describe('Banner 接口', () => {
   });
 
   it('忘记密码：验证码错误 5 次后作废，正确验证码也无法通过', async () => {
-    const { default: pkg } = await import('mysql2/promise');
-    const pool = pkg.createPool({
-      host: '127.0.0.1',
-      user: 'hof_user',
-      password: 'hof_pass_2026',
-      database: 'hotel_order_follow',
-    });
+    const pool = await createTestPool();
     await pool.query(
       "UPDATE users SET status = 'active', email = 'test1@example.com' WHERE phone = '13800000001'"
     );
@@ -394,13 +371,7 @@ describe('Banner 接口', () => {
   });
 
   it('修改密码：旧密码必须匹配，成功后可登录新密码', async () => {
-    const { default: pkg } = await import('mysql2/promise');
-    const pool = pkg.createPool({
-      host: '127.0.0.1',
-      user: 'hof_user',
-      password: 'hof_pass_2026',
-      database: 'hotel_order_follow',
-    });
+    const pool = await createTestPool();
     // 确保用户2 状态与密码正常（bcrypt 重置为 123456，防前序残留破坏）
     const bcrypt2 = (await import('bcryptjs')).default;
     const hash2 = await bcrypt2.hash('123456', 10);

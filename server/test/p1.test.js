@@ -1,5 +1,6 @@
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert';
+import { createTestPool } from './helpers/db.js';
 
 const BASE = 'http://localhost:3001/api';
 
@@ -46,13 +47,7 @@ describe('P1 关键能力', () => {
     const loginB = regB.code === 0 ? regB : await apiPost('/auth/login', { phone: phoneB, password: '123456' });
     userBToken = loginB.data.token;
 
-    const { default: pkg } = await import('mysql2/promise');
-    const pool = pkg.createPool({
-      host: '127.0.0.1',
-      user: 'hof_user',
-      password: 'hof_pass_2026',
-      database: 'hotel_order_follow',
-    });
+    const pool = await createTestPool();
     const [userBRow] = await pool.query('SELECT id FROM users WHERE phone = ?', [phoneB]);
     const userBId = userBRow[0].id;
     await pool.query(

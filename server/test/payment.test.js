@@ -1,6 +1,7 @@
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert';
 import bcrypt from 'bcryptjs';
+import { createTestPool } from './helpers/db.js';
 
 const BASE = 'http://localhost:3001/api';
 
@@ -31,13 +32,7 @@ describe('积分充值支付流程', () => {
   let token;
 
   before(async () => {
-    const { default: pkg } = await import('mysql2/promise');
-    const pool = pkg.createPool({
-      host: '127.0.0.1',
-      user: 'hof_user',
-      password: 'hof_pass_2026',
-      database: 'hotel_order_follow',
-    });
+    const pool = await createTestPool();
     await pool.query(
       `INSERT INTO users (phone, nickname, password_hash, status, created_at)
        VALUES ('13800000001', '测试用户1', ?, 'active', NOW())
