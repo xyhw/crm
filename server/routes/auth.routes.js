@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { nanoid } from 'nanoid';
 import { query, queryOne, insert, update, transaction } from '../db.js';
-import { signToken, signRefreshToken, verifyRefreshToken, authRequired } from '../auth.js';
+import { signToken, signRefreshToken, verifyRefreshToken, authRequired, invalidateUserAuthCache } from '../auth.js';
 import { loginLimiter } from '../middleware/rate-limit.js';
 import { sendResetCodeEmail } from '../services/mail.service.js';
 import { isAccountLocked, recordLoginFailure, clearLoginFailures } from '../services/account-lock.service.js';
@@ -547,6 +547,8 @@ router.post('/reset-password', loginLimiter, async (req, res) => {
         [record.id]
       );
     });
+    // 令牌版本已变，鉴权缓存立即失效
+    invalidateUserAuthCache(user.id);
 
     res.json({ code: 0, message: '密码重置成功，请使用新密码登录' });
   } catch (err) {
@@ -580,6 +582,7 @@ router.put('/change-password', authRequired, async (req, res) => {
     await update('users', { password_hash: passwordHash }, 'id = ?', [req.userId]);
     // 使所有已签发 Token 失效，需重新登录（或前端刷新 Token）
     await query('UPDATE users SET token_version = token_version + 1 WHERE id = ?', [req.userId]);
+    invalidateUserAuthCache(req.userId);
 
     res.json({ code: 0, message: '密码修改成功，请重新登录' });
   } catch (err) {

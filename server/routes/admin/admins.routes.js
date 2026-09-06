@@ -3,6 +3,7 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { query, queryOne, insert, update } from '../../db.js';
 import { audit } from '../../services/audit-log.service.js';
+import { invalidateAdminAuthCache } from '../../auth.js';
 
 const router = Router();
 
@@ -111,6 +112,8 @@ router.put('/:id', audit('admin_user', 'edit'), async (req, res) => {
       return res.json({ code: 400, message: '无更新字段' });
     }
     await update('admin_users', data, 'id = ?', [req.params.id]);
+    // 状态/密码变更立即生效：失效鉴权缓存
+    invalidateAdminAuthCache(req.params.id);
     res.json({ code: 0, message: '更新成功' });
   } catch (err) {
     logger.error('更新管理员 error:', err);
@@ -141,6 +144,7 @@ router.delete('/:id', audit('admin_user', 'delete'), async (req, res) => {
       return res.json({ code: 400, message: '至少保留一个管理员' });
     }
     await query('DELETE FROM admin_users WHERE id = ?', [req.params.id]);
+    invalidateAdminAuthCache(req.params.id);
     res.json({ code: 0, message: '删除成功' });
   } catch (err) {
     logger.error('删除管理员 error:', err);

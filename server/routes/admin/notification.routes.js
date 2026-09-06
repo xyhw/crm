@@ -1,6 +1,6 @@
 import { logger } from '../../services/logger.js';
 import { Router } from 'express';
-import { query, insert, queryOne } from '../../db.js';
+import { query, getConnection } from '../../db.js';
 import { audit } from '../../services/audit-log.service.js';
 
 const router = Router();
@@ -39,17 +39,18 @@ router.post('/send', audit('notification', 'send'), async (req, res) => {
     }
 
     const now = new Date();
-    for (const userId of targetUserIds) {
-      await insert('notifications', {
-        user_id: userId,
-        type: 'system',
-        title,
-        content,
-        related_type: 'admin',
-        related_id: 0,
-        is_read: 0,
-        created_at: now,
-      });
+    // 批量插入（原逐用户单条 insert，全员群发时 DB 往返放大）；mysql2 query 支持 VALUES ? 数组展开
+    const rows = targetUserIds.map((userId) => [userId, 'system', title, content, 'admin', 0, 0, now]);
+    const conn = await getConnection();
+    try {
+      for (let i = 0; i < rows.length; i += 500) {
+        await conn.query(
+          `INSERT INTO notifications (user_id, type, title, content, related_type, related_id, is_read, created_at) VALUES ?`,
+          [rows.slice(i, i + 500)]
+        );
+      }
+    } finally {
+      conn.release();
     }
 
     res.json({ code: 0, message: `已向 ${targetUserIds.length} 位用户发送通知` });

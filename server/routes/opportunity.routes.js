@@ -1,7 +1,7 @@
 import { logger } from '../services/logger.js';
 import { Router } from 'express';
 import { query, queryOne, insert, update, transaction } from '../db.js';
-import { authRequired, optionalAuth } from '../auth.js';
+import { authRequired, optionalAuth, invalidateUserAuthCache } from '../auth.js';
 import { detectSimilar } from '../services/similarity.service.js';
 import { buildMarketIntelligence } from '../services/market-intelligence.service.js';
 import { shouldCountView } from '../services/view-counter.js';
@@ -554,6 +554,8 @@ router.post('/:id/invalid-mark', authRequired, async (req, res) => {
             'UPDATE users SET status = ? WHERE id = ?',
             ['banned', publisherId]
           );
+          // 封禁立即生效：失效鉴权缓存
+          invalidateUserAuthCache(publisherId);
         }
       }
     });
