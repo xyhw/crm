@@ -1,7 +1,8 @@
 import { Router } from 'express';
-import { adminAuthRequired } from '../../auth.js';
+import { adminAuthRequired, invalidateAdminAuthCache } from '../../auth.js';
 import { query, queryOne, insert, update, del } from '../../db.js';
 import { recordLog } from '../../services/audit-log.service.js';
+import { invalidateAdminPermissionCache } from '../../middleware/require-permission.js';
 import bcrypt from 'bcryptjs';
 
 const router = Router();
@@ -19,12 +20,20 @@ const ALL_PERMISSIONS = [
   { key: 'users.credits', label: '调整信用分', group: '用户' },
   { key: 'orders', label: '订单管理', group: '订单' },
   { key: 'points', label: '积分管理', group: '积分' },
+  { key: 'recharge', label: '充值对账', group: '积分' },
+  { key: 'finance', label: '财务汇总', group: '订单' },
+  { key: 'audit', label: '审核管理', group: '审核' },
+  { key: 'audit.approve', label: '审核通过/驳回', group: '审核' },
+  { key: 'categories', label: '分类管理', group: '内容' },
+  { key: 'tags', label: '标签管理', group: '内容' },
+  { key: 'banners', label: 'Banner管理', group: '内容' },
+  { key: 'announcements', label: '公告管理', group: '内容' },
+  { key: 'notifications', label: '通知群发', group: '内容' },
+  { key: 'upload', label: '后台上传', group: '内容' },
   { key: 'levels', label: '等级配置', group: '配置' },
   { key: 'levels.edit', label: '编辑等级', group: '配置' },
   { key: 'configs', label: '系统配置', group: '配置' },
   { key: 'configs.edit', label: '编辑系统配置', group: '配置' },
-  { key: 'audit', label: '审核管理', group: '审核' },
-  { key: 'audit.approve', label: '审核通过/驳回', group: '审核' },
   { key: 'audit_logs', label: '操作日志', group: '系统' },
   { key: 'roles', label: '角色管理', group: '系统' },
   { key: 'roles.edit', label: '编辑角色/分配权限', group: '系统' },
@@ -37,13 +46,18 @@ router.get('/permissions', adminAuthRequired, async (req, res) => {
   res.json({ code: 0, data: ALL_PERMISSIONS });
 });
 
-// 角色列表
+// 角色列表（权限集一次批量查询，消除逐角色 N+1）
 router.get('/', adminAuthRequired, async (req, res) => {
   try {
     const roles = await query('SELECT * FROM roles ORDER BY id');
+    const permRows = await query('SELECT role_id, permission_key FROM role_permissions');
+    const permsByRole = new Map();
+    for (const row of permRows) {
+      if (!permsByRole.has(row.role_id)) permsByRole.set(row.role_id, []);
+      permsByRole.get(row.role_id).push(row.permission_key);
+    }
     for (const role of roles) {
-      const perms = await query('SELECT permission_key FROM role_permissions WHERE role_id = ?', [role.id]);
-      role.permissions = perms.map(p => p.permission_key);
+      role.permissions = permsByRole.get(role.id) || [];
     }
     res.json({ code: 0, data: roles });
   } catch (e) {
@@ -85,6 +99,8 @@ router.put('/:id', adminAuthRequired, async (req, res) => {
       await del('role_permissions', 'role_id = ?', [roleId]);
       for (const permKey of permissions) await insert('role_permissions', { role_id: roleId, permission_key: permKey });
     }
+    // 权限集变更影响持有该角色的全部管理员，清空权限缓存
+    invalidateAdminPermissionCache();
     await recordLog(req.adminId, '编辑权限', 'role', roleId, { name, permissions });
     res.json({ code: 0, message: '角色更新成功' });
   } catch (e) {
@@ -110,13 +126,21 @@ router.delete('/:id', adminAuthRequired, async (req, res) => {
   }
 });
 
-// 管理员列表
+// 管理员列表（角色关系一次批量查询，消除逐管理员 N+1）
 router.get('/admins', adminAuthRequired, async (req, res) => {
   try {
     const admins = await query('SELECT id, username, name, phone, status, created_at FROM admin_users ORDER BY id');
+    const relations = await query(
+      `SELECT arr.admin_id, r.id, r.name FROM roles r
+       JOIN admin_role_relations arr ON r.id = arr.role_id`
+    );
+    const rolesByAdmin = new Map();
+    for (const rel of relations) {
+      if (!rolesByAdmin.has(rel.admin_id)) rolesByAdmin.set(rel.admin_id, []);
+      rolesByAdmin.get(rel.admin_id).push({ id: rel.id, name: rel.name });
+    }
     for (const admin of admins) {
-      const roles = await query('SELECT r.id, r.name FROM roles r JOIN admin_role_relations arr ON r.id = arr.role_id WHERE arr.admin_id = ?', [admin.id]);
-      admin.roles = roles;
+      admin.roles = rolesByAdmin.get(admin.id) || [];
     }
     res.json({ code: 0, data: admins });
   } catch (e) {
@@ -157,6 +181,9 @@ router.put('/admin/:id', adminAuthRequired, async (req, res) => {
       await del('admin_role_relations', 'admin_id = ?', [adminId]);
       for (const roleId of roleIds) await insert('admin_role_relations', { admin_id: adminId, role_id: roleId });
     }
+    // 角色关系变更：失效该管理员的鉴权与权限缓存
+    invalidateAdminAuthCache(adminId);
+    invalidateAdminPermissionCache(adminId);
     await recordLog(req.adminId, '编辑管理员', 'admin_user', adminId, { name, roleIds });
     res.json({ code: 0, message: '管理员更新成功' });
   } catch (e) {
@@ -172,6 +199,8 @@ router.put('/admin/:id/status', adminAuthRequired, async (req, res) => {
     if (!admin) return res.json({ code: 404, message: '管理员不存在' });
     const newStatus = admin.status === 'active' ? 'inactive' : 'active';
     await update('admin_users', { status: newStatus }, 'id = ?', [adminId]);
+    invalidateAdminAuthCache(adminId);
+    invalidateAdminPermissionCache(adminId);
     await recordLog(req.adminId, newStatus === 'active' ? 'unban' : 'ban', 'admin_user', adminId, { name: admin.name });
     res.json({ code: 0, message: `管理员已${newStatus === 'active' ? '启用' : '禁用'}` });
   } catch (e) {

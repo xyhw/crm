@@ -22,6 +22,7 @@ import { migrateWechatBinding } from './migrations/014_wechat_binding.js';
 import { migrateOpportunityTagsSortOrder } from './migrations/015_opportunity_tags_sort_order.js';
 import { migrateOrdersRefundedRepurchase } from './migrations/016_orders_refunded_repurchase.js';
 import { migrateP2Indexes } from './migrations/017_perf_indexes.js';
+import { migratePermissionBackfill } from './migrations/018_permission_backfill.js';
 import { ensureAndLoadPaymentConfig } from './services/payment/config-loader.js';
 import { seedDatabase } from './seeds/seed.js';
 import { closePool } from './db.js';
@@ -29,7 +30,7 @@ import { adminAuthRequired } from './auth.js';
 import scheduler from './scheduler.js';
 import { config } from './config.js';
 import { apiLimiter } from './middleware/rate-limit.js';
-import { requireRole } from './middleware/require-role.js';
+import { requirePermission } from './middleware/require-permission.js';
 import { paginationLimiter } from './middleware/pagination.js';
 import { requestId } from './middleware/request-id.js';
 
@@ -147,33 +148,31 @@ app.use('/api/banners', bannerRoutes);
 app.use('/api/agreement', agreementRoutes);
 app.use('/api/announcements', announcementRoutes);
 
-// 管理后台路由（adminAuthRequired 鉴权 + requireRole 角色授权）
-const OP = ['operation', 'super_admin'];
-const FIN = ['finance', 'super_admin'];
-const SUPER = ['super_admin'];
-
+// 管理后台路由（adminAuthRequired 鉴权 + requirePermission 权限点授权）。
+// 权限点由 role_permissions 表驱动（super_admin 直通），内置角色权限集由 018 迁移回填，
+// 与原 requireRole 挂载行为一致；自定义角色按所配权限点获得访问。
 app.use('/api/v1/admin/auth', adminAuthRoutes);
-app.use('/api/v1/admin/audit-logs', adminAuthRequired, requireRole(...SUPER), adminAuditLogRoutes);
-app.use('/api/v1/admin/roles', adminAuthRequired, requireRole(...SUPER), adminRoleRoutes);
-app.use('/api/v1/admin/admins', adminAuthRequired, requireRole(...SUPER), adminAdminsRoutes);
-app.use('/api/v1/admin/configs', adminAuthRequired, requireRole(...SUPER), adminConfigRoutes);
-app.use('/api/v1/admin/levels', adminAuthRequired, requireRole(...SUPER), adminLevelRoutes);
-app.use('/api/v1/admin/opportunities', adminAuthRequired, requireRole(...OP), adminOpportunityRoutes);
-app.use('/api/v1/admin/users', adminAuthRequired, requireRole(...OP), adminUserRoutes);
-app.use('/api/v1/admin/audit', adminAuthRequired, requireRole(...OP), adminAuditRoutes);
-app.use('/api/v1/admin/categories', adminAuthRequired, requireRole(...OP), adminCategoryRoutes);
-app.use('/api/v1/admin/tags', adminAuthRequired, requireRole(...OP), adminTagRoutes);
-app.use('/api/v1/admin/notifications', adminAuthRequired, requireRole(...OP), adminNotificationRoutes);
-app.use('/api/v1/admin/upload', adminAuthRequired, requireRole(...OP), adminUploadRoutes);
-app.use('/api/v1/admin/import', adminAuthRequired, requireRole(...OP), adminImportRoutes);
-app.use('/api/v1/admin/banners', adminAuthRequired, requireRole(...OP), adminBannerRoutes);
-app.use('/api/v1/admin/announcements', adminAuthRequired, requireRole(...OP), adminAnnouncementRoutes);
-app.use('/api/v1/admin/orders', adminAuthRequired, requireRole(...FIN), adminOrderRoutes);
-app.use('/api/v1/admin/points', adminAuthRequired, requireRole(...FIN), adminPointsRoutes);
-app.use('/api/v1/admin/recharge-orders', adminAuthRequired, requireRole(...FIN), adminRechargeRoutes);
-app.use('/api/v1/admin/finance', adminAuthRequired, requireRole(...FIN), adminFinanceRoutes);
+app.use('/api/v1/admin/audit-logs', adminAuthRequired, requirePermission('audit_logs'), adminAuditLogRoutes);
+app.use('/api/v1/admin/roles', adminAuthRequired, requirePermission('roles'), adminRoleRoutes);
+app.use('/api/v1/admin/admins', adminAuthRequired, requirePermission('admins'), adminAdminsRoutes);
+app.use('/api/v1/admin/configs', adminAuthRequired, requirePermission('configs'), adminConfigRoutes);
+app.use('/api/v1/admin/levels', adminAuthRequired, requirePermission('levels'), adminLevelRoutes);
+app.use('/api/v1/admin/opportunities', adminAuthRequired, requirePermission('opportunities'), adminOpportunityRoutes);
+app.use('/api/v1/admin/users', adminAuthRequired, requirePermission('users'), adminUserRoutes);
+app.use('/api/v1/admin/audit', adminAuthRequired, requirePermission('audit'), adminAuditRoutes);
+app.use('/api/v1/admin/categories', adminAuthRequired, requirePermission('categories'), adminCategoryRoutes);
+app.use('/api/v1/admin/tags', adminAuthRequired, requirePermission('tags'), adminTagRoutes);
+app.use('/api/v1/admin/notifications', adminAuthRequired, requirePermission('notifications'), adminNotificationRoutes);
+app.use('/api/v1/admin/upload', adminAuthRequired, requirePermission('upload'), adminUploadRoutes);
+app.use('/api/v1/admin/import', adminAuthRequired, requirePermission('opportunities.import'), adminImportRoutes);
+app.use('/api/v1/admin/banners', adminAuthRequired, requirePermission('banners'), adminBannerRoutes);
+app.use('/api/v1/admin/announcements', adminAuthRequired, requirePermission('announcements'), adminAnnouncementRoutes);
+app.use('/api/v1/admin/orders', adminAuthRequired, requirePermission('orders'), adminOrderRoutes);
+app.use('/api/v1/admin/points', adminAuthRequired, requirePermission('points'), adminPointsRoutes);
+app.use('/api/v1/admin/recharge-orders', adminAuthRequired, requirePermission('recharge'), adminRechargeRoutes);
+app.use('/api/v1/admin/finance', adminAuthRequired, requirePermission('finance'), adminFinanceRoutes);
 // 统计：运营、财务、超管均可查看
-app.use('/api/v1/admin/stats', adminAuthRequired, requireRole('operation', 'finance', 'super_admin'), adminStatsRoutes);
+app.use('/api/v1/admin/stats', adminAuthRequired, requirePermission('dashboard'), adminStatsRoutes);
 
 // 静态文件服务
 app.use('/uploads', express.static(config.uploadDir));
@@ -251,6 +250,10 @@ async function start() {
     // P2 性能索引（幂等）
     await migrateP2Indexes();
     logger.info('[server] P2 performance indexes applied');
+
+    // 权限点回填（幂等；激活 role_permissions 表驱动授权）
+    await migratePermissionBackfill();
+    logger.info('[server] permission backfill applied');
 
     // 种子数据
     await seedDatabase();
