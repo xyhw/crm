@@ -25,7 +25,10 @@ export async function getPool() {
 
 export async function query(sql, params = []) {
   const p = await getPool();
-  const [rows] = await p.execute(sql, params);
+  // 使用文本协议 query 而非 execute（预处理）：MySQL 8.0 对预处理协议中
+  // LIMIT/OFFSET 的参数类型极严，字符串绑定直接报 Incorrect arguments to
+  // mysqld_stmt_execute；文本协议在客户端转义内联，对列表分页参数完全免疫。
+  const [rows] = await p.query(sql, params);
   return rows;
 }
 
@@ -40,7 +43,7 @@ export async function insert(table, data) {
   const placeholders = keys.map(() => '?').join(', ');
   const sql = `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${placeholders})`;
   const p = await getPool();
-  const [result] = await p.execute(sql, values);
+  const [result] = await p.query(sql, values);
   return { insertId: result.insertId, id: result.insertId, ...data };
 }
 
@@ -50,14 +53,14 @@ export async function update(table, data, where, whereParams = []) {
   const setClause = keys.map(k => `${k} = ?`).join(', ');
   const sql = `UPDATE ${table} SET ${setClause} WHERE ${where}`;
   const p = await getPool();
-  const [result] = await p.execute(sql, [...values, ...whereParams]);
+  const [result] = await p.query(sql, [...values, ...whereParams]);
   return result.affectedRows;
 }
 
 export async function del(table, where, whereParams = []) {
   const sql = `DELETE FROM ${table} WHERE ${where}`;
   const p = await getPool();
-  const [result] = await p.execute(sql, whereParams);
+  const [result] = await p.query(sql, whereParams);
   return result.affectedRows;
 }
 

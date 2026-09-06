@@ -10,8 +10,8 @@ const MAX_PAGE = 10_000;
 
 function toClampedInt(raw, fallback, max) {
   const n = parseInt(raw, 10);
-  if (Number.isNaN(n) || n < 1) return String(fallback);
-  return String(Math.min(n, max));
+  if (Number.isNaN(n) || n < 1) return fallback;
+  return Math.min(n, max);
 }
 
 export function paginationLimiter(req, res, next) {

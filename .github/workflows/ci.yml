@@ -50,6 +50,7 @@ jobs:
       PORT: '3001'
       NODE_ENV: test
       UPLOAD_DIR: /tmp/uploads
+      RATE_LIMIT_API_MAX: '999999'
       RATE_LIMIT_LOGIN_MAX: '999999'
     steps:
       - uses: actions/checkout@v4
