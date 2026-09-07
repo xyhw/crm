@@ -4,7 +4,7 @@
 > 分支：`260906-feat-ci-pipeline`
 > 范围：`miniapp/src/pages.json` 共 52 页（用户端 29 + 管理端 23）
 > 依据：ui-ux-pro-max 清单（a11y / 触控 / 表单 / 导航）
-> 状态：T-02～T-08 已完成（T-01 待办），P2/P3 待排期
+> 状态：P0 与 P1（T-01～T-08）已完成，P2/P3 待排期
 
 对照优先级：P0 先修 → P1 高 → P2 中 → P3 低。验收以 H5（5174）与微信小程序编译为准。
 
@@ -15,11 +15,12 @@
 ### T-01 底栏补图标
 
 - 问题：`pages.json` tabBar 与 `CustomTabBar.vue` 只有文字，无 `iconPath`。微信规范要求图标+文字。
-- 文件：`miniapp/src/pages.json`、`miniapp/src/components/CustomTabBar.vue`、新增 `miniapp/src/static/tabbar/`
+- 文件：`miniapp/src/pages.json`、`miniapp/src/components/CustomTabBar.vue`、新增 `miniapp/src/static/tabbar/`、`miniapp/scripts/gen-tabbar-icons.py`
 - 动作：
-  - 为首页/大厅/发布/CRM/我的各做一套未选中+选中 SVG/PNG（绿 `#048C47` / 灰 `#7A7A7A`）
+  - 为首页/大厅/发布/CRM/我的各做一套未选中+选中 PNG（绿 `#048C47` / 灰 `#7A7A7A`）
   - `pages.json` 补 `iconPath`、`selectedIconPath`
   - `CustomTabBar` 同步图标+文字
+- 注：微信 tabBar 的 `iconPath` 只支持本地 PNG/JPG，不支持 SVG 与 base64，因此用 `scripts/gen-tabbar-icons.py`（Pillow，4 倍超采样）生成 81x81 PNG，单文件 < 5KB，远低于 40KB 上限。图标需改动时重跑该脚本。
 - 验收：H5 与小程序底栏可见图标；当前 Tab 高亮。
 
 ### T-02 仪表盘数字绑定
