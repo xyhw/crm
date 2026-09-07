@@ -2,13 +2,16 @@
   <view class="hall-page">
     <!-- 搜索栏 -->
     <view class="search-bar">
-      <input
-        v-model="keyword"
-        class="search-input"
-        placeholder="搜索商机"
-        confirm-type="search"
-        @confirm="onSearch"
-      />
+      <view class="search-input-wrap">
+        <input
+          v-model="keyword"
+          class="search-input"
+          placeholder="搜索商机"
+          confirm-type="search"
+          @confirm="onSearch"
+        />
+        <text v-if="keyword" class="search-clear" @click="clearSearch">清除</text>
+      </view>
       <text class="search-btn" @click="onSearch">搜索</text>
     </view>
 
@@ -42,8 +45,16 @@
 
     <!-- 列表 -->
     <view class="list-wrap">
-      <view v-if="loading && list.length === 0" class="empty">加载中...</view>
-      <view v-else-if="list.length === 0" class="empty">暂无商机，换个分类或关键词试试</view>
+      <StateView
+        v-if="loading && list.length === 0"
+        :loading="true"
+        :skeleton-count="3"
+      />
+      <view v-else-if="list.length === 0" class="empty-box">
+        <text class="empty-title">暂无商机</text>
+        <text class="empty-desc">换个分类或关键词试试，也可以去发布一条</text>
+        <view class="empty-btn" @click="goPublish">去发布</view>
+      </view>
       <view
         v-for="item in list"
         :key="item.id"
@@ -93,6 +104,7 @@ import { ref, computed } from 'vue';
 import { onLoad, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app';
 import { api } from '@/api/index';
 import { SUPPLIER_CATEGORIES, stageLabel, stageTone, timeAgo } from '@/common/constants';
+import StateView from '@/components/StateView.vue';
 
 const CATEGORIES = {};
 
@@ -175,6 +187,15 @@ function onSearch() {
   reload();
 }
 
+function clearSearch() {
+  keyword.value = '';
+  reload();
+}
+
+function goPublish() {
+  uni.switchTab({ url: '/pages/opportunity/publish' });
+}
+
 async function loadMore() {
   if (!loading.value && hasMore.value) {
     await fetchList(page.value + 1);
@@ -212,20 +233,39 @@ onReachBottom(() => {
   background: #ffffff;
 }
 
-.search-input {
+.search-input-wrap {
   flex: 1;
+  position: relative;
+}
+
+.search-input {
+  width: 100%;
   height: 72rpx;
   line-height: 72rpx;
-  padding: 0 24rpx;
+  padding: 0 100rpx 0 24rpx;
   background: #F2F4F5;
   border-radius: 36rpx;
   font-size: 28rpx;
+  box-sizing: border-box;
+}
+
+.search-clear {
+  position: absolute;
+  right: 20rpx;
+  top: 0;
+  height: 72rpx;
+  line-height: 72rpx;
+  font-size: 26rpx;
+  color: #048C47;
+  padding: 0 8rpx;
 }
 
 .search-btn {
   margin-left: 16rpx;
   color: #048C47;
   font-size: 28rpx;
+  min-height: 72rpx;
+  line-height: 72rpx;
 }
 
 .category-scroll {
@@ -241,11 +281,11 @@ onReachBottom(() => {
 
 .category-tab {
   display: inline-block;
-  padding: 12rpx 24rpx;
+  padding: 16rpx 24rpx;
   margin-right: 16rpx;
   border-radius: 32rpx;
   font-size: 26rpx;
-  color: #7A7A7A;
+  color: #555555;
   background: #F2F4F5;
 }
 
@@ -273,7 +313,7 @@ onReachBottom(() => {
 }
 
 .list-wrap {
-  padding: 16rpx 24rpx;
+  padding: 16rpx 24rpx calc(48rpx + env(safe-area-inset-bottom));
 }
 
 .opportunity-card {
@@ -435,10 +475,35 @@ onReachBottom(() => {
   font-size: 26rpx;
 }
 
-.empty {
+.empty-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 120rpx 48rpx;
+}
+
+.empty-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1A1A1A;
+}
+
+.empty-desc {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: #555555;
   text-align: center;
-  padding: 120rpx 0;
-  color: #B0B0B0;
+  line-height: 1.5;
+}
+
+.empty-btn {
+  margin-top: 32rpx;
+  min-height: 72rpx;
+  line-height: 72rpx;
+  padding: 0 48rpx;
+  background: #048C47;
+  color: #ffffff;
+  border-radius: 36rpx;
   font-size: 28rpx;
 }
 </style>

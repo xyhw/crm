@@ -44,8 +44,12 @@
 
     <!-- 列表 -->
     <view class="list-wrap">
-      <view v-if="loading && list.length === 0" class="empty">加载中...</view>
-      <view v-else-if="list.length === 0" class="empty">{{ mode === 'mine' ? '还没有发布过商机' : '暂无CRM商机' }}</view>
+      <StateView v-if="loading && list.length === 0" :loading="true" :skeleton-count="3" />
+      <view v-else-if="list.length === 0" class="empty-box">
+        <text class="empty-title">{{ mode === 'mine' ? '还没有发布过商机' : '暂无 CRM 商机' }}</text>
+        <text class="empty-desc">{{ mode === 'mine' ? '去发布第一条商机，买家解锁后会出现在这里' : '从大厅购买商机，或手动录入一条线索' }}</text>
+        <view class="empty-btn" @click="onEmptyAction">{{ mode === 'mine' ? '去发布' : '去大厅' }}</view>
+      </view>
 
       <!-- 我发布的商机卡片 -->
       <template v-else-if="mode === 'mine'">
@@ -109,8 +113,15 @@
     </view>
 
     <!-- 手动录入按钮（仅手动线索模式） -->
-    <view v-if="mode === 'crm'" class="fab" @click="goAdd">
+    <view
+      v-if="mode === 'crm'"
+      class="fab"
+      aria-label="新增客户"
+      role="button"
+      @click="goAdd"
+    >
       <text class="fab-plus">+</text>
+      <text class="fab-label">新增</text>
     </view>
   </view>
 </template>
@@ -120,6 +131,7 @@ import { ref } from 'vue';
 import { onLoad, onUnload, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app';
 import { api } from '@/api/index';
 import { CRM_STATUS_META, crmStatusLabel, formatDate, opportunityStatusLabel } from '@/common/constants';
+import StateView from '@/components/StateView.vue';
 
 let debounceTimer = null;
 
@@ -241,6 +253,14 @@ function goAdd() {
   uni.navigateTo({ url: '/pages/crm/add' });
 }
 
+function onEmptyAction() {
+  if (mode.value === 'mine') {
+    uni.switchTab({ url: '/pages/opportunity/publish' });
+    return;
+  }
+  uni.switchTab({ url: '/pages/hall/hall' });
+}
+
 onLoad(() => {
   reload();
 });
@@ -305,7 +325,7 @@ onReachBottom(() => {
 }
 
 .list-wrap {
-  padding: 16rpx 24rpx;
+  padding: 16rpx 24rpx calc(48rpx + env(safe-area-inset-bottom));
 }
 
 .crm-card {
@@ -380,12 +400,14 @@ onReachBottom(() => {
   position: fixed;
   right: 32rpx;
   bottom: calc(120rpx + env(safe-area-inset-bottom));
-  width: 100rpx;
+  min-width: 100rpx;
   height: 100rpx;
-  border-radius: 50%;
+  padding: 0 20rpx;
+  border-radius: 50rpx;
   background: #048C47;
   color: #ffffff;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   box-shadow: 0 4rpx 16rpx rgba(4, 140, 71, 0.4);
@@ -393,14 +415,45 @@ onReachBottom(() => {
 }
 
 .fab-plus {
-  font-size: 48rpx;
+  font-size: 36rpx;
   line-height: 1;
 }
 
-.empty {
+.fab-label {
+  margin-top: 2rpx;
+  font-size: 20rpx;
+  line-height: 1;
+}
+
+.empty-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 120rpx 48rpx;
+}
+
+.empty-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1A1A1A;
+}
+
+.empty-desc {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: #555555;
   text-align: center;
-  padding: 120rpx 0;
-  color: #B0B0B0;
+  line-height: 1.5;
+}
+
+.empty-btn {
+  margin-top: 32rpx;
+  min-height: 72rpx;
+  line-height: 72rpx;
+  padding: 0 48rpx;
+  background: #048C47;
+  color: #ffffff;
+  border-radius: 36rpx;
   font-size: 28rpx;
 }
 

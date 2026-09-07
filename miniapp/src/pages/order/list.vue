@@ -14,9 +14,11 @@
     </view>
 
     <view class="list-wrap">
-      <view v-if="loading" class="empty">加载中...</view>
-      <view v-else-if="list.length === 0" class="empty">
-        {{ tab === 'published' ? '暂无发布记录，去大厅发布第一条商机吧' : '暂无购买记录，去大厅看看' }}
+      <StateView v-if="loading" :loading="true" :skeleton-count="3" />
+      <view v-else-if="list.length === 0" class="empty-box">
+        <text class="empty-title">{{ tab === 'published' ? '暂无发布记录' : '暂无购买记录' }}</text>
+        <text class="empty-desc">{{ tab === 'published' ? '去发布第一条商机' : '去大厅看看有没有合适的商机' }}</text>
+        <view class="empty-btn" @click="goHallOrPublish">{{ tab === 'published' ? '去发布' : '去大厅' }}</view>
       </view>
       <template v-else>
         <view
@@ -66,6 +68,7 @@ import { ref, computed } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import { api } from '@/api/index';
 import { ORDER_STATUS_META, timeAgo } from '@/common/constants';
+import StateView from '@/components/StateView.vue';
 
 const TABS = [
   { title: '我发布的', name: 'published' },
@@ -131,6 +134,14 @@ function goDetail(id) {
   uni.navigateTo({ url: `/pages/opportunity/detail?id=${id}` });
 }
 
+function goHallOrPublish() {
+  if (tab.value === 'published') {
+    uni.switchTab({ url: '/pages/opportunity/publish' });
+    return;
+  }
+  uni.switchTab({ url: '/pages/hall/hall' });
+}
+
 onShow(() => {
   fetchList();
 });
@@ -173,7 +184,7 @@ onShow(() => {
 }
 
 .list-wrap {
-  padding: 16rpx 24rpx;
+  padding: 16rpx 24rpx calc(48rpx + env(safe-area-inset-bottom));
 }
 
 .order-card {
@@ -288,10 +299,34 @@ onShow(() => {
   color: #7A7A7A;
 }
 
-.empty {
+.empty-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 120rpx 48rpx;
+}
+
+.empty-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1A1A1A;
+}
+
+.empty-desc {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: #555555;
   text-align: center;
-  padding: 120rpx 0;
-  color: #B0B0B0;
+}
+
+.empty-btn {
+  margin-top: 32rpx;
+  min-height: 72rpx;
+  line-height: 72rpx;
+  padding: 0 48rpx;
+  background: #048C47;
+  color: #ffffff;
+  border-radius: 36rpx;
   font-size: 28rpx;
 }
 </style>

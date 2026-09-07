@@ -19,7 +19,7 @@
       </view>
       <view class="field">
         <text class="field-label">联系电话</text>
-        <input v-model="form.contactPhone" class="field-input" placeholder="请输入联系电话" type="number" :maxlength="20" />
+        <input v-model="form.contactPhone" class="field-input" placeholder="请输入联系电话" type="tel" :maxlength="20" />
       </view>
       <view class="field">
         <text class="field-label">商机描述</text>

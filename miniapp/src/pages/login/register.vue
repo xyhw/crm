@@ -10,7 +10,7 @@
         <text class="form-label">手机号</text>
         <input
           v-model="form.phone"
-          type="number"
+          type="tel"
           :maxlength="11"
           placeholder="请输入手机号"
           class="form-input"
@@ -22,7 +22,7 @@
       </view>
       <view class="form-item">
         <text class="form-label">邮箱</text>
-        <input v-model="form.email" placeholder="用于找回密码" class="form-input" />
+        <input v-model="form.email" type="email" placeholder="用于找回密码" class="form-input" />
       </view>
       <view class="form-item">
         <text class="form-label">公司（选填）</text>

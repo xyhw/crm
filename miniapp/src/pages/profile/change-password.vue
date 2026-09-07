@@ -4,36 +4,42 @@
       <view class="card-title">修改密码</view>
       <view class="form-item">
         <text class="form-label">旧密码</text>
-        <input
-          v-model="form.oldPassword"
-          :password="!visible"
-          placeholder="请输入当前密码"
-          :maxlength="32"
-          class="form-input"
-        />
+        <view class="password-wrap">
+          <input
+            v-model="form.oldPassword"
+            :type="oldVisible ? 'text' : 'password'"
+            placeholder="请输入当前密码"
+            :maxlength="32"
+            class="form-input form-input--password"
+          />
+          <text class="password-toggle" @click="oldVisible = !oldVisible">{{ oldVisible ? '隐藏' : '显示' }}</text>
+        </view>
       </view>
       <view class="form-item">
         <text class="form-label">新密码</text>
-        <input
-          v-model="form.newPassword"
-          :password="!visible"
-          placeholder="8 位以上，含字母和数字"
-          :maxlength="32"
-          class="form-input"
-        />
+        <view class="password-wrap">
+          <input
+            v-model="form.newPassword"
+            :type="newVisible ? 'text' : 'password'"
+            placeholder="8 位以上，含字母和数字"
+            :maxlength="32"
+            class="form-input form-input--password"
+          />
+          <text class="password-toggle" @click="newVisible = !newVisible">{{ newVisible ? '隐藏' : '显示' }}</text>
+        </view>
       </view>
       <view class="form-item">
         <text class="form-label">确认密码</text>
-        <input
-          v-model="form.confirmPassword"
-          :password="!visible"
-          placeholder="请再次输入新密码"
-          :maxlength="32"
-          class="form-input"
-        />
-      </view>
-      <view class="visible-toggle" @click="visible = !visible">
-        {{ visible ? '隐藏密码' : '显示密码' }}
+        <view class="password-wrap">
+          <input
+            v-model="form.confirmPassword"
+            :type="confirmVisible ? 'text' : 'password'"
+            placeholder="请再次输入新密码"
+            :maxlength="32"
+            class="form-input form-input--password"
+          />
+          <text class="password-toggle" @click="confirmVisible = !confirmVisible">{{ confirmVisible ? '隐藏' : '显示' }}</text>
+        </view>
       </view>
     </view>
 
@@ -51,7 +57,9 @@ import { useUserStore } from '@/store/user';
 const userStore = useUserStore();
 
 const submitting = ref(false);
-const visible = ref(false);
+const oldVisible = ref(false);
+const newVisible = ref(false);
+const confirmVisible = ref(false);
 const form = reactive({
   oldPassword: '',
   newPassword: '',
@@ -130,11 +138,23 @@ async function handleSubmit() {
   font-size: 28rpx;
 }
 
-.visible-toggle {
-  margin-top: 8rpx;
-  font-size: 24rpx;
+.password-wrap {
+  position: relative;
+}
+
+.form-input--password {
+  padding-right: 120rpx;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 88rpx;
+  line-height: 88rpx;
+  padding: 0 24rpx;
+  font-size: 26rpx;
   color: #048C47;
-  text-align: right;
 }
 
 .submit-btn {

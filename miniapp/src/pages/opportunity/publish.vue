@@ -43,7 +43,7 @@
       </view>
       <view class="field">
         <text class="field-label required">联系电话</text>
-        <input v-model="form.contactPhone" class="field-input" placeholder="如：13912345678" type="number" :maxlength="20" />
+        <input v-model="form.contactPhone" class="field-input" placeholder="如：13912345678" type="tel" :maxlength="20" />
       </view>
       <view class="field">
         <text class="field-label">微信号</text>
@@ -89,7 +89,7 @@
         </view>
         <view v-if="form.tags.length < 5" class="tag-input-row">
           <input v-model="tagInput" class="tag-input" placeholder="输入标签后点添加" :maxlength="10" @confirm="addTag" />
-          <text class="tag-add-btn" @click="addTag">添加</text>
+          <view class="tag-add-btn" @click="addTag">添加</view>
         </view>
       </view>
 
@@ -590,8 +590,13 @@ async function handlePublish() {
 
 .tag-add-btn {
   margin-left: 16rpx;
-  color: #048C47;
+  min-height: 72rpx;
+  line-height: 72rpx;
+  padding: 0 28rpx;
+  color: #ffffff;
+  background: #048C47;
   font-size: 26rpx;
+  border-radius: 8rpx;
 }
 
 /* 上传 */
@@ -629,7 +634,7 @@ async function handlePublish() {
 }
 
 .file-card__icon {
-  font-size: 20rpx;
+  font-size: 22rpx;
   color: #048C47;
   background: #E4F7EC;
   border-radius: 8rpx;
@@ -638,7 +643,7 @@ async function handlePublish() {
 }
 
 .file-card__name {
-  font-size: 20rpx;
+  font-size: 22rpx;
   color: #1A1A1A;
   text-align: center;
   line-height: 1.3;
@@ -650,8 +655,8 @@ async function handlePublish() {
 }
 
 .file-card__size {
-  font-size: 18rpx;
-  color: #B0B0B0;
+  font-size: 22rpx;
+  color: #555555;
   margin-top: 4rpx;
 }
 
@@ -659,13 +664,13 @@ async function handlePublish() {
   position: absolute;
   top: 0;
   right: 0;
-  width: 40rpx;
-  height: 40rpx;
-  background: rgba(0, 0, 0, 0.5);
+  width: 56rpx;
+  height: 56rpx;
+  background: rgba(0, 0, 0, 0.55);
   color: #ffffff;
-  font-size: 28rpx;
+  font-size: 32rpx;
   text-align: center;
-  line-height: 36rpx;
+  line-height: 52rpx;
   border-radius: 0 12rpx 0 12rpx;
 }
 

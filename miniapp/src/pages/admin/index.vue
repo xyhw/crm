@@ -37,27 +37,27 @@ const logoutVisible = ref(false);
 const adminUser = ref(null);
 
 const menus = [
-  { path: '/pages/admin/dashboard', icon: '板', label: '仪表盘', color: '#037539' },
-  { path: '/pages/admin/opportunities', icon: '商', label: '商机管理', color: '#037539' },
-  { path: '/pages/admin/opportunities/import', icon: '导', label: '批量导入', color: '#6B4DE6' },
-  { path: '/pages/admin/users', icon: '户', label: '用户管理', color: '#1B7FE0' },
-  { path: '/pages/admin/orders', icon: '单', label: '订单管理', color: '#E8920A' },
-  { path: '/pages/admin/points', icon: '分', label: '积分管理', color: '#E54848' },
-  { path: '/pages/admin/recharge-orders', icon: '充', label: '充值对账', color: '#0F766E' },
-  { path: '/pages/admin/audit', icon: '审', label: '进度审核', color: '#D96C2A' },
-  { path: '/pages/admin/levels', icon: '级', label: '等级配置', color: '#8B5CF6' },
-  { path: '/pages/admin/configs', icon: '配', label: '系统配置', color: '#64748B' },
-  { path: '/pages/admin/configs/agreements', icon: '议', label: '协议内容', color: '#0EA5E9' },
-  { path: '/pages/admin/stats', icon: '统', label: '数据统计', color: '#10B981' },
-  { path: '/pages/admin/roles', icon: '角', label: '角色管理', color: '#3B82F6' },
-  { path: '/pages/admin/audit-logs', icon: '志', label: '操作日志', color: '#6366F1' },
-  { path: '/pages/admin/announcements', icon: '告', label: '公告管理', color: '#F59E0B' },
-  { path: '/pages/admin/banners', icon: '图', label: 'Banner管理', color: '#EC4899' },
-  { path: '/pages/admin/notifications', icon: '知', label: '通知推送', color: '#06B6D4' },
-  { path: '/pages/admin/admins', icon: '员', label: '管理员', color: '#F97316' },
-  { path: '/pages/admin/finance', icon: '财', label: '财务看板', color: '#14B8A6' },
-  { path: '/pages/admin/categories', icon: '类', label: '分类管理', color: '#84CC16' },
-  { path: '/pages/admin/tags', icon: '签', label: '标签管理', color: '#A855F7' },
+  { path: '/pages/admin/dashboard', icon: '仪表', label: '仪表盘', color: '#037539' },
+  { path: '/pages/admin/opportunities', icon: '商机', label: '商机管理', color: '#037539' },
+  { path: '/pages/admin/opportunities/import', icon: '导入', label: '批量导入', color: '#6B4DE6' },
+  { path: '/pages/admin/users', icon: '用户', label: '用户管理', color: '#1B7FE0' },
+  { path: '/pages/admin/orders', icon: '订单', label: '订单管理', color: '#E8920A' },
+  { path: '/pages/admin/points', icon: '积分', label: '积分管理', color: '#E54848' },
+  { path: '/pages/admin/recharge-orders', icon: '充值', label: '充值对账', color: '#0F766E' },
+  { path: '/pages/admin/audit', icon: '审核', label: '进度审核', color: '#D96C2A' },
+  { path: '/pages/admin/levels', icon: '等级', label: '等级配置', color: '#8B5CF6' },
+  { path: '/pages/admin/configs', icon: '配置', label: '系统配置', color: '#64748B' },
+  { path: '/pages/admin/configs/agreements', icon: '协议', label: '协议内容', color: '#0EA5E9' },
+  { path: '/pages/admin/stats', icon: '统计', label: '数据统计', color: '#10B981' },
+  { path: '/pages/admin/roles', icon: '角色', label: '角色管理', color: '#3B82F6' },
+  { path: '/pages/admin/audit-logs', icon: '日志', label: '操作日志', color: '#6366F1' },
+  { path: '/pages/admin/announcements', icon: '公告', label: '公告管理', color: '#F59E0B' },
+  { path: '/pages/admin/banners', icon: '图示', label: 'Banner管理', color: '#EC4899' },
+  { path: '/pages/admin/notifications', icon: '通知', label: '通知推送', color: '#06B6D4' },
+  { path: '/pages/admin/admins', icon: '管理', label: '管理员', color: '#F97316' },
+  { path: '/pages/admin/finance', icon: '财务', label: '财务看板', color: '#14B8A6' },
+  { path: '/pages/admin/categories', icon: '分类', label: '分类管理', color: '#84CC16' },
+  { path: '/pages/admin/tags', icon: '标签', label: '标签管理', color: '#A855F7' },
 ];
 
 onShow(() => {
@@ -132,7 +132,7 @@ function doLogout() {
   height: 72rpx;
   border-radius: 16rpx;
   color: #ffffff;
-  font-size: 32rpx;
+  font-size: 22rpx;
   display: flex;
   align-items: center;
   justify-content: center;

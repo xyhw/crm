@@ -10,7 +10,7 @@
         <text class="form-label">邮箱</text>
         <input
           v-model="form.email"
-          type="text"
+          type="email"
           placeholder="请输入注册邮箱"
           :maxlength="64"
           class="form-input"

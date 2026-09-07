@@ -1,18 +1,16 @@
 <template>
   <view class="support-page">
     <view class="card">
-      <view class="support-row" @click="callHotline">
+      <view class="support-row disabled" @click="callHotline">
         <text class="support-label">客服热线</text>
         <view class="support-value">
-          <text>400-123-4567</text>
-          <text class="arrow">›</text>
+          <text>{{ hotline || '暂未开通' }}</text>
         </view>
       </view>
-      <view class="support-row" @click="copyEmail">
+      <view class="support-row disabled" @click="copyEmail">
         <text class="support-label">客服邮箱</text>
         <view class="support-value">
-          <text>support@hotel-order.com</text>
-          <text class="arrow">›</text>
+          <text>{{ email || '暂未开通' }}</text>
         </view>
       </view>
     </view>
@@ -24,24 +22,21 @@
       <view class="info-line">2. 购买商机后自动加入CRM，可在CRM页面跟进</view>
       <view class="info-line">3. 如果发现商机信息有误，可在商机详情页点击「无效反馈」</view>
       <view class="info-line">4. 邀请好友加入可获得积分奖励，邀请海报在「邀请」页面查看</view>
-      <view class="info-line">5. 如需更多帮助，请联系客服热线或发送邮件</view>
+      <view class="info-line">5. 客服通道开通后，可在本页拨号或复制邮箱联系</view>
     </view>
   </view>
 </template>
 
 <script setup>
+const hotline = '';
+const email = '';
+
 function callHotline() {
-  uni.makePhoneCall({
-    phoneNumber: '400-123-4567',
-    fail: () => uni.showToast({ title: '拨号失败', icon: 'none' }),
-  });
+  uni.showToast({ title: '客服热线暂未开通', icon: 'none' });
 }
 
 function copyEmail() {
-  uni.setClipboardData({
-    data: 'support@hotel-order.com',
-    success: () => uni.showToast({ title: '邮箱已复制', icon: 'none' }),
-  });
+  uni.showToast({ title: '客服邮箱暂未开通', icon: 'none' });
 }
 </script>
 
@@ -70,6 +65,10 @@ function copyEmail() {
   border-bottom: none;
 }
 
+.support-row.disabled {
+  opacity: 0.7;
+}
+
 .support-label {
   font-size: 28rpx;
   color: #1A1A1A;
@@ -79,13 +78,7 @@ function copyEmail() {
   display: flex;
   align-items: center;
   font-size: 26rpx;
-  color: #048C47;
-}
-
-.arrow {
-  margin-left: 8rpx;
-  color: #B0B0B0;
-  font-size: 32rpx;
+  color: #555555;
 }
 
 .support-info {
@@ -93,15 +86,15 @@ function copyEmail() {
 }
 
 .info-title {
+  margin: 16rpx 0 8rpx;
   font-size: 28rpx;
   font-weight: 600;
   color: #1A1A1A;
-  margin: 12rpx 0 8rpx;
 }
 
 .info-line {
   font-size: 26rpx;
-  color: #4A4A4A;
-  line-height: 1.8;
+  color: #555555;
+  line-height: 1.7;
 }
 </style>

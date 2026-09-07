@@ -39,12 +39,12 @@
         <view class="preview-text">{{ previewLines }}</view>
         <view class="preview-mask" />
         <view class="preview-lock">
-          <text class="lock-icon">🔒</text>
+          <text class="lock-icon">未解锁</text>
           <text>购买后查看完整内容</text>
         </view>
       </view>
       <view v-else class="detail-lock">
-        <text class="lock-big-icon">🔒</text>
+        <text class="lock-badge">未解锁</text>
         <text class="lock-text">购买后查看需求描述、项目现状、具体地址、联系人、项目概要及图纸附件</text>
       </view>
 
@@ -146,7 +146,11 @@
     </template>
 
     <view v-if="loading" class="loading-tip">加载中...</view>
-    <view v-if="!loading && !detail" class="empty">商机不存在</view>
+    <view v-if="!loading && !detail" class="empty-box">
+      <text class="empty-title">商机不存在</text>
+      <text class="empty-desc">该商机可能已下架或链接失效</text>
+      <view class="empty-btn" @click="goBack">返回</view>
+    </view>
 
     <!-- 底部固定操作栏 -->
     <view v-if="detail && !loading" class="action-bar">
@@ -399,6 +403,15 @@ function goAddFollowUp() {
 function goShare() {
   uni.navigateTo({ url: `/pages/followup/share?opportunityId=${detail.value.id}&crmId=${detail.value.crmId}` });
 }
+
+function goBack() {
+  const pages = getCurrentPages();
+  if (pages.length > 1) {
+    uni.navigateBack();
+    return;
+  }
+  uni.switchTab({ url: '/pages/hall/hall' });
+}
 </script>
 
 <style lang="scss" scoped>
@@ -407,11 +420,40 @@ function goShare() {
   padding-bottom: 160rpx;
 }
 
-.loading-tip,
-.empty {
+.loading-tip {
   text-align: center;
   padding: 100rpx 0;
-  color: #B0B0B0;
+  color: #555555;
+  font-size: 28rpx;
+}
+
+.empty-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 120rpx 48rpx;
+}
+
+.empty-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1A1A1A;
+}
+
+.empty-desc {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: #555555;
+}
+
+.empty-btn {
+  margin-top: 32rpx;
+  min-height: 72rpx;
+  line-height: 72rpx;
+  padding: 0 48rpx;
+  background: #048C47;
+  color: #ffffff;
+  border-radius: 36rpx;
   font-size: 28rpx;
 }
 
@@ -550,7 +592,12 @@ function goShare() {
 }
 
 .lock-icon {
-  font-size: 40rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #555555;
+  background: #F2F4F5;
+  border-radius: 8rpx;
+  padding: 4rpx 12rpx;
   margin-bottom: 8rpx;
 }
 
@@ -564,8 +611,13 @@ function goShare() {
   border-radius: 16rpx;
 }
 
-.lock-big-icon {
-  font-size: 60rpx;
+.lock-badge {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #555555;
+  background: #F2F4F5;
+  border-radius: 8rpx;
+  padding: 8rpx 16rpx;
   margin-bottom: 16rpx;
 }
 

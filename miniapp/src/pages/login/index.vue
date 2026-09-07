@@ -28,7 +28,7 @@
         <text class="form-label">手机号</text>
         <input
           v-model="phoneForm.phone"
-          type="number"
+          type="tel"
           :maxlength="11"
           placeholder="请输入手机号"
           class="form-input"

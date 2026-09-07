@@ -67,7 +67,7 @@
     </view>
 
     <!-- 商机列表 -->
-    <view v-if="listLoading" class="empty-tip">加载中...</view>
+    <StateView v-if="listLoading" :loading="true" :skeleton-count="3" />
     <view v-else-if="!list.length" class="home-empty">
       <view class="home-empty__title">{{ emptyTitle }}</view>
       <view class="home-empty__desc">{{ emptyDesc }}</view>
@@ -106,6 +106,7 @@ import { onLoad, onPullDownRefresh, onShow, onHide, onUnload } from '@dcloudio/u
 import { api } from '@/api/index';
 import { useUserStore } from '@/store/user';
 import { timeAgo, LEVEL_META } from '@/common/constants';
+import StateView from '@/components/StateView.vue';
 
 const userStore = useUserStore();
 const user = computed(() => userStore.user);
@@ -291,7 +292,7 @@ function onEmptyAction() {
 .home-reminder-bar::before {
   content: '●';
   margin-right: 8rpx;
-  font-size: 16rpx;
+  font-size: 22rpx;
   vertical-align: middle;
 }
 
@@ -312,9 +313,9 @@ function onEmptyAction() {
   border-radius: 6rpx;
   background: #FFD700;
   color: #036B38;
-  font-size: 20rpx;
+  font-size: 22rpx;
   font-weight: 600;
-  line-height: 30rpx;
+  line-height: 32rpx;
 }
 
 .announcement-card__title {
