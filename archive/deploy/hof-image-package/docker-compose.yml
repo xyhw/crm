@@ -1,0 +1,69 @@
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: hotel_order_follow
+      MYSQL_USER: hof_user
+      MYSQL_PASSWORD: ${DB_PASS}
+      TZ: Asia/Shanghai
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    image: hof-api:latest
+    environment:
+      DB_HOST: mysql
+      DB_USER: hof_user
+      DB_PASS: ${DB_PASS}
+      DB_NAME: hotel_order_follow
+      JWT_SECRET: ${JWT_SECRET}
+      REFRESH_SECRET: ${REFRESH_SECRET}
+      ADMIN_SECRET: ${ADMIN_SECRET}
+      ADMIN_INIT_PASSWORD: ${ADMIN_INIT_PASSWORD:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      UPLOAD_DIR: /app/uploads
+      MAIL_PROVIDER: ${MAIL_PROVIDER:-log}
+      MAIL_FROM: ${MAIL_FROM:-noreply@localhost}
+      MAIL_SMTP_HOST: ${MAIL_SMTP_HOST:-}
+      MAIL_SMTP_PORT: ${MAIL_SMTP_PORT:-465}
+      MAIL_SMTP_USER: ${MAIL_SMTP_USER:-}
+      MAIL_SMTP_PASS: ${MAIL_SMTP_PASS:-}
+      TZ: Asia/Shanghai
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3001/api/health').then(async r => { const b = await r.json(); process.exit(r.ok && b.code === 0 ? 0 : 1); }).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  web:
+    image: hof-web:latest
+    ports:
+      - "80:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  mysql_data:
+  uploads:
