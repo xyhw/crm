@@ -31,20 +31,21 @@
 ### M3.5 微信小程序改造（方案A，2026-08-30 定案）
 - [x] miniapp（uni-app + Vue3）全部用户端功能迁移 + 小程序内管理后台（22 页）
 - [x] 微信登录/手机号绑定链路（待填凭据）、微信虚拟支付（requestVirtualPayment）
-- [x] 方案A：miniapp 为唯一前端，client 冻结（2026-09-06 已移出部署链与根 scripts）
+- [x] 方案A：miniapp 为用户端，client 冻结（2026-09-06 已移出部署链与根 scripts）；独立 PC 后台见 M3.6
 
 ### M3.6 项目体检与全面优化（2026-09-06，分支 260906-*）
 - [x] P0 修复：统计页等级恒为普通、管理后台上传列名错误、财务软删过滤、client PayResult TDZ 崩溃
 - [x] 安全加固：配置接口 key 白名单、审计日志敏感值脱敏（支付私钥原文落库缺陷）、
       err.message 外泄收敛、分页参数全局钳制、seed 生产环境拒绝默认管理员、fetch 超时修复
-- [x] CI：GitHub Actions（lint + 集成测试含 MySQL 服务 + 双前端构建）；测试凭据环境变量化
+- [x] CI：GitHub Actions（lint + 集成测试含 MySQL 服务 + miniapp / admin-pc 构建）；测试凭据环境变量化
 - [x] 后端重构：结构化日志（console.* 全量替换）、请求 ID、统一响应助手与列表查询构造器、
       市场情报/积分账务/浏览量去重服务化（消除 9 处账务复制）、权限点 RBAC 生效（018 回填迁移）、
       鉴权缓存、群发通知批量插入、等级重算消 N+1
 - [x] 等级系统修复：等级判定顺序（原永远停在 normal）与 useful_shares 统计字段错误（status→audit_status）
 - [x] 支付渠道注册表收敛（alipay/stripe 占位摘除）、微信为主渠道、默认渠道兜底解析
-- [x] 部署统一：miniapp H5 Docker 化，deploy/ 废弃标记，PROD_API_BASE 构建期注入
-- [x] 运维：定时备份脚本（deploy/backup.sh）、每日对账巡检任务、DEPLOY.md 恢复演练
+- [x] 部署统一：miniapp H5 Docker 化，deploy/ 废弃并归档至 archive/deploy/，PROD_API_BASE 构建期注入
+- [x] 运维：定时备份脚本（archive/deploy/backup.sh）、每日对账巡检任务、DEPLOY.md 恢复演练
+- [x] 独立 PC 管理后台：仓库根 `admin-pc/`（Vue3 + Vite，端口 5175），写接口同时接受 camelCase / snake_case；不合入方案 B 分佣改革与充值退款记账
 
 ## 进行中
 

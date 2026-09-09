@@ -2,7 +2,7 @@
 
 面向酒店从筹建到开业全链路供应链的**供应商互助平台**。覆盖装修总包、弱电总包、软装总包、酒店家具、酒店运营物资等领域，通过「投稿跟单 → 积分购买 → 跟进共享 → 分佣激励」的积分飞轮实现**人人分享，人人受益**。
 
-> **方案A（2026-08-30 已定）**：`miniapp/`（uni-app + Vue3，编译 H5 + 微信小程序）为**唯一前端**；`client/`（React H5）已冻结，仅保留可构建状态，不再新增功能、不参与部署。
+> **方案A（2026-08-30 已定）**：`miniapp/`（uni-app + Vue3，编译 H5 + 微信小程序）为用户端；`admin-pc/` 为独立 PC 管理后台。旧 React 前端已冻结于 `archive/client/`。
 
 ## 功能模块
 
@@ -18,7 +18,7 @@
 | 积分与充值 | 积分明细、余额查询、在线充值（微信虚拟支付 / Waffo 收银台 / 开发 mock） |
 | 社区运营 | 邀请好友（海报）、排行榜、公告、通知中心、信用分、会员等级、客服入口 |
 
-### 管理后台（miniapp 内管理页，与 Web 后台同源接口）
+### 管理后台（admin-pc PC 工作台 + miniapp 移动端管理页，同源接口）
 
 RBAC 权限点模型（`role_permissions` 表驱动，超级管理员/运营/财务/客服），包含：数据看板、财务汇总、充值对账（查单补账）、用户管理、商机管理与 CSV 导入、审核流（内容审核 + 操作日志）、订单与积分流水、Banner/分类/标签/公告/通知群发、会员等级配置、协议配置、管理员与角色权限管理。
 
@@ -26,25 +26,26 @@ RBAC 权限点模型（`role_permissions` 表驱动，超级管理员/运营/财
 
 ## 技术栈
 
-- **前端**：uni-app + Vue 3 + Pinia + Vite（编译到微信小程序与 H5）
+- **前端**：uni-app + Vue 3 + Pinia + Vite（用户端 H5 / 微信小程序）；独立 PC 管理后台（Vue 3 + Vue Router + Pinia，端口 5175）
 - **后端**：Node.js 20 (ESM) + Express + MySQL 8.0（mysql2 连接池），测试用 `node --test`
 - **认证**：JWT access + refresh 双令牌，登录限流 + 账号级失败锁定，bcrypt 密码哈希
 - **支付**：微信小程序虚拟支付（wx.requestVirtualPayment）+ [Waffo](https://www.npmjs.com/package/@waffo/pancake-ts) 托管收银台 + webhook 原始 body 验签；内置 mock 渠道（仅非生产）
 - **API 文档**：Swagger（swagger-jsdoc + swagger-ui-express）
-- **CI**：GitHub Actions（lint + 后端集成测试含 MySQL 服务 + 双前端构建）
+- **CI**：GitHub Actions（lint + 后端集成测试含 MySQL 服务 + miniapp / admin-pc 构建）
 - **部署**：Docker Compose 三服务编排（见下文）
 
 ## 目录结构
 
 ```
 .
-├── miniapp/                   # 唯一前端：uni-app (H5 + 微信小程序)
+├── miniapp/                   # 用户端：uni-app (H5 + 微信小程序)
 │   ├── src/api/               #   API 封装（与后端接口一一对应）
 │   ├── src/pages/             #   用户端页面（46 页）
 │   ├── src/pages/admin/       #   管理后台页面（22 页）
 │   ├── src/common/            #   request/payment/constants（H5 与小程序条件编译）
 │   ├── Dockerfile / nginx.conf#   H5 生产镜像（nginx 反代 /api、/uploads）
 │   └── DEPLOY.md              #   小程序发布流程与上线参数清单
+├── admin-pc/                  # 独立 PC 管理后台（Vue3 + Vite，开发端口 5175）
 ├── server/                    # Express 后端
 │   ├── routes/                #   业务路由（auth/opportunity/order/points/follow-up/crm...）
 │   ├── routes/admin/          #   后台管理路由（权限点保护）
@@ -55,9 +56,10 @@ RBAC 权限点模型（`role_permissions` 表驱动，超级管理员/运营/财
 │   ├── lib/                   #   统一响应助手 / 列表查询构造器
 │   ├── scheduler.js           #   定时任务（等级重算/积分过期清理/查单兜底/对账巡检）
 │   └── test/                  #   node --test 集成测试
-├── client/                    # （已冻结）旧 React 前端，仅保留可构建，不参与部署
+├── archive/                   # 归档目录（已冻结/废弃，不参与构建与部署）
+│   ├── client/                #   （已冻结）旧 React 前端
+│   └── deploy/                #   （已废弃）旧备用部署方案
 ├── docs/                      # REQUIREMENTS.md 需求文档 / PLAN.md 开发计划与 roadmap
-├── deploy/                    # （已废弃）旧备用部署方案，仅存档
 ├── DEPLOY.md                  # Docker 部署指南
 └── docker-compose.yml         # mysql + api + web(miniapp H5) 编排
 ```
@@ -73,9 +75,12 @@ cp server/.env.example server/.env
 
 # 同时启动后端(3001)与 miniapp H5(5174)
 npm run dev
+
+# 另开终端启动 PC 管理后台(5175)
+npm run dev:admin
 ```
 
-H5 访问 `http://localhost:5174`（vite 代理 `/api`、`/uploads` 到 3001）。首次启动自动建表并灌入种子数据。
+H5 访问 `http://localhost:5174`（vite 代理 `/api`、`/uploads` 到 3001）。PC 管理后台访问 `http://localhost:5175`。首次启动自动建表并灌入种子数据。
 
 小程序调试：`npm run dev:mp --prefix miniapp` 后用微信开发者工具导入 `miniapp/dist/dev/mp-weixin`（详见 [miniapp/DEPLOY.md](miniapp/DEPLOY.md)）。
 
@@ -100,12 +105,13 @@ npm test --prefix server
 # 后端 lint
 npm run lint --prefix server
 
-# 前端构建验证（H5 与小程序）
+# 前端构建验证（H5、小程序、PC 管理后台）
 npm run build --prefix miniapp
 npm run build:mp --prefix miniapp
+npm run build --prefix admin-pc
 ```
 
-推送即触发 GitHub Actions：lint + 后端测试（CI 内起 mysql:8.0 服务）+ 双前端构建。
+推送即触发 GitHub Actions：lint + 后端测试（CI 内起 mysql:8.0 服务）+ miniapp / admin-pc 构建。
 
 ## 生产部署
 

@@ -44,7 +44,8 @@
 - 类别: 环境配置 / 构建与测试
 - 说明:
   - `miniapp` 一份代码同时编译 H5 与微信小程序，条件编译 `#ifdef MP-WEIXIN` / `#ifndef MP-WEIXIN` 区分平台（payment.js 渠道过滤、onBannerTap 链接处理）。
-  - `client`（React，端口 5173）将下线，主预览切到 miniapp H5（端口 5174）。
+  - 旧 React 前端已冻结于 `archive/client/`，主预览切到 miniapp H5（端口 5174）。
+  - 独立 PC 管理后台在仓库根 `admin-pc/`（Vue3 + Vite，端口 5175，`npm run dev:admin`）。与 miniapp 管理页同源 `/api/v1/admin`；写接口同时接受 camelCase / snake_case。
   - miniapp 测试：`cd /workspace/miniapp && NODE_PATH=$(npm root -g) npx vitest run`。测试依赖（vitest/jsdom/@vue/test-utils）全局安装在 `/usr/local/lib/node_modules`，在 `miniapp/node_modules` 下用符号链接指向全局；`@vue/test-utils` 必须在项目本地安装以避免与项目 vue 3.5.41 双实例冲突（全局自带 vue 3.5.42 会报 `reading 'ce'`）。
   - 投稿人姓名匿名：后端 `server/constants.js` 的 `anonymizeName()` 确定性哈希取单字，前台 API 返回匿名昵称；后台 admin 接口保留实名。前端直接展示后端值，不要再套 maskName 二次脱敏。
   - miniapp 分页约定：列表接口用服务端分页（page/pageSize + total），后端 rankings 接口已补 total 字段；不要一次性 pageSize:50 拉全量。

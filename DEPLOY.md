@@ -8,7 +8,7 @@
 |------|-----------|------|
 | `mysql` | mysql:8.0 | 数据库，数据持久化到 `mysql_data` volume，带健康检查 |
 | `api` | `./server` 构建 | Node.js 后端，启动时自动执行 migration 与种子数据 |
-| `web` | `./miniapp` 构建 | uni-app H5 多阶段构建出静态文件，nginx 托管并反代（方案A 唯一前端；`client/` 已冻结不参与部署） |
+| `web` | `./miniapp` 构建 | uni-app H5 多阶段构建出静态文件，nginx 托管并反代（用户端；旧 React 前端在 `archive/client/`，不参与部署。PC 管理后台 `admin-pc/` 目前走开发预览，未编入 Compose） |
 
 请求链路：浏览器 → `web`(nginx:80) → `/api`、`/uploads` 反代到 `api`:3001；SPA 路由由 nginx 回退到 `index.html`。
 
@@ -124,12 +124,12 @@ docker compose exec -T mysql sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" hotel_
 
 ### 定时备份（推荐）
 
-使用 `deploy/backup.sh`（mysqldump 单事务快照 + uploads 打包 + 按天轮转）：
+使用 `archive/deploy/backup.sh`（mysqldump 单事务快照 + uploads 打包 + 按天轮转）：
 
 ```bash
 # 安装每日 03:00 备份
 crontab -e
-0 3 * * * cd /path/to/project && BACKUP_DIR=/opt/backups/hof KEEP_DAYS=14 ./deploy/backup.sh >> /var/log/hof-backup.log 2>&1
+0 3 * * * cd /path/to/project && BACKUP_DIR=/opt/backups/hof KEEP_DAYS=14 ./archive/deploy/backup.sh >> /var/log/hof-backup.log 2>&1
 
 # 恢复演练（上线前必做一次）
 gunzip < /opt/backups/hof/db-xxxx.sql.gz | \
