@@ -6,3 +6,7 @@ coverage
 uploads/
 data/
 test/
+eslint.config.js
+Dockerfile
+.dockerignore
+.git

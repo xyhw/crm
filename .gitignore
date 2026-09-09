@@ -13,15 +13,13 @@ server/data/*.json
 # 上传文件与运行时数据
 uploads/
 
-# 调试脚本（开发期排查用，禁止入仓）
-client/check-empty.mjs
-client/dump.mjs
-client/inspect-bundle.mjs
-client/probe-rv.mjs
-client/render-*.mjs
-client/test-esm.mjs
-client/test-min.mjs
-client/test-rv.mjs
+# 归档：源码入库；依赖与构建产物沿用上方 node_modules/、dist/
+# archive/admin-pc 仅为本地构建残留（正式源码在仓库根 admin-pc/）
+archive/admin-pc/
+client_archive_tmp/
+
+# docker 镜像离线包（可重新 docker save 生成，不入仓）
+archive/deploy/hof-image-package/hof-images.tar.gz
 
 # 后端运行时输出
 server/coverage/

@@ -1,4 +1,4 @@
-# miniapp H5 生产构建（方案A：miniapp 为唯一前端，client 已冻结）
+# miniapp H5 生产构建（用户端；client 已冻结于 archive/client/）
 # 多阶段：node 构建 uni-app H5 产物 → nginx 托管并反代 /api、/uploads 到 api:3001
 FROM node:20-alpine AS frontend-build
 

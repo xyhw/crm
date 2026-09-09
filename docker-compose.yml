@@ -17,7 +17,7 @@ services:
       retries: 20
 
   api:
-    build: ./server
+    image: hof-api:latest
     environment:
       DB_HOST: mysql
       DB_USER: hof_user
@@ -50,11 +50,7 @@ services:
       start_period: 60s
 
   web:
-    # 方案A：miniapp 为唯一前端（H5 构建产物 + nginx 反代），client 已冻结不再参与部署
-    build:
-      context: ./miniapp
-      args:
-        VITE_API_BASE: ${VITE_API_BASE:-}
+    image: hof-web:latest
     ports:
       - "80:80"
     depends_on:

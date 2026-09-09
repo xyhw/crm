@@ -80,22 +80,6 @@ jobs:
           name: server-log
           path: server/server.log
 
-  build-client:
-    name: Build (client, 冻结维护)
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: client
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: client/package-lock.json
-      - run: npm ci
-      - run: npm run build
-
   build-miniapp:
     name: Build (miniapp)
     runs-on: ubuntu-latest
@@ -111,3 +95,19 @@ jobs:
           cache-dependency-path: miniapp/package-lock.json
       - run: npm ci
       - run: npm run build:mp
+
+  build-admin-pc:
+    name: Build (admin-pc)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: admin-pc
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: admin-pc/package-lock.json
+      - run: npm ci
+      - run: npm run build
