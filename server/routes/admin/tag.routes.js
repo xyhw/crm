@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { query, queryOne, insert, update } from '../../db.js';
 import { audit } from '../../services/audit-log.service.js';
+import { pickBodyFields } from '../../utils/body-fields.js';
 
 const router = Router();
 
@@ -47,9 +48,9 @@ router.get('/', async (req, res) => {
  */
 router.post('/', audit('tag', 'create', (req, res, body) => body?.data?.id ?? null), async (req, res) => {
   try {
-    const { name } = req.body || {};
+    const { name, sortOrder } = pickBodyFields(req.body, ['name', 'sortOrder']);
     if (!name) return res.json({ code: 400, message: '标签名称不能为空' });
-    const result = await insert('opportunity_tags', { name, sort_order: 0 });
+    const result = await insert('opportunity_tags', { name, sort_order: sortOrder ?? 0 });
     res.json({ code: 0, data: { id: result.insertId } });
   } catch (err) {
     res.status(500).json({ code: 500, message: '创建标签失败' });
@@ -74,7 +75,7 @@ router.post('/', audit('tag', 'create', (req, res, body) => body?.data?.id ?? nu
  */
 router.put('/:id', audit('tag', 'edit'), async (req, res) => {
   try {
-    const { name, sortOrder } = req.body || {};
+    const { name, sortOrder } = pickBodyFields(req.body, ['name', 'sortOrder']);
     const data = {};
     if (name !== undefined) data.name = name;
     if (sortOrder !== undefined) data.sort_order = sortOrder;
