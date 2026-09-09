@@ -2,13 +2,16 @@
   "name": "hotel-order-follow",
   "version": "1.0.0",
   "private": true,
-  "description": "酒店装修供应链在线跟单互助系统（方案A：miniapp 为唯一前端，client 已冻结）",
+  "description": "酒店装修供应链在线跟单互助系统（方案A：miniapp 为用户端；admin-pc 为独立 PC 管理后台）",
   "scripts": {
     "dev": "concurrently -n server,miniapp -c blue,green \"npm run dev --prefix server\" \"npm run dev:h5 --prefix miniapp\"",
+    "dev:admin": "npm run dev --prefix admin-pc",
+    "dev:all": "concurrently -n server,miniapp,admin -c blue,green,magenta \"npm run dev --prefix server\" \"npm run dev:h5 --prefix miniapp\" \"npm run dev --prefix admin-pc\"",
     "start": "concurrently -n server,miniapp -c blue,green \"npm run start --prefix server\" \"npm run dev:h5 --prefix miniapp\"",
-    "install:all": "npm install && npm install --prefix server && npm install --prefix miniapp",
+    "install:all": "npm install && npm install --prefix server && npm install --prefix miniapp && npm install --prefix admin-pc",
     "build": "npm run build:h5 --prefix miniapp",
-    "build:mp": "npm run build:mp --prefix miniapp"
+    "build:mp": "npm run build:mp --prefix miniapp",
+    "build:admin": "npm run build --prefix admin-pc"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"

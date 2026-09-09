@@ -1,0 +1,21 @@
+{
+  "name": "hof-admin-pc",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "HOF 独立 PC 管理后台",
+  "scripts": {
+    "dev": "vite --host --port 5175",
+    "build": "vite build",
+    "preview": "vite preview --host --port 5175"
+  },
+  "dependencies": {
+    "pinia": "^2.3.1",
+    "vue": "^3.5.41",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "vite": "^5.2.8"
+  }
+}
