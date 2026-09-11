@@ -28,13 +28,15 @@
         <text class="form-label">公司（选填）</text>
         <input v-model="form.company" placeholder="公司名称" :maxlength="50" class="form-input" />
       </view>
-      <view class="form-item" @click="showCategory = true">
-        <text class="form-label">供应商类型</text>
-        <view class="form-input form-picker">
-          <text>{{ categoryLabel(form.category) }}</text>
-          <text class="picker-arrow">›</text>
+      <picker mode="selector" :range="categoryLabels" :value="categoryIndex" @change="onCategoryChange">
+        <view class="form-item">
+          <text class="form-label">供应商类型</text>
+          <view class="form-input form-picker">
+            <text>{{ categoryLabel(form.category) }}</text>
+            <text class="picker-arrow">›</text>
+          </view>
         </view>
-      </view>
+      </picker>
       <view class="form-item">
         <text class="form-label">密码</text>
         <view class="password-wrap">
@@ -69,35 +71,11 @@
         </text>
       </view>
     </view>
-
-    <!-- 供应商类型选择器 -->
-    <view v-if="showCategory" class="modal-mask" @click.self="showCategory = false">
-      <view class="picker-modal">
-        <view class="picker-header">
-          <text class="picker-cancel" @click="showCategory = false">取消</text>
-          <text class="picker-title">选择供应商类型</text>
-          <text class="picker-confirm" @click="showCategory = false">完成</text>
-        </view>
-        <scroll-view scroll-y class="picker-body" :scroll-into-view="'cat-' + form.category" scroll-with-animation>
-          <view
-            v-for="c in SUPPLIER_CATEGORIES"
-            :key="c.value"
-            :id="'cat-' + c.value"
-            class="picker-item"
-            :class="{ active: form.category === c.value }"
-            @click="selectCategory(c.value)"
-          >
-            <text>{{ c.label }}</text>
-            <text v-if="form.category === c.value" class="picker-check">✓</text>
-          </view>
-        </scroll-view>
-      </view>
-    </view>
   </view>
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/user';
 import { SUPPLIER_CATEGORIES, categoryLabel } from '@/common/constants';
@@ -105,10 +83,10 @@ import { SUPPLIER_CATEGORIES, categoryLabel } from '@/common/constants';
 const userStore = useUserStore();
 
 const submitting = ref(false);
-const showCategory = ref(false);
 const passwordVisible = ref(false);
 const agreed = ref(false);
 const inviteCode = ref('');
+const categoryLabels = SUPPLIER_CATEGORIES.map((c) => c.label);
 
 const form = reactive({
   phone: '',
@@ -117,6 +95,11 @@ const form = reactive({
   company: '',
   category: SUPPLIER_CATEGORIES[0].value,
   password: '',
+});
+
+const categoryIndex = computed(() => {
+  const idx = SUPPLIER_CATEGORIES.findIndex((c) => c.value === form.category);
+  return idx >= 0 ? idx : 0;
 });
 
 onLoad((options) => {
@@ -175,9 +158,10 @@ function goLogin() {
   uni.navigateBack();
 }
 
-function selectCategory(value) {
-  form.category = value;
-  showCategory.value = false;
+function onCategoryChange(e) {
+  const idx = Number(e.detail.value);
+  const selected = SUPPLIER_CATEGORIES[idx];
+  if (selected) form.category = selected.value;
 }
 
 function goAgreement(type) {
@@ -324,74 +308,5 @@ function goAgreement(type) {
 
 .link {
   color: #048C47;
-}
-
-/* 供应商类型选择器（与 profile/edit 同规格） */
-.modal-mask {
-  position: fixed;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 200;
-  display: flex;
-  align-items: flex-end;
-}
-
-.picker-modal {
-  width: 100%;
-  background: #ffffff;
-  border-radius: 24rpx 24rpx 0 0;
-  max-height: 60vh;
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-.picker-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24rpx;
-  border-bottom: 1px solid #F2F4F5;
-}
-
-.picker-cancel {
-  color: #7A7A7A;
-  font-size: 28rpx;
-}
-
-.picker-title {
-  font-size: 30rpx;
-  font-weight: 600;
-}
-
-.picker-confirm {
-  color: #048C47;
-  font-size: 28rpx;
-}
-
-.picker-body {
-  max-height: 50vh;
-}
-
-.picker-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 28rpx 32rpx;
-  font-size: 28rpx;
-  color: #1A1A1A;
-  border-bottom: 1px solid #F7F8F9;
-}
-
-.picker-item.active {
-  color: #048C47;
-  font-weight: 600;
-  background: #F3FBF6;
-}
-
-.picker-check {
-  color: #048C47;
-  font-size: 32rpx;
 }
 </style>
