@@ -23,7 +23,6 @@
       <button class="btn btn-primary submit" type="submit" :disabled="loading">
         {{ loading ? '登录中...' : '登录' }}
       </button>
-      <p class="hint">默认账号：admin / admin123</p>
     </form>
   </div>
 </template>

@@ -25,6 +25,14 @@ if ! docker images | grep -q 'hof-api'; then
   echo "导入 hof-images.tar.gz ..."
   gunzip -c hof-images.tar.gz | docker load
 fi
+if ! docker images | grep -q 'hof-web'; then
+  echo "导入 hof-images.tar.gz ..."
+  gunzip -c hof-images.tar.gz | docker load
+fi
+if ! docker images | grep -q 'hof-admin-pc'; then
+  echo "导入 hof-images.tar.gz ..."
+  gunzip -c hof-images.tar.gz | docker load
+fi
 
 echo "==> [3/4] 检查 .env"
 if [ ! -f .env ]; then

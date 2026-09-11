@@ -4,8 +4,8 @@
 
 ```
 hof-image-package/
-├── hof-images.tar.gz    # 2 个业务镜像（hof-api 168MB + hof-web 69.8MB，压缩后 80MB）
-├── docker-compose.yml   # 3 服务编排（mysql / api / web）
+├── hof-images.tar.gz    # 3 个业务镜像（hof-api 168MB + hof-web 69.8MB + hof-admin-pc 69.2MB，压缩后 80MB）
+├── docker-compose.yml   # 4 服务编排（mysql / api / web / web-admin）
 ├── .env.example         # 配置模板
 ├── deploy.sh            # 一键部署脚本
 └── README-DEPLOY.md     # 本说明
@@ -17,6 +17,7 @@ hof-image-package/
 |------|------|-------------|
 | `hof-api:latest` | 后端 API（Node.js + Express） | ✅ 已打包 |
 | `hof-web:latest` | 用户端 H5（uni-app + nginx） | ✅ 已打包 |
+| `hof-admin-pc:latest` | PC 管理后台（Vue3 + nginx） | ✅ 已打包 |
 | `mysql:8.0` | MySQL（Docker 官方，新机自动拉取） | ❌ 无需打包 |
 
 ## 部署步骤（新机器）
@@ -85,6 +86,16 @@ curl http://localhost/api/health
 # 前端首页
 curl -I http://localhost/
 # 期望: HTTP/1.1 200 OK
+
+# PC 管理后台
+curl -I http://localhost:8080/
+# 期望: HTTP/1.1 200 OK
+
+# 管理后台登录（经 8080 反代到 api）
+curl -s -X POST http://localhost:8080/api/v1/admin/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"admin","password":"<ADMIN_INIT_PASSWORD 值>"}'
+# 期望: {"code":0,"data":{"token":"..."}}
 ```
 
 ### 6. 域名 + HTTPS
@@ -110,7 +121,8 @@ server {
 
 ### 7. 首次登录
 
-- 用户端 H5：`https://yourdomain.com`
+- 用户端 H5：`http://yourdomain.com`（或 `https://yourdomain.com`）
+- PC 管理后台：`http://yourdomain.com:8080`（用 nginx 反代到 8080 可去掉端口）
 - admin 初始账号：`admin`，密码为 `ADMIN_INIT_PASSWORD` 配置值，登录后立即修改。
 
 ## 常用运维命令
@@ -119,6 +131,7 @@ server {
 docker compose ps               # 查看状态
 docker compose logs -f api      # 查看 api 日志
 docker compose logs -f web      # 查看 web 日志
+docker compose logs -f web-admin # 查看管理后台日志
 docker compose logs -f mysql    # 查看 mysql 日志
 docker compose restart api      # 重启 api
 docker compose down             # 停止（保留数据卷）
