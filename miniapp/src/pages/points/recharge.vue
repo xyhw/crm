@@ -32,11 +32,7 @@
             {{ a }} 积分
           </view>
         </view>
-        <view class="custom-row">
-          <text class="custom-label">自定义金额</text>
-          <input v-model="amount" class="custom-input" type="digit" placeholder="输入积分数量" :maxlength="6" />
-        </view>
-        <view class="section-tip">单次充值上限 10000 积分</view>
+        <view class="section-tip">可选择上方档位进行充值</view>
       </view>
 
       <view class="submit-btn" :class="{ disabled: submitting }" @click="handleRecharge">
@@ -71,8 +67,7 @@ import { onLoad } from '@dcloudio/uni-app';
 import { api } from '@/api/index';
 import { resolveMiniappChannels, channelLabel, checkIosVirtualPayVersion, getWxLoginCode, requestVirtualPayment } from '@/common/payment';
 
-const options = [50, 100, 200, 500, 1000];
-const MAX_AMOUNT = 10000;
+const options = [50, 100, 200];
 
 const loading = ref(true);
 const availableChannels = ref(['mock']);
@@ -111,11 +106,7 @@ async function handleRecharge() {
   }
   const value = Number(amount.value);
   if (!value || value <= 0) {
-    uni.showToast({ title: '请输入有效金额', icon: 'none' });
-    return;
-  }
-  if (value > MAX_AMOUNT) {
-    uni.showToast({ title: `单次充值上限${MAX_AMOUNT}积分`, icon: 'none' });
+    uni.showToast({ title: '请选择充值档位', icon: 'none' });
     return;
   }
   if (submitting.value) return;
@@ -288,28 +279,6 @@ function pollOrderStatus(orderNo, times = 90, interval = 2000) {
 .amount-chip.active {
   color: #ffffff;
   background: #048C47;
-}
-
-.custom-row {
-  display: flex;
-  align-items: center;
-  margin-top: 8rpx;
-}
-
-.custom-label {
-  font-size: 26rpx;
-  color: #4A4A4A;
-}
-
-.custom-input {
-  flex: 1;
-  height: 64rpx;
-  line-height: 64rpx;
-  background: #F2F4F5;
-  border-radius: 8rpx;
-  padding: 0 20rpx;
-  font-size: 26rpx;
-  margin-left: 16rpx;
 }
 
 .section-tip {

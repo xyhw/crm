@@ -34,6 +34,9 @@ export const config = {
     siteBaseUrl: process.env.PAY_SITE_BASE_URL || '',
     // mock 渠道是否自动完成支付（开发默认 true）
     mockAutoPay: process.env.PAY_MOCK_AUTOPAY !== 'false',
+    // 充值档位白名单（积分数，逗号分隔；前端档位须与此一致）
+    rechargeTiers: (process.env.POINTS_RECHARGE_TIERS || '50,100,200')
+      .split(',').map((s) => parseInt(s.trim(), 10)).filter((n) => n > 0),
     wechat: {
       appId: process.env.PAY_WECHAT_APPID || process.env.WX_MINIAPP_APPID || '',
       mchId: process.env.PAY_WECHAT_MCHID || '',

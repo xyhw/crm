@@ -74,10 +74,6 @@
             {{ a }} 积分
           </view>
         </view>
-        <view class="custom-row">
-          <text class="dialog-label">自定义金额</text>
-          <input v-model="rechargeAmount" class="custom-input" type="digit" placeholder="输入积分数量" :maxlength="6" />
-        </view>
         <view v-if="payChannel" class="pay-channel-row">
           <text class="dialog-label">支付方式</text>
           <text class="pay-channel-name">{{ channelLabel(payChannel) }}</text>
@@ -117,7 +113,7 @@ const logTabs = [
   { title: '收入', name: 'income' },
   { title: '支出', name: 'expense' },
 ];
-const rechargeOptions = [50, 100, 200, 500, 1000];
+const rechargeOptions = [50, 100, 200];
 
 async function fetchLogs(p = 1, reset = false) {
   try {
@@ -184,11 +180,7 @@ function goInvite() {
 async function handleRecharge() {
   const amount = Number(rechargeAmount.value);
   if (!amount || amount <= 0) {
-    uni.showToast({ title: '请输入有效金额', icon: 'none' });
-    return;
-  }
-  if (amount > 10000) {
-    uni.showToast({ title: '单次充值上限10000积分', icon: 'none' });
+    uni.showToast({ title: '请选择充值档位', icon: 'none' });
     return;
   }
   if (recharging.value) return;
@@ -497,23 +489,6 @@ onReachBottom(() => {
 .recharge-chip.active {
   color: #ffffff;
   background: #048C47;
-}
-
-.custom-row {
-  display: flex;
-  align-items: center;
-  margin-top: 8rpx;
-}
-
-.custom-input {
-  flex: 1;
-  height: 64rpx;
-  line-height: 64rpx;
-  background: #F2F4F5;
-  border-radius: 8rpx;
-  padding: 0 20rpx;
-  font-size: 26rpx;
-  margin-left: 16rpx;
 }
 
 .pay-channel-row {

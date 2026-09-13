@@ -62,7 +62,13 @@ export { BasePaymentAdapter };
  */
 export async function createRechargeOrder({ userId, amount, channel, sessionKey, openid }) {
   if (!amount || amount <= 0) {
-    const err = new Error('请输入有效的充值金额');
+    const err = new Error('请选择有效的充值档位');
+    err.code = 400;
+    throw err;
+  }
+  const tiers = config.payment.rechargeTiers;
+  if (tiers.length && !tiers.includes(amount)) {
+    const err = new Error(`仅支持充值 ${tiers.join('/')} 积分档位`);
     err.code = 400;
     throw err;
   }
