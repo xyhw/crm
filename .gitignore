@@ -9,6 +9,7 @@ server/data/*.json
 .env.*
 !.env.example
 !.env.docker.example
+!.env.production.example
 
 # 上传文件与运行时数据
 uploads/
