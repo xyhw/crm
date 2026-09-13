@@ -50,18 +50,13 @@
     "quickapp" : {},
     /* 小程序特有相关 */
     "mp-weixin" : {
-        "appid" : "",
+        "appid" : "wxac0cbad5d9bf09b0",
         "setting" : {
             "urlCheck" : false,
             "es6" : true,
             "minified" : true
         },
         "usingComponents" : true,
-        "permission" : {
-            "scope.userLocation" : {
-                "desc" : "用于展示商机项目位置信息"
-            }
-        },
         "requiredPrivateInfos" : [],
         "lazyCodeLoading" : "requiredComponents"
     },

@@ -6,7 +6,7 @@
 
 | 参数 | 填入位置 | 获取方式 |
 |------|---------|---------|
-| 小程序 AppID | `miniapp/src/manifest.json` → `mp-weixin.appid`（当前为空字符串） | 微信公众平台 mp.weixin.qq.com「设置-基本信息的 AppID」 |
+| 小程序 AppID | `miniapp/src/manifest.json` → `mp-weixin.appid`（已填 `wxac0cbad5d9bf09b0`） | 微信公众平台 mp.weixin.qq.com「设置-基本信息的 AppID」 |
 | 服务端 AppID | 环境变量 `WX_MINIAPP_APPID` | 同上，与前端一致 |
 | 服务端 Secret | 环境变量 `WX_MINIAPP_SECRET` | 微信公众平台「开发管理-开发设置的 AppSecret」 |
 
@@ -14,7 +14,7 @@
 
 ## 2. API 域名（必填）
 
-1. `miniapp/src/common/config.js` → `PROD_API_BASE` 替换为正式 HTTPS 域名（当前占位 `https://api.example.com/api`）。
+1. `miniapp/.env.production` 写入 `VITE_API_BASE=https://<你的API域名>/api`（构建期注入小程序端 API 基址）。
 2. 微信公众平台「开发管理-服务器域名」配置：
    - request 合法域名：`https://<你的API域名>`
    - uploadFile/downloadFile 合法域名：同上
