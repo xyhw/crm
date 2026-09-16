@@ -17,8 +17,11 @@ services:
       retries: 20
 
   api:
+    # 重新打包：APP_VERSION=v1.0.0 docker compose build（镜像名 crm/api，未设置时 tag 为 latest）
+    image: crm/api:${APP_VERSION:-latest}
     build: ./server
     environment:
+      # ── 基础：数据库与密钥 ──
       DB_HOST: mysql
       DB_USER: hof_user
       DB_PASS: ${DB_PASS}
@@ -29,13 +32,58 @@ services:
       ADMIN_INIT_PASSWORD: ${ADMIN_INIT_PASSWORD:-}
       CORS_ORIGINS: ${CORS_ORIGINS:-}
       UPLOAD_DIR: /app/uploads
+      TZ: Asia/Shanghai
+      # ── 邮件（找回密码验证码） ──
       MAIL_PROVIDER: ${MAIL_PROVIDER:-log}
       MAIL_FROM: ${MAIL_FROM:-noreply@localhost}
       MAIL_SMTP_HOST: ${MAIL_SMTP_HOST:-}
       MAIL_SMTP_PORT: ${MAIL_SMTP_PORT:-465}
+      MAIL_SMTP_SECURE: ${MAIL_SMTP_SECURE:-true}
       MAIL_SMTP_USER: ${MAIL_SMTP_USER:-}
       MAIL_SMTP_PASS: ${MAIL_SMTP_PASS:-}
-      TZ: Asia/Shanghai
+      # ── 微信小程序（登录/手机号授权；未配置自动降级，不影响手机号+密码登录） ──
+      WX_MINIAPP_APPID: ${WX_MINIAPP_APPID:-}
+      WX_MINIAPP_SECRET: ${WX_MINIAPP_SECRET:-}
+      # ── 支付通用（渠道开关 pay_*_enabled 在后台「系统配置」里设置） ──
+      PAY_DEFAULT_CHANNEL: ${PAY_DEFAULT_CHANNEL:-mock}
+      PAY_SITE_BASE_URL: ${PAY_SITE_BASE_URL:-}
+      PAY_POINTS_TO_YUAN: ${PAY_POINTS_TO_YUAN:-}
+      PAY_ORDER_TTL: ${PAY_ORDER_TTL:-}
+      PAY_MOCK_AUTOPAY: ${PAY_MOCK_AUTOPAY:-}
+      # ── 微信虚拟支付（小程序端充值；个人主体虚拟支付） ──
+      PAY_WECHAT_APPID: ${PAY_WECHAT_APPID:-}
+      PAY_WECHAT_OFFER_ID: ${PAY_WECHAT_OFFER_ID:-}
+      PAY_WECHAT_ENV: ${PAY_WECHAT_ENV:-}
+      PAY_WECHAT_APPKEY: ${PAY_WECHAT_APPKEY:-}
+      PAY_WECHAT_PUSH_TOKEN: ${PAY_WECHAT_PUSH_TOKEN:-}
+      PAY_WECHAT_PRODUCT_MAP: ${PAY_WECHAT_PRODUCT_MAP:-}
+      PAY_WECHAT_MCHID: ${PAY_WECHAT_MCHID:-}
+      PAY_WECHAT_SERIALNO: ${PAY_WECHAT_SERIALNO:-}
+      PAY_WECHAT_APIV3KEY: ${PAY_WECHAT_APIV3KEY:-}
+      PAY_WECHAT_PRIVATE_KEY_PATH: ${PAY_WECHAT_PRIVATE_KEY_PATH:-}
+      PAY_WECHAT_NOTIFY_URL: ${PAY_WECHAT_NOTIFY_URL:-}
+      # ── Waffo 托管收银台（H5 端充值） ──
+      PAY_WAFFO_ENVIRONMENT: ${PAY_WAFFO_ENVIRONMENT:-}
+      PAY_WAFFO_MERCHANT_ID: ${PAY_WAFFO_MERCHANT_ID:-}
+      PAY_WAFFO_STORE_ID: ${PAY_WAFFO_STORE_ID:-}
+      PAY_WAFFO_PRODUCT_ID: ${PAY_WAFFO_PRODUCT_ID:-}
+      PAY_WAFFO_PRIVATE_KEY: ${PAY_WAFFO_PRIVATE_KEY:-}
+      PAY_WAFFO_CURRENCY: ${PAY_WAFFO_CURRENCY:-CNY}
+      PAY_WAFFO_SUCCESS_URL: ${PAY_WAFFO_SUCCESS_URL:-}
+      # ── 支付宝 / Stripe（可选渠道，未接入可留空） ──
+      PAY_ALIPAY_APPID: ${PAY_ALIPAY_APPID:-}
+      PAY_ALIPAY_PRIVATE_KEY: ${PAY_ALIPAY_PRIVATE_KEY:-}
+      PAY_ALIPAY_PUBLIC_KEY: ${PAY_ALIPAY_PUBLIC_KEY:-}
+      PAY_ALIPAY_NOTIFY_URL: ${PAY_ALIPAY_NOTIFY_URL:-}
+      PAY_STRIPE_SECRET_KEY: ${PAY_STRIPE_SECRET_KEY:-}
+      PAY_STRIPE_WEBHOOK_SECRET: ${PAY_STRIPE_WEBHOOK_SECRET:-}
+      # ── 风控调参（留空用代码默认） ──
+      RATE_LIMIT_API_MAX: ${RATE_LIMIT_API_MAX:-}
+      RATE_LIMIT_API_WINDOW_MS: ${RATE_LIMIT_API_WINDOW_MS:-}
+      RATE_LIMIT_LOGIN_MAX: ${RATE_LIMIT_LOGIN_MAX:-}
+      RATE_LIMIT_LOGIN_WINDOW_MS: ${RATE_LIMIT_LOGIN_WINDOW_MS:-}
+      ACCOUNT_LOCK_THRESHOLD: ${ACCOUNT_LOCK_THRESHOLD:-}
+      ACCOUNT_LOCK_WINDOW_SEC: ${ACCOUNT_LOCK_WINDOW_SEC:-}
     volumes:
       - uploads:/app/uploads
     depends_on:
@@ -50,6 +98,7 @@ services:
       start_period: 60s
 
   web:
+    image: crm/web:${APP_VERSION:-latest}
     build: ./client
     ports:
       - "80:80"

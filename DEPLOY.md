@@ -82,10 +82,11 @@ docker compose logs -f api
 1. **域名与 HTTPS**：支付回调要求 HTTPS，正式域名解析到服务器后配置 TLS（见下方 HTTPS 一节）
 2. **强随机密钥**：`.env` 五个密钥全部用 `openssl rand -hex 32` 生成，且 `.env` 不提交到 git
 3. **默认管理员密码**：部署前在 `.env` 设置 `ADMIN_INIT_PASSWORD`（首启创建 `admin` 账号的初始密码）；否则会使用默认密码 `admin123` 并在日志输出安全警告，**务必上线后第一时间在后台修改**
-3. **邮件 SMTP**：`.env` 中 `MAIL_PROVIDER=smtp` 并填 `MAIL_SMTP_HOST/USER/PASS`；保持 `log` 时验证码只会打印到 api 日志，用户收不到找回密码邮件——**务必实测找回密码全链路**
-4. **支付配置**：在管理后台完成下面的「上线后必做的配置切换」（站点域名、Waffo 生产渠道、webhook）
-5. **恢复演练**：执行一次备份并尝试恢复到临时库，确认备份脚本可用（备份命令见下文）
-6. **冷启动巡检**：清空 volume 后 `docker compose up -d --build` 完整跑一遍，核对 migration 日志无报错、种子数据就绪、三个服务都 healthy
+4. **邮件 SMTP**：`.env` 中 `MAIL_PROVIDER=smtp` 并填 `MAIL_SMTP_HOST/USER/PASS`；保持 `log` 时验证码只会打印到 api 日志，用户收不到找回密码邮件——**务必实测找回密码全链路**
+5. **支付配置**：在管理后台完成下面的「上线后必做的配置切换」（站点域名、Waffo 生产渠道、webhook）；如需小程序虚拟支付，`.env` 填 `PAY_WECHAT_*` 并在 MP 后台开通虚拟支付（见 `miniapp/DEPLOY-CHECKLIST.md`）
+6. **微信小程序凭据**：发布小程序时 `.env` 填 `WX_MINIAPP_APPID/WX_MINIAPP_SECRET`（不填则微信登录自动降级，不影响手机号+密码登录）；`miniapp/src/manifest.json` 的 `mp-weixin.appid` 同步填写
+7. **恢复演练**：执行一次备份并尝试恢复到临时库，确认备份脚本可用（备份命令见下文）
+8. **冷启动巡检**：清空 volume 后 `docker compose up -d --build` 完整跑一遍，核对 migration 日志无报错、种子数据就绪、三个服务都 healthy
 
 ## 上线后必做的配置切换
 
@@ -103,6 +104,26 @@ docker compose logs -f api
 - **certbot**：宿主机安装 certbot，为 nginx 挂载证书，或在 web 容器前再加一层宿主机 nginx/caddy 终结 TLS
 - **腾讯云 CLB**：负载均衡挂免费证书，回源到服务器 80 端口
 
+## 重新打包镜像
+
+`docker compose build` 产物镜像名固定为 `crm/api`、`crm/web`，tag 默认 `latest`，可用 `APP_VERSION` 控制版本号：
+
+```bash
+# 带版本 tag 重新打包（建议加 --no-cache 确保拿全最新代码）
+APP_VERSION=v1.0.0 docker compose build --no-cache
+# → crm/api:v1.0.0、crm/web:v1.0.0
+
+# 推送到镜像仓库
+docker tag crm/api:v1.0.0 <registry>/crm-api:v1.0.0
+docker tag crm/web:v1.0.0 <registry>/crm-web:v1.0.0
+docker push <registry>/crm-api:v1.0.0 && docker push <registry>/crm-web:v1.0.0
+
+# 目标机拉镜像启动（不需要源码）
+APP_VERSION=v1.0.0 docker compose up -d
+```
+
+> `deploy/` 目录仅保留 `start.sh`（本脚本包装）与 README，已不再有独立编排。
+
 ## 常用运维命令
 
 ```bash
@@ -111,6 +132,9 @@ docker compose logs -f api
 
 # 更新代码后重新部署
 git pull && docker compose up -d --build
+
+# 重新打包镜像（带版本 tag）
+APP_VERSION=v1.0.0 docker compose build --no-cache
 
 # 重启单个服务
 docker compose restart api

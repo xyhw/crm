@@ -1,11 +1,9 @@
 # 部署说明
 
-使用 Docker Compose 一键部署前后端与数据库。
-
-## 前置要求
-
-- Docker 20.10+
-- Docker Compose v2
+> 2026-09 梳理：本目录原有的独立 Dockerfile / docker-compose.yml（mariadb:10.11、
+> npm install 不可复现构建、uploads 卷挂载错位导致重新部署丢文件、硬编码默认密钥）
+> 已删除。**统一使用仓库根目录的 `docker-compose.yml`**（mysql:8.0、npm ci 锁定
+> 构建、三服务健康检查、无默认密钥），完整文档见 [`../DEPLOY.md`](../DEPLOY.md)。
 
 ## 快速开始
 
@@ -15,55 +13,28 @@ bash start.sh
 ```
 
 脚本会自动：
-1. 复制 `.env.example` 为 `.env`（首次运行）
-2. 构建前端与后端镜像
+1. 复制 `.env.docker.example` 为 `.env`（首次运行，需填密钥）
+2. 构建前后端镜像（`crm/api`、`crm/web`）
 3. 启动 MySQL、后端（Node）、前端（Nginx）三个服务
 
 ## 访问地址
 
 | 服务 | 地址 |
 |------|------|
-| 前端 H5 | http://localhost:8080 |
-| 管理后台 | http://localhost:8080/admin |
-| 后端 API | http://localhost:8080/api |
+| 用户端 H5 | http://localhost/ |
+| 管理后台 | http://localhost/admin |
+| 后端 API | http://localhost/api/health |
 
-默认管理员账号：`admin / admin123`（首次登录后请修改）
+默认管理员账号：`admin / admin123`（首次登录后请修改）。
 
-## 配置说明
-
-编辑 `deploy/.env` 文件可调整：
-
-| 变量 | 说明 | 默认值 |
-|------|------|--------|
-| `WEB_PORT` | 对外暴露端口 | 8080 |
-| `DB_NAME` | 数据库名 | hotel_order_follow |
-| `DB_USER` / `DB_PASS` | 数据库账号 | hof_user / hof_pass_2026 |
-| `JWT_SECRET` | JWT 签名密钥 | 请务必修改 |
-| `ADMIN_SECRET` | 管理端签名密钥 | 请务必修改 |
-
-## 数据持久化
-
-- MySQL 数据：`mysql_data` 卷
-- 上传文件：`uploads_data` 卷（挂载到后端的 `/workspace/uploads`）
-
-## 常用命令
+## 重新打包镜像
 
 ```bash
-# 查看日志
-docker compose logs -f backend
+# 带版本 tag 构建（产物：crm/api:v1.0.0、crm/web:v1.0.0）
+APP_VERSION=v1.0.0 docker compose build --no-cache
 
-# 查看全部服务状态
-docker compose ps
-
-# 停止服务
-docker compose down
-
-# 停止并删除数据卷（慎用）
-docker compose down -v
+# 推送到镜像仓库（以 Docker Hub 为例）
+docker tag crm/api:v1.0.0 <registry>/crm-api:v1.0.0
+docker tag crm/web:v1.0.0 <registry>/crm-web:v1.0.0
+docker push <registry>/crm-api:v1.0.0 && docker push <registry>/crm-web:v1.0.0
 ```
-
-## 生产注意事项
-
-- 修改 `.env` 中 `JWT_SECRET` 与 `ADMIN_SECRET` 为随机强密码
-- 修改默认管理员密码
-- 如需 HTTPS，请在前置负载均衡或 Nginx 处配置证书
