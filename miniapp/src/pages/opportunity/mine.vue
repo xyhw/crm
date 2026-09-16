@@ -56,6 +56,7 @@ import { ref, computed } from 'vue';
 import { onShow, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app';
 import { api } from '@/api/index';
 import { stageLabel, stageTone } from '@/common/constants';
+import { goPublish as navGoPublish, goPublishEdit } from '@/common/navigation';
 import CustomTabBar from '@/components/CustomTabBar.vue';
 
 const list = ref([]);
@@ -139,13 +140,15 @@ onReachBottom(() => {
 });
 
 function goPublish() {
-  uni.navigateTo({ url: '/pages/opportunity/publish' });
+  // 发布页是 tabBar 页，navigateTo 不可用；经存储中转跳转
+  navGoPublish();
 }
 function goDetail(id) {
   uni.navigateTo({ url: `/pages/opportunity/detail?id=${id}` });
 }
 function goEdit(id) {
-  uni.navigateTo({ url: `/pages/opportunity/publish?edit=${id}` });
+  // switchTab 不支持 query，编辑 id 经存储中转
+  goPublishEdit(id);
 }
 </script>
 

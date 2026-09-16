@@ -165,10 +165,11 @@
 
 <script setup>
 import { ref, reactive } from 'vue';
-import { onLoad } from '@dcloudio/uni-app';
+import { onLoad, onShow } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/user';
 import { api } from '@/api/index';
 import { getToken } from '@/common/storage';
+import { consumePublishEdit } from '@/common/navigation';
 import { API_BASE, UPLOAD_BASE } from '@/common/config';
 import { SUPPLIER_CATEGORIES } from '@/common/constants';
 
@@ -205,28 +206,65 @@ const form = reactive({
 onLoad((options) => {
   if (options.edit) {
     editId.value = options.edit;
-    api.opportunity(options.edit).then((detail) => {
-      let parsedFiles = [];
-      try {
-        const att = detail.attachments ? JSON.parse(detail.attachments) : [];
-        parsedFiles = Array.isArray(att) ? att.map((url) => ({ url })) : [];
-      } catch {}
-      form.title = detail.title || '';
-      form.categoryId = detail.categoryId || detail.category_id || null;
-      form.categoryName = detail.categoryId || detail.category_id ? SUPPLIER_CATEGORIES.find((c) => c.value === (detail.categoryId || detail.category_id))?.label || '' : '';
-      form.brand = detail.brand || '';
-      form.city = detail.city || '';
-      form.address = detail.address || '';
-      form.contactName = detail.contactName || detail.contact_name || '';
-      form.contactPhone = detail.contactPhone || detail.contact_phone || '';
-      form.wechat = detail.wechat || '';
-      form.price = detail.price || '';
-      form.stage = detail.stage || '';
-      form.descriptionFull = detail.descriptionFull || detail.description_full || '';
-      form.files = parsedFiles;
-    }).catch((e) => uni.showToast({ title: e.message, icon: 'none' }));
+    loadForEdit(options.edit);
   }
 });
+
+// 发布页是 tabBar 页：switchTab 不支持 query 参数，从我的/CRM 页跳转的编辑指令经存储中转
+// 无指令（用户直接点 tab）时保留现场，不清表单
+onShow(() => {
+  const pending = consumePublishEdit();
+  if (!pending) return;
+  if (pending === 'new') {
+    editId.value = '';
+    resetForm();
+  } else {
+    editId.value = pending;
+    loadForEdit(pending);
+  }
+});
+
+function resetForm() {
+  const dfltCategory = Number(userStore.user?.category) || null;
+  form.title = '';
+  form.categoryId = dfltCategory;
+  form.categoryName = dfltCategory ? SUPPLIER_CATEGORIES.find((c) => c.value === dfltCategory)?.label || '' : '';
+  form.brand = '';
+  form.city = '';
+  form.address = '';
+  form.contactName = '';
+  form.contactPhone = '';
+  form.wechat = '';
+  form.price = '';
+  form.stage = '';
+  form.descriptionFull = '';
+  form.tags = [];
+  form.files = [];
+  similarList.value = null;
+}
+
+function loadForEdit(id) {
+  api.opportunity(id).then((detail) => {
+    let parsedFiles = [];
+    try {
+      const att = detail.attachments ? JSON.parse(detail.attachments) : [];
+      parsedFiles = Array.isArray(att) ? att.map((url) => ({ url })) : [];
+    } catch {}
+    form.title = detail.title || '';
+    form.categoryId = detail.categoryId || detail.category_id || null;
+    form.categoryName = detail.categoryId || detail.category_id ? SUPPLIER_CATEGORIES.find((c) => c.value === (detail.categoryId || detail.category_id))?.label || '' : '';
+    form.brand = detail.brand || '';
+    form.city = detail.city || '';
+    form.address = detail.address || '';
+    form.contactName = detail.contactName || detail.contact_name || '';
+    form.contactPhone = detail.contactPhone || detail.contact_phone || '';
+    form.wechat = detail.wechat || '';
+    form.price = detail.price || '';
+    form.stage = detail.stage || '';
+    form.descriptionFull = detail.descriptionFull || detail.description_full || '';
+    form.files = parsedFiles;
+  }).catch((e) => uni.showToast({ title: e.message, icon: 'none' }));
+}
 
 function validate() {
   if (!form.title.trim()) return '请输入项目名称';

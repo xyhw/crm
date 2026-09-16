@@ -5,6 +5,26 @@ export default {
   onLaunch: function () {
     // 启动时从本地存储恢复登录态（token/user/refreshToken）
     initAuthFromStorage();
+    // 小程序版本更新检测（仅小程序端）：新版准备好后静默下载并提示用户重启生效
+    // #ifdef MP-WEIXIN
+    try {
+      const um = uni.getUpdateManager();
+      um.onUpdateReady && um.onUpdateReady(() => {
+        uni.showModal({
+          title: '更新提示',
+          content: '新版本已准备好，是否重启应用？',
+          success: (res) => {
+            if (res.confirm) um.applyUpdate();
+          },
+        });
+      });
+      um.onUpdateFailed && um.onUpdateFailed(() => {
+        uni.showToast({ title: '新版本下载失败，请稍后重试', icon: 'none' });
+      });
+    } catch (e) {
+      // 低版本基础库无 getUpdateManager，忽略
+    }
+    // #endif
   },
   onShow: function () {},
   onHide: function () {},

@@ -10,11 +10,12 @@ export default defineConfig({
     allowedHosts: ['.monkeycode-ai.online', '.monkeycode-ai.com'],
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:3001',
+        // 可用 API_TARGET 环境变量覆盖（本地联调指向 3011 等端口）
+        target: process.env.API_TARGET || 'http://127.0.0.1:3001',
         changeOrigin: true,
       },
       '/uploads': {
-        target: 'http://127.0.0.1:3001',
+        target: process.env.API_TARGET || 'http://127.0.0.1:3001',
         changeOrigin: true,
       },
     },

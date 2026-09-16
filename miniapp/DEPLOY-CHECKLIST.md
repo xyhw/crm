@@ -14,7 +14,9 @@
 
 ## 2. API 域名（必填）
 
-1. `miniapp/src/common/config.js` → `PROD_API_BASE` 替换为正式 HTTPS 域名（当前占位 `https://api.example.com/api`）。
+1. 构建时通过环境变量注入（`miniapp/src/common/config.js` 会读取，未注入时回退占位域名）：
+   - 生产：`VITE_API_BASE=https://<你的API域名>/api npm run build:mp`
+   - 本地联调（可略过）：`VITE_DEV_API_BASE=http://127.0.0.1:3001/api`
 2. 微信公众平台「开发管理-服务器域名」配置：
    - request 合法域名：`https://<你的API域名>`
    - uploadFile/downloadFile 合法域名：同上

@@ -120,6 +120,7 @@ import { ref } from 'vue';
 import { onLoad, onUnload, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app';
 import { api } from '@/api/index';
 import { CRM_STATUS_META, crmStatusLabel, formatDate, opportunityStatusLabel } from '@/common/constants';
+import { goPublishEdit } from '@/common/navigation';
 
 let debounceTimer = null;
 
@@ -234,7 +235,8 @@ function goOppDetail(id) {
 }
 
 function goEditOpp(id) {
-  uni.navigateTo({ url: `/pages/opportunity/publish?edit=${id}` });
+  // 发布页是 tabBar 页且 switchTab 不支持 query，编辑 id 经存储中转
+  goPublishEdit(id);
 }
 
 function goAdd() {

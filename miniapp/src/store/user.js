@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { request } from '@/common/request';
 import {
   getToken,
+  getRefreshToken,
   setAuth,
   clearAuth,
   getCachedUser,
@@ -97,6 +98,11 @@ export const useUserStore = defineStore('user', {
     },
 
     logout() {
+      // 服务端吊销当前 token（按 jti，与 P3 服务端登出对齐）；fire-and-forget，失败不阻塞本地清理
+      request('/auth/logout', {
+        method: 'POST',
+        body: { refreshToken: getRefreshToken() },
+      }).catch(() => {});
       this.token = '';
       this.user = null;
       clearAuth();

@@ -5,12 +5,17 @@
  *   仅保留 mock + 微信虚拟支付（wx.requestVirtualPayment）。
  * - H5 端：全部渠道可用，redirect 类渠道由充值页处理跳转。
  */
-// #ifdef MP-WEIXIN
-const PLATFORM_ABLE = ['mock', 'wechat'];
-// #endif
-// #ifndef MP-WEIXIN
-const PLATFORM_ABLE = null;
-// #endif
+// 单声明 + 条件编译裁剪（ⅠIFE 在纯 vite/jsdom 下也是合法 JS，首个 return 生效，即 MP-WEIXIN 语义）：
+// - 小程序端：waffo/alipay 等需要浏览器跳转的渠道无法在小程序内拉起，仅保留 mock + 微信虚拟支付
+// - H5 端：全部渠道可用（null = 不做平台过滤，redirect 类渠道由充值页处理跳转）
+const PLATFORM_ABLE = (() => {
+  // #ifdef MP-WEIXIN
+  return ['mock', 'wechat'];
+  // #endif
+  // #ifndef MP-WEIXIN
+  return null;
+  // #endif
+})();
 
 import { api } from '@/api/index';
 
@@ -22,12 +27,15 @@ export async function resolveMiniappChannels() {
     const able = PLATFORM_ABLE
       ? all.filter((c) => PLATFORM_ABLE.includes(c))
       : all.filter((c) => c !== 'wechat');
-    // #ifdef MP-WEIXIN
-    const channel = able.includes('wechat') ? 'wechat' : able.length ? able[0] : 'mock';
-    // #endif
-    // #ifndef MP-WEIXIN
-    const channel = defaultChannel;
-    // #endif
+    // 单声明 + 条件编译裁剪（同上，纯 vite/jsdom 下首个 return 生效，即 MP-WEIXIN 语义）
+    const channel = (() => {
+      // #ifdef MP-WEIXIN
+      return able.includes('wechat') ? 'wechat' : able.length ? able[0] : 'mock';
+      // #endif
+      // #ifndef MP-WEIXIN
+      return defaultChannel;
+      // #endif
+    })();
     return { channels: able.length ? able : ['mock'], channel, defaultChannel };
   } catch (e) {
     return { channels: ['mock'], channel: 'mock', defaultChannel: 'mock' };
