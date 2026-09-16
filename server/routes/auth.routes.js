@@ -3,10 +3,11 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { nanoid } from 'nanoid';
 import { query, queryOne, insert, update, transaction } from '../db.js';
-import { signToken, signRefreshToken, verifyRefreshToken, authRequired } from '../auth.js';
+import { signToken, signRefreshToken, verifyToken, verifyRefreshToken, authRequired, isTokenRevoked, revokeToken } from '../auth.js';
 import { loginLimiter } from '../middleware/rate-limit.js';
 import { sendResetCodeEmail } from '../services/mail.service.js';
 import { isAccountLocked, recordLoginFailure, clearLoginFailures } from '../services/account-lock.service.js';
+import { recordLoginDay } from '../services/level.service.js';
 import { isWechatConfigured, code2Session, getPhoneByCode } from '../services/wechat.service.js';
 
 const router = Router();
@@ -59,11 +60,15 @@ async function createUserWithGifts(conn, { phone, passwordHash, nickname, email,
   await conn.execute('INSERT INTO points_accounts (user_id, balance) VALUES (?, 0)', [userId]);
   await conn.execute("INSERT INTO user_level_stats (user_id, level) VALUES (?, 'normal')", [userId]);
 
-  // 注册赠送积分
+  // 注册赠送积分（P0-1：奖励类积分有有效期，入账即设 expires_at）
   const [configRow] = await conn.execute(
     "SELECT config_value FROM system_configs WHERE config_key = 'register_gift_points'"
   );
   const giftPoints = parseInt(configRow[0]?.config_value || '10');
+  const [expireRow] = await conn.execute(
+    "SELECT config_value FROM system_configs WHERE config_key = 'points_expire_days'"
+  );
+  const expireDays = parseInt(expireRow[0]?.config_value || '180');
 
   if (giftPoints > 0) {
     await conn.execute('UPDATE points_accounts SET balance = balance + ? WHERE user_id = ?', [
@@ -71,9 +76,9 @@ async function createUserWithGifts(conn, { phone, passwordHash, nickname, email,
       userId,
     ]);
     await conn.execute(
-      `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-       VALUES (?, ?, ?, 'register_gift', '注册赠送')`,
-      [userId, giftPoints, giftPoints]
+      `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title, expires_at)
+       VALUES (?, ?, ?, 'register_gift', '注册赠送', DATE_ADD(NOW(), INTERVAL ? DAY))`,
+      [userId, giftPoints, giftPoints, expireDays]
     );
   }
 
@@ -94,9 +99,9 @@ async function createUserWithGifts(conn, { phone, passwordHash, nickname, email,
         [invitedBy]
       );
       await conn.execute(
-        `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-         VALUES (?, ?, ?, 'invite_gift', ?)`,
-        [invitedBy, rewardPoints, inviterAccount[0].balance, `邀请 ${nickname} 注册`]
+        `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title, expires_at)
+         VALUES (?, ?, ?, 'invite_gift', ?, DATE_ADD(NOW(), INTERVAL ? DAY))`,
+        [invitedBy, rewardPoints, inviterAccount[0].balance, `邀请 ${nickname} 注册`, expireDays]
       );
 
       await conn.execute('UPDATE points_accounts SET balance = balance + ? WHERE user_id = ?', [
@@ -104,9 +109,9 @@ async function createUserWithGifts(conn, { phone, passwordHash, nickname, email,
         userId,
       ]);
       await conn.execute(
-        `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-         VALUES (?, ?, ?, 'invite_gift', '邀请注册奖励')`,
-        [userId, rewardPoints, giftPoints + rewardPoints]
+        `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title, expires_at)
+         VALUES (?, ?, ?, 'invite_gift', '邀请注册奖励', DATE_ADD(NOW(), INTERVAL ? DAY))`,
+        [userId, rewardPoints, giftPoints + rewardPoints, expireDays]
       );
 
       await conn.execute(
@@ -144,6 +149,7 @@ router.post('/wechat-login', async (req, res) => {
     if (session.unionid && !user.wechat_unionid) {
       await update('users', { wechat_unionid: session.unionid }, 'id = ?', [user.id]);
     }
+    await recordLoginDay(user.id);
     return res.json({ code: 0, data: { bound: true, ...issueSession(user) } });
   } catch (err) {
     console.error('Wechat login error:', err);
@@ -216,6 +222,7 @@ router.post('/bind-wechat', async (req, res) => {
       user = await queryOne('SELECT * FROM users WHERE wechat_openid = ?', [openid]);
     }
 
+    await recordLoginDay(user.id);
     return res.json({ code: 0, data: issueSession(user), message: existingUser ? '绑定成功' : '注册成功' });
   } catch (err) {
     console.error('Bind wechat error:', err);
@@ -292,6 +299,7 @@ router.post('/register', async (req, res) => {
 
     // 查询用户信息返回
     const user = await queryOne('SELECT * FROM users WHERE phone = ?', [phone]);
+    await recordLoginDay(user.id);
     res.json({ code: 0, data: issueSession(user), message: '注册成功' });
   } catch (err) {
     console.error('Register error:', err);
@@ -328,6 +336,7 @@ router.post('/login', loginLimiter, async (req, res) => {
       return res.json({ code: 400, message: '手机号或密码错误' });
     }
     await clearLoginFailures(user.id);
+    await recordLoginDay(user.id);
 
     const token = signToken(user);
     const refreshToken = signRefreshToken(user);
@@ -366,6 +375,11 @@ router.post('/refresh', async (req, res) => {
       return res.status(401).json({ code: 401, message: 'refreshToken 无效' });
     }
 
+    // 已吊销（登出）的 refreshToken 拒绝续期
+    if (await isTokenRevoked(payload.jti)) {
+      return res.status(401).json({ code: 401, message: '登录已失效，请重新登录' });
+    }
+
     const user = await queryOne('SELECT * FROM users WHERE id = ? AND deleted_at IS NULL', [payload.id]);
     if (!user || user.status === 'banned') {
       return res.status(401).json({ code: 401, message: '用户不存在或已禁用' });
@@ -386,6 +400,30 @@ router.post('/refresh', async (req, res) => {
   } catch (err) {
     console.error('Refresh error:', err);
     res.status(500).json({ code: 500, message: '刷新失败' });
+  }
+});
+
+// 服务端登出：吊销当前 access token（及可选的 refreshToken），按 jti 不影响其他会话
+router.post('/logout', authRequired, async (req, res) => {
+  try {
+    const payload = req.authPayload;
+    const expDate = payload.exp ? new Date(payload.exp * 1000) : new Date(Date.now() + 7 * 24 * 3600 * 1000);
+    await revokeToken({ jti: payload.jti, userId: payload.id, tokenType: 'access', expiresAt: expDate });
+
+    // 同时吊销 body 里的 refreshToken（客户端登出时应带上）
+    const { refreshToken } = req.body || {};
+    if (refreshToken) {
+      const rPayload = verifyRefreshToken(refreshToken);
+      if (rPayload && rPayload.type === 'user') {
+        const rExp = rPayload.exp ? new Date(rPayload.exp * 1000) : new Date(Date.now() + 30 * 24 * 3600 * 1000);
+        await revokeToken({ jti: rPayload.jti, userId: rPayload.id, tokenType: 'refresh', expiresAt: rExp });
+      }
+    }
+
+    res.json({ code: 0, message: '已退出登录' });
+  } catch (err) {
+    console.error('Logout error:', err);
+    res.status(500).json({ code: 500, message: '登出失败' });
   }
 });
 

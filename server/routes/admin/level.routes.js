@@ -19,9 +19,17 @@ router.get('/', async (req, res) => {
 // 更新等级配置
 router.put('/:id', async (req, res) => {
   try {
-    const { purchaseDiscount, commissionBonus, purchaseRateThreshold, invalidRateThreshold, helpfulRateThreshold, activityThreshold, freeAudit, markWeight } = req.body || {};
+    const { purchaseDiscount, commissionRate, commissionBonus, purchaseRateThreshold, invalidRateThreshold, helpfulRateThreshold, activityThreshold, freeAudit, markWeight } = req.body || {};
 
     const updates = {};
+    // P0-2：分佣比例（直接比例，后台可配）；purchase_discount 已废弃（购买统一原价）仅兼容保留
+    if (commissionRate !== undefined) {
+      const rate = Number(commissionRate);
+      if (!Number.isFinite(rate) || rate <= 0 || rate > 1) {
+        return res.json({ code: 400, message: '分佣比例需为 0~1 之间的小数（如 0.75）' });
+      }
+      updates.commission_rate = rate;
+    }
     if (purchaseDiscount !== undefined) updates.purchase_discount = purchaseDiscount;
     if (commissionBonus !== undefined) updates.commission_bonus = commissionBonus;
     if (purchaseRateThreshold !== undefined) updates.purchase_rate_threshold = purchaseRateThreshold;

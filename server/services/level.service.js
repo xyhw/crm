@@ -70,6 +70,19 @@ export function clearUserLevelCache(userId) {
   delCache(CACHE_PREFIX + userId);
 }
 
+// P0-3：登录打卡（活跃度「登录频率」指标 + 周活跃加分数据源），同一用户同一天只记一条
+export async function recordLoginDay(userId) {
+  if (!userId) return;
+  try {
+    await query(
+      'INSERT IGNORE INTO user_login_days (user_id, login_date) VALUES (?, CURDATE())',
+      [userId]
+    );
+  } catch (err) {
+    console.error('[level.service] 登录打卡失败:', err.message);
+  }
+}
+
 export function clearLevelConfigCache() {
   if (global.levelCache) {
     for (const key of global.levelCache.keys()) {
@@ -80,18 +93,12 @@ export function clearLevelConfigCache() {
   }
 }
 
-export async function calculatePurchaseDiscount(userId) {
+export async function getCommissionRate(userId) {
+  // P0-2：分佣比例直接取等级配置 member_levels.commission_rate（普通70/银牌75/金牌80/达人85，后台可配）
   const level = await getUserLevel(userId);
   const config = await getLevelConfig(level);
-  return config?.purchase_discount || 1.00;
-}
-
-export async function calculateCommissionRate(userId) {
-  const level = await getUserLevel(userId);
-  const config = await getLevelConfig(level);
-  const baseRate = 0.40;
-  const bonus = Number(config?.commission_bonus) || 0;
-  return baseRate * (1 + bonus);
+  const rate = Number(config?.commission_rate);
+  return Number.isFinite(rate) && rate > 0 ? rate : 0.70;
 }
 
 export async function isFreeAudit(userId) {
@@ -106,37 +113,39 @@ export async function getMarkWeight(userId) {
   return config?.mark_weight || 1;
 }
 
-export async function getPurchasePrice(opportunityId, buyerId) {
+export async function getPurchasePrice(opportunityId) {
   const [opp] = await query(
-    'SELECT price FROM opportunities WHERE id = ?',
+    'SELECT price, user_id FROM opportunities WHERE id = ?',
     [opportunityId]
   );
   if (!opp) return null;
 
-  const discount = await calculatePurchaseDiscount(buyerId);
-  const originalPrice = opp.price;
-  const finalPrice = Math.round(originalPrice * discount);
-  
+  // P0-2：购买无折扣，统一原价（用户拍板：会员等级只影响分佣比例）
+  const originalPrice = Number(opp.price);
+  const finalPrice = Math.round(originalPrice);
+  const rate = await getCommissionRate(opp.user_id);
+  const sellerIncome = Math.round(finalPrice * rate);
+
   return {
     originalPrice,
     finalPrice,
-    discount,
-    platformFee: Math.round(finalPrice * 0.20),
-    sellerIncome: finalPrice - Math.round(finalPrice * 0.20)
+    discount: 1,
+    platformFee: finalPrice - sellerIncome,
+    sellerIncome
   };
 }
 
 export async function calculateSellerEarnings(buyerId, sellerId, finalPrice) {
-  const platformFee = Math.round(finalPrice * 0.20);
-  const netAmount = finalPrice - platformFee;
-  
-  const sellerCommissionRate = await calculateCommissionRate(sellerId);
-  const sellerEarnings = Math.round(netAmount * sellerCommissionRate);
-  
+  // P0-2 新分佣模型（用户拍板）：购买无折扣；
+  // 投稿人分佣 = 实付 × 等级分佣比例；平台抽成 = 实付 - 分佣；积分严格守恒
+  const sellerCommissionRate = await getCommissionRate(sellerId);
+  const sellerEarnings = Math.round(finalPrice * sellerCommissionRate);
+  const platformFee = finalPrice - sellerEarnings;
+
   return {
     platformFee,
     sellerEarnings,
-    netAmount,
+    netAmount: finalPrice - platformFee,
     sellerCommissionRate
   };
 }
@@ -144,42 +153,74 @@ export async function calculateSellerEarnings(buyerId, sellerId, finalPrice) {
 export async function recalculateAllLevels() {
   const users = await query('SELECT id FROM users WHERE status = "active"');
   const levelConfigs = await getAllLevelConfigs();
-  
+
   let updated = 0;
   for (const user of users) {
+    // P0-3 修正：购买率/无效率分母为全部已发布商机；有用率 = 摘要有用标记数/本人共享摘要数；
+    // 活跃度 = 复合分（登录频率30% + 操作频次30% + 互动贡献40%，不含注册时长）
     const [stats] = await query(
-      `SELECT 
-        COUNT(DISTINCT o.id) as total_orders,
-        SUM(CASE WHEN o.status = 'paid' THEN 1 ELSE 0 END) as completed_orders,
-        (SELECT COUNT(*) FROM follow_up_shares fus 
-         JOIN opportunities op ON fus.opportunity_id = op.id 
-         WHERE op.user_id = ? AND fus.status = 'approved') as useful_shares,
-        (SELECT COUNT(*) FROM opportunities WHERE user_id = ? AND status = 'active') as total_opportunities,
-        (SELECT COUNT(*) FROM opportunities WHERE user_id = ? AND status = 'invalid') as invalid_opportunities,
-        (SELECT COUNT(*) FROM crm_opportunities WHERE user_id = ?) as total_crm
-      FROM orders o WHERE o.user_id = ? AND o.status = 'paid'`,
-      [user.id, user.id, user.id, user.id, user.id]
+      `SELECT
+        (SELECT COUNT(*) FROM opportunities WHERE user_id = ? AND deleted_at IS NULL) AS published_opportunities,
+        (SELECT COUNT(*) FROM opportunities WHERE user_id = ? AND deleted_at IS NULL AND purchase_count > 0) AS purchased_opportunities,
+        (SELECT COUNT(*) FROM opportunities WHERE user_id = ? AND deleted_at IS NULL AND status = 'invalid') AS invalid_opportunities,
+        (SELECT COUNT(*) FROM follow_up_shares WHERE user_id = ?) AS total_shares,
+        (SELECT COALESCE(SUM(helpful_count), 0) FROM follow_up_shares WHERE user_id = ?) AS helpful_marks,
+        (SELECT COUNT(DISTINCT login_date) FROM user_login_days
+          WHERE user_id = ? AND login_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)) AS login_days_30d,
+        ((SELECT COUNT(*) FROM opportunities WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY))
+          + (SELECT COUNT(*) FROM follow_ups WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY))
+          + (SELECT COUNT(*) FROM follow_up_shares WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY))
+          + (SELECT COUNT(*) FROM orders WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY))) AS ops_30d,
+        (SELECT COUNT(*) FROM follow_up_helpful_marks m
+          JOIN follow_up_shares s ON m.share_id = s.id
+          WHERE s.user_id = ? AND m.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)) AS helpful_marks_30d`,
+      [user.id, user.id, user.id, user.id, user.id, user.id, user.id, user.id, user.id, user.id, user.id]
     );
 
-    const totalOrders = stats.total_orders || 0;
-    const purchaseRate = totalOrders > 0 ? (stats.completed_orders / totalOrders) * 100 : 0;
-    const invalidRate = stats.total_opportunities > 0 
-      ? (stats.invalid_opportunities / stats.total_opportunities) * 100 
-      : 0;
-    const usefulRate = stats.total_crm > 0 
-      ? (stats.useful_shares / stats.total_crm) * 100 
-      : 0;
-    const activity = stats.total_crm || 0;
+    const published = stats.published_opportunities || 0;
+    const purchased = stats.purchased_opportunities || 0;
+    const invalid = stats.invalid_opportunities || 0;
+    const shares = stats.total_shares || 0;
+    const helpfulMarks = Number(stats.helpful_marks) || 0;
+
+    const purchaseRate = published > 0 ? (purchased / published) * 100 : 0;
+    const invalidRate = published > 0 ? (invalid / published) * 100 : 0;
+    const usefulRate = shares > 0 ? Math.min(100, (helpfulMarks / shares) * 100) : 0;
+
+    // P0-3 活跃度复合分（0~100，用户拍板权重 30/30/40）
+    const loginDays = Number(stats.login_days_30d) || 0;
+    const opsCount = Number(stats.ops_30d) || 0;
+    const helpfulRecent = Number(stats.helpful_marks_30d) || 0;
+    const loginScore = Math.min(100, (loginDays / 30) * 100);
+    const opsScore = Math.min(100, (opsCount / 20) * 100);
+    const interactiveScore = Math.min(100, (helpfulRecent / 5) * 100);
+    const activity = Math.round(loginScore * 0.3 + opsScore * 0.3 + interactiveScore * 0.4);
 
     let newLevel = 'normal';
     for (const level of levelConfigs) {
-      if (purchaseRate >= level.purchase_rate_threshold &&
-          invalidRate <= level.invalid_rate_threshold &&
-          usefulRate >= level.helpful_rate_threshold &&
-          activity >= level.activity_threshold) {
+      if (purchaseRate >= Number(level.purchase_rate_threshold) &&
+          invalidRate <= Number(level.invalid_rate_threshold) &&
+          usefulRate >= Number(level.helpful_rate_threshold) &&
+          activity >= Number(level.activity_threshold)) {
         newLevel = level.level_key;
         break;
       }
+    }
+
+    // 等级变更通知（需求 5.6：等级变更实时生效并发送通知）
+    const prevStats = await queryOne('SELECT level FROM user_level_stats WHERE user_id = ?', [user.id]);
+    const prevLevel = prevStats?.level || 'normal';
+    if (prevLevel !== newLevel) {
+      const sorted = [...levelConfigs].sort((a, b) => Number(a.sort_order) - Number(b.sort_order));
+      const nameOf = (key) => sorted.find((l) => l.level_key === key)?.name || key;
+      const prevIdx = sorted.findIndex((l) => l.level_key === prevLevel);
+      const nextIdx = sorted.findIndex((l) => l.level_key === newLevel);
+      const direction = nextIdx > prevIdx ? '升级' : '降级';
+      await query(
+        `INSERT INTO notifications (user_id, type, title, content)
+         VALUES (?, 'system', '会员等级变更', ?)`,
+        [user.id, `恭喜！您的会员等级已${direction}：${nameOf(prevLevel)} → ${nameOf(newLevel)}`]
+      );
     }
 
     await query(
@@ -198,8 +239,8 @@ export async function recalculateAllLevels() {
          helpful_shares = VALUES(helpful_shares),
          last_calculated_at = NOW()`,
       [user.id, newLevel, purchaseRate, invalidRate, usefulRate, activity, 
-       stats.completed_orders || 0, stats.total_opportunities || 0, 
-       stats.invalid_opportunities || 0, stats.total_crm || 0, stats.useful_shares || 0]
+       purchased, published, 
+       invalid, shares, helpfulMarks]
     );
 
     clearUserLevelCache(user.id);

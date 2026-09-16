@@ -15,16 +15,17 @@ const CATEGORIES = [
 ];
 
 const MEMBER_LEVELS = [
-  { level_key: 'normal', name: '普通会员', purchase_discount: 1.00, commission_bonus: 0, purchase_rate_threshold: 0, invalid_rate_threshold: 100, helpful_rate_threshold: 0, activity_threshold: 0, free_audit: 0, mark_weight: 1, sort_order: 1 },
-  { level_key: 'silver', name: '银牌会员', purchase_discount: 0.90, commission_bonus: 0.10, purchase_rate_threshold: 30, invalid_rate_threshold: 10, helpful_rate_threshold: 20, activity_threshold: 50, free_audit: 0, mark_weight: 1, sort_order: 2 },
-  { level_key: 'gold', name: '金牌会员', purchase_discount: 0.80, commission_bonus: 0.20, purchase_rate_threshold: 50, invalid_rate_threshold: 5, helpful_rate_threshold: 40, activity_threshold: 100, free_audit: 1, mark_weight: 2, sort_order: 3 },
-  { level_key: 'expert', name: '认证达人', purchase_discount: 0.70, commission_bonus: 0.30, purchase_rate_threshold: 70, invalid_rate_threshold: 3, helpful_rate_threshold: 60, activity_threshold: 200, free_audit: 1, mark_weight: 3, sort_order: 4 },
+  // purchase_discount 已废弃（购买统一原价，代码不再读取）；commission_rate 为该等级分佣比例；activity_threshold 为 0~100 活跃度分
+  { level_key: 'normal', name: '普通会员', purchase_discount: 1.00, commission_rate: 0.70, commission_bonus: 0, purchase_rate_threshold: 0, invalid_rate_threshold: 100, helpful_rate_threshold: 0, activity_threshold: 0, free_audit: 0, mark_weight: 1, sort_order: 1 },
+  { level_key: 'silver', name: '银牌会员', purchase_discount: 1.00, commission_rate: 0.75, commission_bonus: 0.10, purchase_rate_threshold: 30, invalid_rate_threshold: 10, helpful_rate_threshold: 20, activity_threshold: 30, free_audit: 0, mark_weight: 1, sort_order: 2 },
+  { level_key: 'gold', name: '金牌会员', purchase_discount: 1.00, commission_rate: 0.80, commission_bonus: 0.20, purchase_rate_threshold: 50, invalid_rate_threshold: 5, helpful_rate_threshold: 40, activity_threshold: 50, free_audit: 1, mark_weight: 2, sort_order: 3 },
+  { level_key: 'expert', name: '认证达人', purchase_discount: 1.00, commission_rate: 0.85, commission_bonus: 0.30, purchase_rate_threshold: 70, invalid_rate_threshold: 3, helpful_rate_threshold: 60, activity_threshold: 70, free_audit: 1, mark_weight: 3, sort_order: 4 },
 ];
 
 const SYSTEM_CONFIGS = [
   { config_key: 'register_gift_points', config_value: '10', config_type: 'number', description: '注册赠送积分' },
   { config_key: 'invite_reward_points', config_value: '5', config_type: 'number', description: '邀请奖励积分（双方各得）' },
-  { config_key: 'platform_commission_rate', config_value: '0.20', config_type: 'number', description: '平台抽成比例' },
+  { config_key: 'platform_commission_rate', config_value: '0.20', config_type: 'number', description: '平台抽成比例（已废弃：分佣改为按等级 commission_rate 直接比例，平台抽成 = 实付 - 分佣）' },
   { config_key: 'points_expire_days', config_value: '180', config_type: 'number', description: '奖励积分有效期（天）' },
   { config_key: 'invalid_threshold', config_value: '0.20', config_type: 'number', description: '无效判定阈值（购买量占比）' },
   { config_key: 'invalid_penalty_rate', config_value: '0.50', config_type: 'number', description: '无效惩罚扣除比例' },
@@ -87,11 +88,13 @@ export async function seedDatabase() {
     console.warn('[seed][SECURITY] Default admin created with DEFAULT password admin/admin123 — 请登录后台立即修改密码，或部署前设置 ADMIN_INIT_PASSWORD');
   }
 
-  // 创建默认角色
-  await insert('roles', { name: 'super_admin', description: '超级管理员' });
-  await insert('roles', { name: 'operation', description: '运营管理员' });
-  await insert('roles', { name: 'finance', description: '财务管理员' });
-  await insert('roles', { name: 'support', description: '客服/助理' });
+  // 创建默认角色（INSERT IGNORE 幂等：013_security_guards 启动迁移已确保角色存在，
+  // 全新库首启时 migrateSecurityGuards() 先于 seedDatabase() 执行，普通 INSERT 会触发
+  // ER_DUP_ENTRY 'super_admin' 导致首次启动失败）
+  await query('INSERT IGNORE INTO roles (name, description) VALUES (?, ?)', ['super_admin', '超级管理员']);
+  await query('INSERT IGNORE INTO roles (name, description) VALUES (?, ?)', ['operation', '运营管理员']);
+  await query('INSERT IGNORE INTO roles (name, description) VALUES (?, ?)', ['finance', '财务管理员']);
+  await query('INSERT IGNORE INTO roles (name, description) VALUES (?, ?)', ['support', '客服/助理']);
   console.log('[seed] Default roles created');
 
   // 绑定默认管理员到 super_admin 角色（角色体系防空转）

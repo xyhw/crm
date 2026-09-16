@@ -42,8 +42,8 @@ router.post('/', authRequired, async (req, res) => {
       return res.json({ code: 409, message: '你已购买过此商机' });
     }
 
-    // 计算购买价格（使用 level service）
-    const priceInfo = await getPurchasePrice(opportunityId, req.userId);
+    // 计算购买价格（使用 level service；P0-2：购买无折扣，统一原价）
+    const priceInfo = await getPurchasePrice(opportunityId);
     if (!priceInfo) {
       return res.json({ code: 404, message: '商机不存在' });
     }
@@ -119,11 +119,11 @@ router.post('/', authRequired, async (req, res) => {
         [req.userId, opportunityId, opportunity.price, discountRate, actualPrice, platformCommission, totalSellerIncome]
       );
 
-      // 4. 创建分佣记录
+      // 4. 创建分佣记录（P0-2 直接比例模型：platform_rate 存实际抽成比例，无等级加成）
       await conn.execute(
         `INSERT INTO commission_settlements (order_id, seller_id, order_amount, platform_rate, platform_commission, seller_income, level_bonus, status)
-         VALUES (LAST_INSERT_ID(), ?, ?, ?, ?, ?, ?, 'paid')`,
-        [opportunity.user_id, actualPrice, 0.20, platformCommission, totalSellerIncome, Math.max(0, totalSellerIncome - Math.round(earningsInfo.netAmount * 0.40))]
+         VALUES (LAST_INSERT_ID(), ?, ?, ?, ?, ?, 0, 'paid')`,
+        [opportunity.user_id, actualPrice, actualPrice > 0 ? platformCommission / actualPrice : 0, platformCommission, totalSellerIncome]
       );
 
       // 5. 更新商机购买数

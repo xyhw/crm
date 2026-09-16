@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { randomUUID } from 'node:crypto';
 import { query, queryOne } from '../../db.js';
 import { config } from '../../config.js';
 import { loginLimiter } from '../../middleware/rate-limit.js';
 import { isAccountLocked, recordLoginFailure, clearLoginFailures } from '../../services/account-lock.service.js';
+import { revokeToken, isTokenRevoked } from '../../auth.js';
 
 const router = Router();
 const ADMIN_SECRET = config.adminSecret;
@@ -66,7 +68,7 @@ router.post('/login', loginLimiter, async (req, res) => {
     );
 
     const token = jwt.sign(
-      { id: admin.id, type: 'admin', roles: roles.map(r => r.name) },
+      { id: admin.id, type: 'admin', roles: roles.map(r => r.name), jti: randomUUID() },
       ADMIN_SECRET,
       { expiresIn: '7d' }
     );
@@ -114,6 +116,10 @@ router.get('/me', async (req, res) => {
     if (payload.type !== 'admin') {
       return res.status(401).json({ code: 401, message: '权限不足' });
     }
+    // 已吊销（登出）的管理 token 拒绝
+    if (await isTokenRevoked(payload.jti)) {
+      return res.status(401).json({ code: 401, message: '登录已失效，请重新登录' });
+    }
 
     const admin = await queryOne('SELECT * FROM admin_users WHERE id = ?', [payload.id]);
     if (!admin) {
@@ -139,6 +145,34 @@ router.get('/me', async (req, res) => {
   } catch (err) {
     console.error('Get admin me error:', err);
     res.status(401).json({ code: 401, message: '登录已过期' });
+  }
+});
+
+// 服务端登出：吊销当前管理 token（按 jti）
+router.post('/logout', async (req, res) => {
+  try {
+    const header = req.headers.authorization || '';
+    const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+    if (!token) {
+      return res.status(401).json({ code: 401, message: '未登录' });
+    }
+    let payload;
+    try {
+      payload = jwt.verify(token, ADMIN_SECRET);
+    } catch {
+      return res.status(401).json({ code: 401, message: '登录已过期' });
+    }
+    if (payload.type !== 'admin') {
+      return res.status(401).json({ code: 401, message: '权限不足' });
+    }
+    if (payload.jti) {
+      const expDate = payload.exp ? new Date(payload.exp * 1000) : new Date(Date.now() + 7 * 24 * 3600 * 1000);
+      await revokeToken({ jti: payload.jti, userId: payload.id, tokenType: 'admin', expiresAt: expDate });
+    }
+    res.json({ code: 0, message: '已退出登录' });
+  } catch (err) {
+    console.error('Admin logout error:', err);
+    res.status(500).json({ code: 500, message: '登出失败' });
   }
 });
 

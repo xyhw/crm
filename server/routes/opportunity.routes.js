@@ -12,6 +12,7 @@ router.get('/', optionalAuth, async (req, res) => {
     const statusProvided = req.query.status !== undefined;
     
     let sql = `SELECT o.id, o.title, o.category_id, o.city, o.brand, o.hotel_name, o.price, o.status,
+              o.audit_status, o.audit_reason,
               o.purchase_count, o.view_count, o.created_at, o.user_id,
               o.address, o.stage, o.description_full, o.contact_name, o.contact_phone, o.wechat,
               c.name as category_name, c.icon as category_icon,
@@ -37,6 +38,8 @@ router.get('/', optionalAuth, async (req, res) => {
     } else if (status) {
       sql += ' AND o.status = ?';
       params.push(status);
+      // P0-4：公开列表只展示免审(none)或审核通过(approved)的商机，待审/驳回不可见
+      sql += " AND o.audit_status IN ('none', 'approved')";
     }
     if (category) {
       sql += ' AND o.category_id = ?';
@@ -146,6 +149,8 @@ router.get('/', optionalAuth, async (req, res) => {
         hotelName: item.hotel_name,
         price: item.price,
         status: item.status,
+        auditStatus: item.audit_status,
+        auditReason: item.audit_reason,
         purchaseCount: item.purchase_count,
         viewCount: item.view_count,
         publisherName: '匿名投稿人',
@@ -193,6 +198,14 @@ router.get('/:id', optionalAuth, async (req, res) => {
     );
 
     if (!opportunity) {
+      return res.json({ code: 404, message: '商机不存在' });
+    }
+
+    // P0-4：待审核/已驳回的商机仅投稿人本人可见（未上架，不对外展示）
+    if (
+      (opportunity.audit_status === 'pending' || opportunity.audit_status === 'rejected') &&
+      opportunity.user_id !== req.userId
+    ) {
       return res.json({ code: 404, message: '商机不存在' });
     }
 
@@ -275,6 +288,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
       hotelName: opportunity.hotel_name,
       price: opportunity.price,
       status: opportunity.status,
+      auditStatus: opportunity.audit_status,
       purchaseCount: opportunity.purchase_count,
       viewCount: finalViewCount,
       invalidMarkCount: opportunity.invalid_mark_count,
@@ -337,11 +351,17 @@ router.post('/', authRequired, async (req, res) => {
       return res.json({ code: 400, message: '请完善必填信息' });
     }
 
-    // 信用分门槛（需求 5.7：40 分以下封禁，60 分以下禁止投稿）登录已被 banned 拦截，此处校验投稿门槛
+    // P0-4 信用分投稿阶梯（需求 5.7，阈值后台可配）：<60 禁止投稿；60~80 投稿需审核；≥80 即时上架
+    const reviewConfig = await queryOne("SELECT config_value FROM system_configs WHERE config_key = 'credit_review_threshold'");
+    const reviewThreshold = parseInt(reviewConfig?.config_value || '60', 10);
+    const instantConfig = await queryOne("SELECT config_value FROM system_configs WHERE config_key = 'credit_instant_threshold'");
+    const instantThreshold = parseInt(instantConfig?.config_value || '80', 10);
     const user = await queryOne('SELECT credit_score, status FROM users WHERE id = ?', [req.userId]);
-    if (user && user.credit_score < 60) {
-      return res.json({ code: 422, message: '信用分低于60，暂时无法投稿跟单' });
+    if (user && user.credit_score < reviewThreshold) {
+      return res.json({ code: 422, message: `信用分低于${reviewThreshold}，暂时无法投稿跟单` });
     }
+    // 60~80：投稿先进待审队列，审核通过后才上架
+    const needsAudit = !user || user.credit_score < instantThreshold;
 
     // 检查价格范围
     const priceRows = await query(
@@ -375,7 +395,8 @@ router.post('/', authRequired, async (req, res) => {
       brand: brand || '',
       stage: stage || '',
       price: Number(price),
-      status: 'active',
+      status: needsAudit ? 'inactive' : 'active',
+      audit_status: needsAudit ? 'pending' : 'none',
       attachments: Array.isArray(attachments) && attachments.length > 0 ? JSON.stringify(attachments) : null,
     });
 
@@ -398,9 +419,10 @@ router.post('/', authRequired, async (req, res) => {
       data: {
         id: opportunity.id,
         title: opportunity.title,
+        auditStatus: needsAudit ? 'pending' : 'none',
         similarOpportunities: similar,
       },
-      message: '发布成功',
+      message: needsAudit ? '已提交审核，审核通过后上架' : '发布成功',
     });
   } catch (err) {
     console.error('Create opportunity error:', err);

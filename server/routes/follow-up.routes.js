@@ -95,6 +95,11 @@ router.post('/share', authRequired, async (req, res) => {
 
     // 检查用户等级，决定是否免审
     const freeAudit = await isFreeAudit(req.userId);
+    // P0-1：奖励类积分有效期
+    const expireConfig = await query(
+      "SELECT config_value FROM system_configs WHERE config_key = 'points_expire_days'"
+    );
+    const expireDays = parseInt((Array.isArray(expireConfig) ? expireConfig[0] : expireConfig)?.config_value || '180');
 
     const share = await insert('follow_up_shares', {
       user_id: req.userId,
@@ -124,9 +129,9 @@ router.post('/share', authRequired, async (req, res) => {
             [req.userId]
           );
           await conn.execute(
-            `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-             VALUES (?, ?, ?, 'reward', '进展同步奖励')`,
-            [req.userId, rewardPoints, account[0].balance]
+            `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title, expires_at)
+             VALUES (?, ?, ?, 'reward', '进展同步奖励', DATE_ADD(NOW(), INTERVAL ? DAY))`,
+            [req.userId, rewardPoints, account[0].balance, expireDays]
           );
         });
       }
@@ -202,6 +207,10 @@ router.post('/helpful', authRequired, async (req, res) => {
         "SELECT config_value FROM system_configs WHERE config_key = 'helpful_reward_points'"
       );
       const rewardPoints = parseInt(rewardConfig[0]?.config_value || '1');
+      const [helpfulExpireRow] = await conn.execute(
+        "SELECT config_value FROM system_configs WHERE config_key = 'points_expire_days'"
+      );
+      const helpfulExpireDays = parseInt(helpfulExpireRow[0]?.config_value || '180');
 
       if (rewardPoints > 0) {
         await conn.execute(
@@ -213,9 +222,9 @@ router.post('/helpful', authRequired, async (req, res) => {
           [share.user_id]
         );
         await conn.execute(
-          `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title)
-           VALUES (?, ?, ?, 'reward', '进展被标记有用')`,
-          [share.user_id, rewardPoints, account[0].balance]
+          `INSERT INTO points_logs (user_id, delta, balance_after, source_type, source_title, expires_at)
+           VALUES (?, ?, ?, 'reward', '进展被标记有用', DATE_ADD(NOW(), INTERVAL ? DAY))`,
+          [share.user_id, rewardPoints, account[0].balance, helpfulExpireDays]
         );
       }
 

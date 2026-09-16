@@ -21,6 +21,9 @@ import { migrateWechatBinding } from './migrations/014_wechat_binding.js';
 import { migrateOpportunityTagsSortOrder } from './migrations/015_opportunity_tags_sort_order.js';
 import { migrateOrdersRefundedRepurchase } from './migrations/016_orders_refunded_repurchase.js';
 import { migrateP2Indexes } from './migrations/017_perf_indexes.js';
+import { migrateP0Optimizations } from './migrations/018_p0_optimizations.js';
+import { migrateRolePermissions } from './migrations/019_role_permissions.js';
+import { migrateRevokedTokens } from './migrations/020_revoked_tokens.js';
 import { ensureAndLoadPaymentConfig } from './services/payment/config-loader.js';
 import { seedDatabase } from './seeds/seed.js';
 import { closePool } from './db.js';
@@ -243,6 +246,17 @@ async function start() {
     // P2 性能索引（幂等）
     await migrateP2Indexes();
     console.log('[server] P2 performance indexes applied');
+
+    // P0 优化：登录打卡表 / 分佣比例 / 商机审核字段 / 积分过期规则（幂等）
+    await migrateP0Optimizations();
+    console.log('[server] P0 optimizations applied (login_days / commission_rate / audit_status / points expiry)');
+
+    // 角色权限种子（幂等，与 requireRole 映射对齐）
+    await migrateRolePermissions();
+    console.log('[server] role_permissions seeded for default roles');
+
+    // token 吊销表（幂等，服务端登出依赖）
+    await migrateRevokedTokens();
 
     // 种子数据
     await seedDatabase();

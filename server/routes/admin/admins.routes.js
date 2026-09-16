@@ -56,7 +56,7 @@ router.get('/', async (req, res) => {
  */
 router.post('/', audit('admin_user', 'create'), async (req, res) => {
   try {
-    const { username, password, name, phone } = req.body || {};
+    const { username, password, name, phone, roleIds } = req.body || {};
     if (!username || !password) {
       return res.json({ code: 400, message: '用户名和密码不能为空' });
     }
@@ -65,7 +65,13 @@ router.post('/', audit('admin_user', 'create'), async (req, res) => {
       return res.json({ code: 400, message: '用户名已存在' });
     }
     const passwordHash = await bcrypt.hash(password, 10);
-    await insert('admin_users', { username, password_hash: passwordHash, name: name || '', phone: phone || '', status: 'active' });
+    const admin = await insert('admin_users', { username, password_hash: passwordHash, name: name || '', phone: phone || '', status: 'active' });
+    // 角色绑定：无角色管理员会被 requireRole 拒绝所有业务接口，必须支持 roleIds
+    if (Array.isArray(roleIds) && roleIds.length > 0) {
+      for (const roleId of roleIds) {
+        await insert('admin_role_relations', { admin_id: admin.id, role_id: roleId });
+      }
+    }
     res.json({ code: 0, message: '创建成功' });
   } catch (err) {
     console.error('创建管理员 error:', err);
@@ -91,7 +97,7 @@ router.post('/', audit('admin_user', 'create'), async (req, res) => {
  */
 router.put('/:id', audit('admin_user', 'edit'), async (req, res) => {
   try {
-    const { name, phone, status, password } = req.body || {};
+    const { name, phone, status, password, roleIds } = req.body || {};
     if (status !== undefined && status === 'inactive') {
       const target = await queryOne('SELECT status FROM admin_users WHERE id = ?', [req.params.id]);
       if (target && target.status === 'active') {
@@ -106,10 +112,20 @@ router.put('/:id', audit('admin_user', 'edit'), async (req, res) => {
     if (phone !== undefined) data.phone = phone;
     if (status !== undefined) data.status = status;
     if (password) data.password_hash = await bcrypt.hash(password, 10);
-    if (Object.keys(data).length === 0) {
+    // 角色重绑定：全量替换 admin_role_relations
+    if (Array.isArray(roleIds)) {
+      const targetId = Number(req.params.id);
+      await query('DELETE FROM admin_role_relations WHERE admin_id = ?', [targetId]);
+      for (const roleId of roleIds) {
+        await insert('admin_role_relations', { admin_id: targetId, role_id: roleId });
+      }
+    }
+    if (Object.keys(data).length === 0 && !Array.isArray(roleIds)) {
       return res.json({ code: 400, message: '无更新字段' });
     }
-    await update('admin_users', data, 'id = ?', [req.params.id]);
+    if (Object.keys(data).length > 0) {
+      await update('admin_users', data, 'id = ?', [req.params.id]);
+    }
     res.json({ code: 0, message: '更新成功' });
   } catch (err) {
     console.error('更新管理员 error:', err);
