@@ -1,9 +1,12 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert';
+import bcrypt from 'bcryptjs';
 
-const BASE = 'http://127.0.0.1:3001/api';
+const BASE = process.env.TEST_BASE || 'http://127.0.0.1:3001/api';
+// 符合密码策略（≥8 位且含字母和数字）的测试密码
+const TEST_PASSWORD = 'test1234';
 
-async function login(phone, password = '123456') {
+async function login(phone, password = TEST_PASSWORD) {
   const resp = await fetch(`${BASE}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -12,8 +15,8 @@ async function login(phone, password = '123456') {
   return resp.json();
 }
 
-// 独立的测试账号，避免与 core/payment 等并行文件共用 13800000001/02 造成锁定互相干扰
-const LOCK_PHONE = '13800000021';
+// 独立的测试账号：不与 core/payment(13800000001/02)、follow-up(13800000021/22/23) 共用，避免并行文件锁定互相干扰
+const LOCK_PHONE = '13800000031';
 
 async function getUserIdByPhone(pool, phone) {
   const [rows] = await pool.query('SELECT id FROM users WHERE phone = ?', [phone]);
@@ -37,6 +40,13 @@ async function clearFailures() {
 describe('安全加固', () => {
   before(async () => {
     const pool = await clearFailures();
+    // 直接落库确保锁定测试账号存在（不依赖其他测试文件的注册顺序与密码策略）
+    await pool.query(
+      `INSERT INTO users (phone, nickname, password_hash, status, created_at)
+       VALUES (?, '锁定测试', ?, 'active', NOW())
+       ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), status = 'active'`,
+      [LOCK_PHONE, await bcrypt.hash(TEST_PASSWORD, 10)]
+    );
     await pool.query(
       "UPDATE users SET status = 'active' WHERE phone = ?",
       [LOCK_PHONE]
@@ -72,7 +82,7 @@ describe('安全加固', () => {
     const correctWhileLocked = await fetch(`${BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: LOCK_PHONE, password: '123456' }),
+      body: JSON.stringify({ phone: LOCK_PHONE, password: TEST_PASSWORD }),
     });
     assert.strictEqual((await correctWhileLocked.json()).code, 429);
 
@@ -81,7 +91,7 @@ describe('安全加固', () => {
     const okResp = await fetch(`${BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: LOCK_PHONE, password: '123456' }),
+      body: JSON.stringify({ phone: LOCK_PHONE, password: TEST_PASSWORD }),
     });
     const okJson = await okResp.json();
     assert.strictEqual(okJson.code, 0);
@@ -100,12 +110,12 @@ describe('安全加固', () => {
     assert.ok(regJson.message.includes('字母和数字'));
 
     // 修改密码弱密码（先正常登录）
-    const loginRes = await login(LOCK_PHONE, '123456');
+    const loginRes = await login(LOCK_PHONE, TEST_PASSWORD);
     assert.strictEqual(loginRes.code, 0);
     const chgResp = await fetch(`${BASE}/auth/change-password`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${loginRes.data.token}` },
-      body: JSON.stringify({ oldPassword: '123456', newPassword: 'abc123' }),
+      body: JSON.stringify({ oldPassword: TEST_PASSWORD, newPassword: 'abc123' }),
     });
     const chgJson = await chgResp.json();
     assert.strictEqual(chgJson.code, 400);

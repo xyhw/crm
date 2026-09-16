@@ -1,7 +1,7 @@
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert';
 
-const BASE = 'http://localhost:3001/api';
+const BASE = process.env.TEST_BASE || 'http://localhost:3001/api';
 
 const FOLLOW_UP_STATUSES = ['call_no_answer', 'added_wechat', 'interested', 'quoting', 'negotiating', 'closed', 'abandoned'];
 
@@ -23,7 +23,7 @@ async function apiPost(path, data, token) {
 
 // 注册（已存在则忽略，返回 null）
 async function registerIfAbsent(phone, extra = {}) {
-  const res = await apiPost('/auth/register', { phone, password: '123456', nickname: `T${phone.slice(-4)}`, ...extra });
+  const res = await apiPost('/auth/register', { phone, password: 'test1234', nickname: `T${phone.slice(-4)}`, ...extra });
   if (res.code !== 0 && res.code !== 400) {
     throw new Error(`register failed: ${JSON.stringify(res)}`);
   }
@@ -37,13 +37,13 @@ describe('P1 关键能力', () => {
     // 用户A：注册（带 email）
     const phoneA = '13700009901';
     const regA = await registerIfAbsent(phoneA, { email: 'a@example.com', company: 'A公司', category: 'zhuangxiu' });
-    const loginA = regA.code === 0 ? regA : await apiPost('/auth/login', { phone: phoneA, password: '123456' });
+    const loginA = regA.code === 0 ? regA : await apiPost('/auth/login', { phone: phoneA, password: 'test1234' });
     userAToken = loginA.data.token;
 
     // 用户B：注册 + 充值
     const phoneB = '13700009902';
     const regB = await registerIfAbsent(phoneB);
-    const loginB = regB.code === 0 ? regB : await apiPost('/auth/login', { phone: phoneB, password: '123456' });
+    const loginB = regB.code === 0 ? regB : await apiPost('/auth/login', { phone: phoneB, password: 'test1234' });
     userBToken = loginB.data.token;
 
     const { default: pkg } = await import('mysql2/promise');

@@ -1,7 +1,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert';
 
-const BASE = 'http://localhost:3001/api';
+const BASE = process.env.TEST_BASE || 'http://localhost:3001/api';
 
 async function adminLogin() {
   const resp = await fetch(`${BASE}/v1/admin/auth/login`, {

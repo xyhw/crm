@@ -2,7 +2,7 @@ import { describe, it, before, beforeEach } from 'node:test';
 import assert from 'node:assert';
 import bcrypt from 'bcryptjs';
 
-const BASE = 'http://localhost:3001/api';
+const BASE = process.env.TEST_BASE || 'http://localhost:3001/api';
 
 async function login(phone, password = '123456') {
   const resp = await fetch(`${BASE}/auth/login`, {
@@ -96,10 +96,11 @@ describe('核心流程', () => {
     );
     await pool2.query(
       `INSERT INTO points_logs (user_id, delta, balance_after, source_type, created_at)
-       VALUES (2, 10000, 10000, 'recharge', NOW())`
+       SELECT id, 10000, 10000, 'recharge', NOW() FROM users WHERE phone = '13800000002'`
     );
     await pool2.query(
-      `INSERT INTO points_accounts (user_id, balance, total_recharged) VALUES (2, 10000, 10000)
+      `INSERT INTO points_accounts (user_id, balance, total_recharged)
+       SELECT id, 10000, 10000 FROM users WHERE phone = '13800000002'
        ON DUPLICATE KEY UPDATE balance = balance + 10000, total_recharged = total_recharged + 10000`
     );
     await pool2.end();
@@ -196,8 +197,25 @@ describe('核心流程', () => {
   });
 
   it('推荐排序：购买历史推导同城/同品牌偏好加分', async () => {
-    // user2 此前已购买 publishedId（杭州、分类4），推导出"杭州"偏好
-    // 发布两个同为分类6的杭州/深圳商机，类型分相同，杭州应因城市偏好排前
+    // 注意：先行测试“无效标记录”会自动退款 user2 对 publishedId 的购买（invalid-mark 退款所有购买者），
+    // 而同城偏好只统计 paid 订单 —— 这里补一笔杭州商机的真实购买，使偏好推导生效
+    const prefPub = await apiPost('/opportunities', {
+      title: '杭州滨江酒店弱电工程10间',
+      city: '杭州',
+      address: '滨江区某酒店',
+      brand: '西溪假日',
+      categoryId: 4,
+      price: 30,
+      descriptionFull: '偏好推导购买用',
+      contactName: '王五',
+      contactPhone: '13900000004',
+    }, user1Token);
+    assert.strictEqual(prefPub.code, 0);
+    const prefBuy = await apiPost('/orders', { opportunityId: prefPub.data.id }, user2Token);
+    assert.strictEqual(prefBuy.code, 0);
+
+    // user2 刚购买了杭州商机（paid），推导出“杭州”偏好；发布两个同为分类6的杭州/深圳商机，
+    // 类型分相同，杭州应因城市偏好（+30）排前
     const hzRes = await apiPost('/opportunities', {
       title: '杭州西湖酒店厨房设备采购15间',
       city: '杭州',
@@ -212,11 +230,11 @@ describe('核心流程', () => {
     assert.strictEqual(hzRes.code, 0);
     const hangzhouId = hzRes.data.id;
 
-    const listRes = await apiGet('/opportunities?sort=recommend&pageSize=500&boostCategory=6', user1Token);
+    // 同城偏好取自请求用户的购买历史（paid 订单）：user2 刚购买过杭州商机，其偏好即杭州
+    const listRes = await apiGet('/opportunities?sort=recommend&pageSize=500&boostCategory=6', user2Token);
     assert.strictEqual(listRes.code, 0);
     const ids = listRes.data.list.map((x) => x.id);
     assert.ok(ids.includes(hangzhouId), '同分类商机应在列表内');
-    // 未登录用户无偏好数据：换 user2 自己请求也不影响断言目标（其偏好即杭州）
     assert.ok(
       ids.indexOf(hangzhouId) < ids.indexOf(kitchenId),
       '同城偏好的商机应排在同分类型异地商机之前'

@@ -1,7 +1,7 @@
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert';
 
-const BASE = 'http://localhost:3001/api';
+const BASE = process.env.TEST_BASE || 'http://localhost:3001/api';
 
 async function apiGet(path, token) {
   const resp = await fetch(`${BASE}${path}`, {
@@ -20,7 +20,7 @@ async function apiPost(path, data, token) {
 }
 
 async function registerIfAbsent(phone, extra = {}) {
-  const res = await apiPost('/auth/register', { phone, password: '123456', nickname: `T${phone.slice(-4)}`, ...extra });
+  const res = await apiPost('/auth/register', { phone, password: 'test1234', nickname: `T${phone.slice(-4)}`, ...extra });
   if (res.code !== 0 && res.code !== 400) {
     throw new Error(`register failed: ${JSON.stringify(res)}`);
   }
@@ -28,7 +28,7 @@ async function registerIfAbsent(phone, extra = {}) {
 }
 
 async function ensureLogin(phone) {
-  const res = await apiPost('/auth/login', { phone, password: '123456' });
+  const res = await apiPost('/auth/login', { phone, password: 'test1234' });
   if (res.code !== 0) throw new Error(`login failed: ${JSON.stringify(res)}`);
   return res.data.token;
 }

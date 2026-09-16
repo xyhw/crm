@@ -2,7 +2,7 @@ import { describe, it, before } from 'node:test';
 import assert from 'node:assert';
 import bcrypt from 'bcryptjs';
 
-const BASE = 'http://localhost:3001/api';
+const BASE = process.env.TEST_BASE || 'http://localhost:3001/api';
 
 async function login(phone, password = '123456') {
   const resp = await fetch(`${BASE}/auth/login`, {
