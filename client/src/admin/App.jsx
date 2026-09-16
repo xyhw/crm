@@ -11,6 +11,7 @@ const OpportunityList = lazy(() => import('../pages/admin/OpportunityList'));
 const UserList = lazy(() => import('../pages/admin/UserList'));
 const OrderList = lazy(() => import('../pages/admin/OrderList'));
 const PointsList = lazy(() => import('../pages/admin/PointsList'));
+const RechargeOrders = lazy(() => import('../pages/admin/RechargeOrders'));
 const LevelConfig = lazy(() => import('../pages/admin/LevelConfig'));
 const SystemConfig = lazy(() => import('../pages/admin/SystemConfig'));
 const AgreementConfig = lazy(() => import('../pages/admin/AgreementConfig'));
@@ -52,6 +53,7 @@ export default function AdminApp() {
           <Route path="users" element={<Suspense fallback={<PageLoading />}><UserList /></Suspense>} />
           <Route path="orders" element={<Suspense fallback={<PageLoading />}><OrderList /></Suspense>} />
           <Route path="points" element={<Suspense fallback={<PageLoading />}><PointsList /></Suspense>} />
+          <Route path="recharge-orders" element={<Suspense fallback={<PageLoading />}><RechargeOrders /></Suspense>} />
           <Route path="levels" element={<Suspense fallback={<PageLoading />}><LevelConfig /></Suspense>} />
           <Route path="configs" element={<Suspense fallback={<PageLoading />}><SystemConfig /></Suspense>} />
           <Route path="configs/agreements" element={<Suspense fallback={<PageLoading />}><AgreementConfig /></Suspense>} />

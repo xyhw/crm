@@ -113,6 +113,10 @@ export default function Publish() {
         if (data?.similarOpportunities?.length) {
           setSimilarList(data.similarOpportunities);
           Toast.info('存在相似商机，请检查');
+        } else if (data?.auditStatus === 'pending') {
+          // P0-4：信用分 60~80 用户投稿需审核
+          Toast.info('已提交审核，审核通过后上架');
+          navigate('/my-opportunities');
         } else {
           Toast.success('发布成功');
           navigate('/');

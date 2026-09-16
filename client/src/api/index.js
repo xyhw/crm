@@ -150,6 +150,8 @@ export const api = {
   me: () => request('/auth/me'),
   updateMe: (data) => request('/auth/me', { method: 'PUT', body: data }),
   changePassword: (data) => request('/auth/change-password', { method: 'PUT', body: data }),
+  // 服务端登出：吊销当前 token（失败不阻塞本地清理）
+  logout: () => request('/auth/logout', { method: 'POST', body: { refreshToken: getRefreshToken() } }),
 
   // 商机
   opportunities: (params) => request('/opportunities' + qs(params)),

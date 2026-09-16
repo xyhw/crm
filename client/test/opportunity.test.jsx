@@ -279,7 +279,6 @@ describe('商机详情（开发需求 6.1.2/6.1.3 购买解锁）', () => {
     await waitFor(() => expect(screen.getByText('确认购买')).toBeTruthy());
     expect(screen.getByText('原价')).toBeTruthy();
     expect(screen.getByText('实付')).toBeTruthy();
-    expect(screen.getByText('会员折扣（普通会员）')).toBeTruthy();
     fireEvent.click(screen.getAllByText('确认')[0]);
     await waitFor(() => expect(api.purchase).toHaveBeenCalled());
     expect(api.purchase).toHaveBeenCalledWith({ opportunityId: 25 });

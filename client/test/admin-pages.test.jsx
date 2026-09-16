@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, waitFor, cleanup } from '@testing-library/react';
+import { render, waitFor, cleanup, screen } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import React from 'react';
 
@@ -21,6 +21,9 @@ vi.mock('../src/admin/api', () => ({
     adjustCredit: vi.fn().mockResolvedValue({}),
     getOrders: vi.fn().mockResolvedValue({ list: [], total: 0 }),
     getPointsLogs: vi.fn().mockResolvedValue({ list: [], total: 0 }),
+    getRechargeOrders: vi.fn().mockResolvedValue({ list: [], total: 0 }),
+    getRechargeSummary: vi.fn().mockResolvedValue({ today: {}, byStatus: [], byChannel: [], reconcile: { paidOrderPoints: 0, ledgerRechargePoints: 0, diff: 0, missingLedgerOrders: 0, missingLedgerPoints: 0 } }),
+    syncRechargeOrder: vi.fn().mockResolvedValue({ settled: false }),
     getLevels: vi.fn().mockResolvedValue([]),
     updateLevel: vi.fn().mockResolvedValue({}),
     getConfigs: vi.fn().mockResolvedValue({}),
@@ -69,6 +72,7 @@ const ADMIN_PAGES = [
   ['UserList', '../src/pages/admin/UserList'],
   ['OrderList', '../src/pages/admin/OrderList'],
   ['PointsList', '../src/pages/admin/PointsList'],
+  ['RechargeOrders', '../src/pages/admin/RechargeOrders'],
   ['LevelConfig', '../src/pages/admin/LevelConfig'],
   ['SystemConfig', '../src/pages/admin/SystemConfig'],
   ['AgreementConfig', '../src/pages/admin/AgreementConfig'],
@@ -97,6 +101,7 @@ describe('后台管理页冒烟测试（开发需求 6.2）', () => {
   });
 
   for (const [name, path] of ADMIN_PAGES) {
+    // 首个动态 import 冷启动拉取 antd 等大依赖，低配环境超过默认 5s，放宽到 30s
     it(`渲染 ${name} 不崩溃`, async () => {
       const mod = await import(path);
       const Comp = mod.default;
@@ -124,6 +129,48 @@ describe('后台管理页冒烟测试（开发需求 6.2）', () => {
         console.error = origError;
       }
       expect(failed).toBeNull();
-    });
+    }, 30000);
   }
+
+  it('AdminLayout 按角色过滤菜单并显示角色（财务仅见 6 项）', async () => {
+    const { adminApi } = await import('../src/admin/api');
+    adminApi.getMe.mockResolvedValue({ username: 'fin01', name: '财务小张', roles: ['finance'] });
+    const AdminLayout = (await import('../src/admin/components/AdminLayout')).default;
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <Routes>
+          <Route path="/" element={<AdminLayout />}>
+            <Route index element={<div>首页内容</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(screen.getByText('财务小张')).toBeTruthy());
+    expect(screen.getByText('财务管理员')).toBeTruthy();
+    // 财务可见：仪表盘/订单管理/积分管理/充值对账/数据统计/财务看板
+    for (const label of ['仪表盘', '订单管理', '积分管理', '充值对账', '数据统计', '财务看板']) {
+      expect(screen.getByText(label)).toBeTruthy();
+    }
+    // 财务不可见：商机管理/用户管理/等级配置/系统配置/角色管理/管理员管理/分类管理/标签管理
+    for (const label of ['商机管理', '用户管理', '等级配置', '系统配置', '角色管理', '管理员管理', '分类管理', '标签管理']) {
+      expect(screen.queryByText(label)).toBeNull();
+    }
+  });
+
+  it('AdminLayout getMe 失败时降级展示全部菜单', async () => {
+    const { adminApi } = await import('../src/admin/api');
+    adminApi.getMe.mockRejectedValue(new Error('network error'));
+    const AdminLayout = (await import('../src/admin/components/AdminLayout')).default;
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <Routes>
+          <Route path="/" element={<AdminLayout />}>
+            <Route index element={<div>首页内容</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(screen.getByText('商机管理')).toBeTruthy());
+    expect(screen.getByText('管理员管理')).toBeTruthy();
+  });
 });

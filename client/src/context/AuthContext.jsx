@@ -34,7 +34,13 @@ export function AuthProvider({ children }) {
     return res;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    // 服务端吊销 token（按 jti）；失败也继续清理本地
+    try {
+      await api.logout();
+    } catch {
+      // token 已过期或网络异常：本地清理即可
+    }
     clearAuth();
     setUser(null);
   };

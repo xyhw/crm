@@ -40,7 +40,8 @@ export default defineConfig({
     allowedHosts: ['.monkeycode-ai.online'],
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        // 可用 API_TARGET 环境变量覆盖（本地联调指向 3011 等端口）
+        target: process.env.API_TARGET || 'http://localhost:3001',
         changeOrigin: true,
       },
     },

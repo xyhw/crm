@@ -51,6 +51,14 @@ export const adminApi = {
   getOrders: (params) => apiClient.get('/orders', { params }),
   
   getPointsLogs: (params) => apiClient.get('/points', { params }),
+
+  // 充值对账（与小程序后台同一套后端 API）
+  getRechargeOrders: (params) => apiClient.get('/recharge-orders', { params }),
+  getRechargeSummary: () => apiClient.get('/recharge-orders/summary'),
+  syncRechargeOrder: (orderNo) => apiClient.post(`/recharge-orders/${orderNo}/sync`),
+
+  // 服务端登出：吊销当前管理 token（失败不阻塞本地清理）
+  adminLogout: () => apiClient.post('/auth/logout'),
   
   getLevels: () => apiClient.get('/levels'),
   updateLevel: (id, data) => apiClient.put(`/levels/${id}`, data),

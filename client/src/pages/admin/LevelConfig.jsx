@@ -30,8 +30,8 @@ export default function LevelConfig() {
   const columns = [
     { title: 'ID', dataIndex: 'id', width: 60 },
     { title: '等级名称', dataIndex: 'name', width: 100 },
-    { title: '购买折扣', dataIndex: 'purchase_discount', width: 100, render: (v) => `${((Number(v) || 1) * 100).toFixed(0)}%` },
-    { title: '分佣加成', dataIndex: 'commission_bonus', width: 100, render: (v) => `+${((Number(v) || 0) * 100).toFixed(0)}%` },
+    // P0-2：购买无折扣（purchase_discount 已废弃）；分佣比例为主权益
+    { title: '分佣比例', dataIndex: 'commission_rate', width: 100, render: (v) => `${((Number(v) || 0.7) * 100).toFixed(0)}%` },
     { title: '购买率阈值', dataIndex: 'purchase_rate_threshold', width: 100, render: (v) => `${v}%` },
     { title: '无效率阈值', dataIndex: 'invalid_rate_threshold', width: 100, render: (v) => `${v}%` },
     { title: '有用率阈值', dataIndex: 'helpful_rate_threshold', width: 100, render: (v) => `${v}%` },
@@ -58,8 +58,7 @@ export default function LevelConfig() {
     try {
       const values = await editForm.validateFields();
       await adminApi.updateLevel(editItem.id, {
-        purchaseDiscount: values.purchase_discount,
-        commissionBonus: values.commission_bonus,
+        commissionRate: values.commission_rate,
         purchaseRateThreshold: values.purchase_rate_threshold,
         invalidRateThreshold: values.invalid_rate_threshold,
         helpfulRateThreshold: values.helpful_rate_threshold,
@@ -101,11 +100,8 @@ export default function LevelConfig() {
         onCancel={() => setEditItem(null)}
       >
         <Form form={editForm} layout="vertical">
-          <Form.Item name="purchase_discount" label="购买折扣（0.9 = 9折）" rules={[{ required: true }]}>
-            <InputNumber min={0} max={1} step={0.05} style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item name="commission_bonus" label="分佣加成（0.1 = +10%）" rules={[{ required: true }]}>
-            <InputNumber min={0} max={1} step={0.05} style={{ width: '100%' }} />
+          <Form.Item name="commission_rate" label="分佣比例（0.75 = 投稿人得实付 75%，平台抽 25%）" rules={[{ required: true }]}>
+            <InputNumber min={0.01} max={1} step={0.05} style={{ width: '100%' }} />
           </Form.Item>
           <Form.Item name="purchase_rate_threshold" label="购买率阈值（%）" rules={[{ required: true }]}>
             <InputNumber min={0} max={100} style={{ width: '100%' }} />

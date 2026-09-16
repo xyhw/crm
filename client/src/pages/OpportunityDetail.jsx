@@ -7,7 +7,7 @@ import PageNavBar from '../components/PageNavBar';
 import Icon from '../components/Icon';
 import MarketIntelligence from '../components/MarketIntelligence';
 import AttachmentGrid from '../components/AttachmentGrid';
-import { stageLabel, statusMeta, INVALID_REASONS, levelMeta, formatDate } from '../constants';
+import { stageLabel, statusMeta, INVALID_REASONS, formatDate } from '../constants';
 
 export default function OpportunityDetail() {
   const { id } = useParams();
@@ -44,34 +44,54 @@ export default function OpportunityDetail() {
   const handlePurchase = async () => {
     if (!user) return navigate('/login');
 
-    const discount = levelMeta(user.level || 'normal').discount;
-    const rateMap = { '无折扣': 1, '9折': 0.9, '8折': 0.8, '7折': 0.7 };
-    const rate = rateMap[discount] || 1;
-    const payable = Math.ceil(detail.price * rate);
+    // P0-2：购买无折扣，统一原价（会员等级只影响投稿人分佣比例）
+    // P0 需求 5.4：发布超 1 年的跟单，提示可能存在时效性问题，二次确认后购买
+    const payable = detail.price;
+    const publishedAt = detail.publishedAt || detail.createdAt;
+    const overOneYear = publishedAt && (Date.now() - new Date(publishedAt).getTime()) > 365 * 24 * 60 * 60 * 1000;
+    const priceDetail = (
+      <div className="purchase-price-detail">
+        <div className="purchase-price-detail__row"><span>原价</span><span>{detail.price} 积分</span></div>
+        <div className="purchase-price-detail__row purchase-price-detail__row--total"><span>实付</span><span>{payable} 积分</span></div>
+      </div>
+    );
+
+    if (overOneYear) {
+      Dialog.confirm({
+        title: '时效性提醒',
+        message: (
+          <div>
+            <div className="purchase-price-detail">{priceDetail}</div>
+            <div style={{ marginTop: 8, color: '#E8920A' }}>该跟单发布已超过 1 年，可能存在时效性问题，是否继续购买？</div>
+          </div>
+        ),
+      }).then(async () => {
+        await doPurchase();
+      }).catch(() => {});
+      return;
+    }
 
     Dialog.confirm({
       title: '确认购买',
-      message: (
-        <div className="purchase-price-detail">
-          <div className="purchase-price-detail__row"><span>原价</span><span>{detail.price} 积分</span></div>
-          <div className="purchase-price-detail__row"><span>会员折扣（{levelMeta(user.level || 'normal').label}）</span><span>{discount}</span></div>
-          <div className="purchase-price-detail__row purchase-price-detail__row--total"><span>实付</span><span>{payable} 积分</span></div>
-        </div>
-      ),
+      message: priceDetail,
     }).then(async () => {
-      setPurchasing(true);
-      try {
-        const res = await api.purchase({ opportunityId: Number(id) });
-        const actual = res?.actualPrice;
-        Toast.success(actual != null ? `购买成功，实付 ${actual} 积分` : '购买成功');
-        const newDetail = await api.opportunity(id);
-        setDetail(newDetail);
-      } catch (e) {
-        Toast.fail(e.message);
-      } finally {
-        setPurchasing(false);
-      }
+      await doPurchase();
     }).catch(() => {});
+  };
+
+  const doPurchase = async () => {
+    setPurchasing(true);
+    try {
+      const res = await api.purchase({ opportunityId: Number(id) });
+      const actual = res?.actualPrice;
+      Toast.success(actual != null ? `购买成功，实付 ${actual} 积分` : '购买成功');
+      const newDetail = await api.opportunity(id);
+      setDetail(newDetail);
+    } catch (e) {
+      Toast.fail(e.message);
+    } finally {
+      setPurchasing(false);
+    }
   };
 
   const handleMarkInvalid = async () => {

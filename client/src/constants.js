@@ -75,10 +75,11 @@ export const SHARE_INVALID_REASONS = [
 ];
 
 export const LEVEL_META = {
-  normal: { label: '普通会员', color: '#7A7A7A', discount: '无折扣' },
-  silver: { label: '银牌会员', color: '#048C47', discount: '9折' },
-  gold: { label: '金牌会员', color: '#E8920A', discount: '8折' },
-  expert: { label: '认证达人', color: '#E54848', discount: '7折' },
+  // P0-2：购买无折扣，会员等级只影响分佣比例（用户拍板）
+  normal: { label: '普通会员', color: '#7A7A7A', discount: '分佣 70%' },
+  silver: { label: '银牌会员', color: '#048C47', discount: '分佣 75%' },
+  gold: { label: '金牌会员', color: '#E8920A', discount: '分佣 80%' },
+  expert: { label: '认证达人', color: '#E54848', discount: '分佣 85%' },
 };
 
 export function categoryLabel(value) {

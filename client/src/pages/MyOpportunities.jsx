@@ -14,6 +14,12 @@ const STATUS_META = {
   invalid: { label: '已失效', tone: 'hot' },
 };
 
+// P0-4：审核状态标签（待审核/已驳回，仅本人投稿列表可见）
+const AUDIT_META = {
+  pending: { label: '待审核', tone: 'hot' },
+  rejected: { label: '审核驳回', tone: 'hot' },
+};
+
 const PAGE_SIZE = 10;
 
 export default function MyOpportunities() {
@@ -58,11 +64,13 @@ export default function MyOpportunities() {
           <>
             {list.map((item) => {
               const meta = STATUS_META[item.status] || STATUS_META.active;
+              const auditMeta = item.auditStatus && AUDIT_META[item.auditStatus];
               const editable = item.status !== 'invalid' && (item.purchaseCount || 0) === 0;
               return (
                 <div key={item.id} className="my-opp-card" onClick={() => navigate(`/opportunity/${item.id}`)}>
                   <div className="my-opp-card__head">
                     <Tag className={`opp-stage-tag ${meta.tone}`}>{meta.label}</Tag>
+                    {auditMeta && <Tag className={`opp-stage-tag ${auditMeta.tone}`}>{auditMeta.label}</Tag>}
                     <span className="my-opp-card__time">{item.createdAt?.slice(0, 10)}</span>
                   </div>
                   <div className="my-opp-card__title">{item.title}</div>
