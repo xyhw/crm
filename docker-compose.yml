@@ -10,6 +10,11 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 5s
@@ -90,6 +95,11 @@ services:
       mysql:
         condition: service_healthy
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:3001/api/health').then(async r => { const b = await r.json(); process.exit(r.ok && b.code === 0 ? 0 : 1); }).catch(() => process.exit(1))"]
       interval: 15s
@@ -105,6 +115,11 @@ services:
     depends_on:
       - api
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost/"]
       interval: 15s
