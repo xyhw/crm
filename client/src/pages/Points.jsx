@@ -112,7 +112,7 @@ export default function Points() {
 
   if (loading) return <div className="page"><PageNavBar title="积分中心" onClickLeft={() => navigate(-1)} /><div className="empty-tip">加载中...</div></div>;
 
-  const rechargeOptions = [50, 100, 200, 500, 1000];
+  const rechargeOptions = [50, 100, 200];
 
   return (
     <div className="page">

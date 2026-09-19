@@ -71,7 +71,7 @@ import { onLoad } from '@dcloudio/uni-app';
 import { api } from '@/api/index';
 import { resolveMiniappChannels, channelLabel, checkIosVirtualPayVersion, getWxLoginCode, requestVirtualPayment } from '@/common/payment';
 
-const options = [50, 100, 200, 500, 1000];
+const options = [50, 100, 200];
 const MAX_AMOUNT = 10000;
 
 const loading = ref(true);
