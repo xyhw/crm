@@ -48,3 +48,26 @@
   - miniapp 测试：`cd /workspace/miniapp && NODE_PATH=$(npm root -g) npx vitest run`。测试依赖（vitest/jsdom/@vue/test-utils）全局安装在 `/usr/local/lib/node_modules`，在 `miniapp/node_modules` 下用符号链接指向全局；`@vue/test-utils` 必须在项目本地安装以避免与项目 vue 3.5.41 双实例冲突（全局自带 vue 3.5.42 会报 `reading 'ce'`）。
   - 投稿人姓名匿名：后端 `server/constants.js` 的 `anonymizeName()` 确定性哈希取单字，前台 API 返回匿名昵称；后台 admin 接口保留实名。前端直接展示后端值，不要再套 maskName 二次脱敏。
   - miniapp 分页约定：列表接口用服务端分页（page/pageSize + total），后端 rankings 接口已补 total 字段；不要一次性 pageSize:50 拉全量。
+## 待办：本地 5 个提交待推送 GitHub
+- 日期: 2026-09-16
+- 上下文: P0 优化 + 测试修复 + 小程序适配 + docker 梳理共 5 个提交已在本地 main（89cdb57..f9a1da2），推送受阻
+- 类别: 运维与部署
+- 说明:
+  - 已配置凭据 ~/.git-credentials（x-access-token 形式，token 已由用户提供），credential.helper=store
+  - 推送 403「Resource not accessible by personal access token」：fine-grained token 未勾选 Contents: Read and write
+  - 修复路径：GitHub → Settings → Developer settings → Fine-grained tokens → 编辑该 token → Repository access 含 xyhw/crm → Permissions → Contents 改为 Read and write → 保存（token 字符串不变，改完直接 git push origin main）
+  - 完整提交清单：89cdb57 feat(server) P0 四项优化与安全加固 / 250e625 test(server) 测试修复 / 3433dc6 feat(client) P0 UI 对齐与充值对账页 / b0bb32c feat(miniapp) 适配修复 / f9a1da2 chore(docker) 编排统一
+
+## 运维：mysql-memory-server 的进程与数据目录生命周期
+- 日期: 2026-09-16
+- 上下文: 误杀旧 start.js keeper 后 /tmp/mysqlmsn/dbs 下的数据目录被连带清空
+- 类别: 运维与部署 / 环境配置
+- 说明:
+  - /tmp/mysql-userspace/start.js 用 mysql-memory-server 的 createDB 启动 MySQL，宿主进程退出（含被 kill）时会**自动删除其数据目录**；用 pgrep -f "star[t].js" 匹配会同时杀掉多个会话的 keeper，导致所有数据目录被清
+  - 教训：①只 kill 精确 pid，杀前先 ps 确认每个 pid 的启动时间与归属；②数据目录在 /tmp（易失），需要保留状态的测试数据应先 mysqldump 备份
+  - 全新库恢复流程：node /tmp/mysql-userspace/start.js → 重启 CRM API（迁移+种子自动执行）→ 跑套件（core.test.js 已改为按手机号子查询，不依赖具体自增 id）
+
+## 运维：公网访问改用 Cloudflare Tunnel（用户自有域名 freellm.cc.cd）
+- 日期：2026-09-18
+- 类别：运维/网络
+- 说明：容器无公网入口，改用 cloudflared 出站隧道。用户已在 Cloudflare Zero Trust 面板建隧道（远程托管模式）并配置公共主机名：crm.freellm.cc.cd → localhost:8080（H5+管理后台/admin，预览服务 /tmp/crm-preview.js 跑 client/dist），miniapp.freellm.cc.cd → localhost:5175（小程序 H5，uni dev，须 API_TARGET=http://127.0.0.1:3011 启动）。连接器：/tmp/cloudflared tunnel --no-autoupdate run --token <token>，重启脚本 /opt/data/home/start-cloudflared.sh（token 取自运行进程）。此前的 localhost.run / serveo 免费 SSH 隧道已自然断开并弃用。
